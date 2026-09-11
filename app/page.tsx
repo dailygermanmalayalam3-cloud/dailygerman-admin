@@ -3,9 +3,9 @@ import {
   getVocabulary,
   getGrammarTopics,
   getGoetheMaterials,
-  getConversations,
+  getVocabularyCategories,
 } from "@/lib/db/content";
-import { BookOpen, FileText, Award, MessageSquare, PlusCircle, ArrowRight } from "lucide-react";
+import { BookOpen, FileText, Award, PlusCircle, ArrowRight } from "lucide-react";
 
 import { isCurrentUserAdmin } from "@/lib/supabase/auth";
 import { redirect } from "next/navigation";
@@ -18,19 +18,19 @@ export default async function AdminDashboardPage() {
     redirect("/login");
   }
 
-  const [vocab, grammar, goethe, conversations] = await Promise.all([
+  const [vocab, grammar, goethe, categories] = await Promise.all([
     getVocabulary(),
     getGrammarTopics(),
     getGoetheMaterials(),
-    getConversations(),
+    getVocabularyCategories(),
   ]);
 
   const cards = [
     {
-      title: "Vocabulary & Words",
+      title: "Vocabulary & Categories",
       count: vocab.length,
-      unit: "words & lessons",
-      description: "Add, edit, or remove German words, categories, and Malayalam meanings.",
+      unit: `${categories.length} categories • ${vocab.length} words`,
+      description: "Manage topic categories, order them, and batch add German words.",
       href: "/vocabulary",
       icon: BookOpen,
       color: "#ffe600",
@@ -52,15 +52,6 @@ export default async function AdminDashboardPage() {
       href: "/goethe",
       icon: Award,
       color: "#fde047",
-    },
-    {
-      title: "Conversations",
-      count: conversations.length,
-      unit: "dialogues",
-      description: "Add or edit real-life conversations with trilingual dialogue lines.",
-      href: "/conversations",
-      icon: MessageSquare,
-      color: "#fef9c3",
     },
   ];
 

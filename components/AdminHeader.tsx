@@ -44,7 +44,6 @@ export default function AdminHeader() {
     { label: 'Vocabulary', href: '/vocabulary', icon: BookOpen },
     { label: 'Grammar', href: '/grammar', icon: FileText },
     { label: 'Goethe Prep', href: '/goethe', icon: Award },
-    { label: 'Conversations', href: '/conversations', icon: MessageSquare },
   ];
 
   if (pathname === '/login') {

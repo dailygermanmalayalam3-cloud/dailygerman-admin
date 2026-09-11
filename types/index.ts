@@ -1,12 +1,13 @@
-﻿export type Level = "A1" | "A2" | "B1" | "B2";
+export type Level = "A1" | "A2" | "B1" | "B2";
 
-export type Category =
-  | "Vocabulary"
-  | "Grammar"
-  | "Speaking"
-  | "Reading"
-  | "Writing"
-  | "Listening";
+export type Category = string;
+
+export interface VocabularyCategory {
+  id: string;
+  name: string;
+  order_index: number;
+  created_at?: string;
+}
 
 export type GoetheSection = "Sprechen" | "Lesen" | "Schreiben" | "Hören";
 
@@ -19,7 +20,7 @@ export interface Example {
 export interface VocabularyItem {
   id: string;
   level: Level;
-  category: Category;
+  category: string;
   title: string;
   slug: string;
   german_content: string;
@@ -54,23 +55,6 @@ export interface GoetheMaterial {
   content: string;
   tips?: string;
   audio_url?: string;
-  created_at?: string;
-}
-
-export interface DialogueLine {
-  speaker: string;
-  german: string;
-  english: string;
-  malayalam: string;
-}
-
-export interface ConversationItem {
-  id: string;
-  level: Level;
-  title: string;
-  slug: string;
-  description?: string;
-  dialogue: DialogueLine[];
   created_at?: string;
 }
 
