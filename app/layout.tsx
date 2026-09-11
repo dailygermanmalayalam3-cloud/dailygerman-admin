@@ -19,9 +19,11 @@ export const metadata: Metadata = {
   description: "Content Management Dashboard for Daily German Malayalam.",
   icons: {
     icon: [
-      { url: "/favicon.ico" },
-      { url: "/icon.png", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "256x256" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
     ],
+    shortcut: "/favicon.ico",
     apple: "/apple-icon.png",
   },
 };
