@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #111111;
+  --yellow-accent: #ffe600;
+  --yellow-badge: #fef08a;
+  --yellow-border: #facc15;
+}
+
+html.dark {
+  --background: #0d0d0d;
+  --foreground: #ededed;
+  --yellow-accent: #ffe600;
+  --yellow-badge: #854d0e;
+  --yellow-border: #facc15;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Malayalam", "Noto Sans", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom Yellow Highlight Marker */
+.highlight-yellow {
+  background: linear-gradient(120deg, rgba(255, 230, 0, 0.4) 0%, rgba(255, 230, 0, 0.9) 100%);
+  padding: 0.1em 0.35em;
+  border-radius: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+html.dark .highlight-yellow {
+  background: linear-gradient(120deg, rgba(250, 204, 21, 0.25) 0%, rgba(250, 204, 21, 0.6) 100%);
+  color: #ffffff;
+}
+
+/* Clean hairline borders */
+.border-subtle {
+  border-color: #e5e5e5;
+}
+
+html.dark .border-subtle {
+  border-color: #262626;
+}
+
+/* Malayalam font booster */
+.font-malayalam {
+  font-family: "Noto Sans Malayalam", -apple-system, BlinkMacSystemFont, sans-serif;
+}

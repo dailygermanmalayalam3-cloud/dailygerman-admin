@@ -1,0 +1,82 @@
+﻿export type Level = "A1" | "A2" | "B1" | "B2";
+
+export type Category =
+  | "Vocabulary"
+  | "Grammar"
+  | "Speaking"
+  | "Reading"
+  | "Writing"
+  | "Listening";
+
+export type GoetheSection = "Sprechen" | "Lesen" | "Schreiben" | "Hören";
+
+export interface Example {
+  german: string;
+  english: string;
+  malayalam: string;
+}
+
+export interface VocabularyItem {
+  id: string;
+  level: Level;
+  category: Category;
+  title: string;
+  slug: string;
+  german_content: string;
+  english_meaning: string;
+  malayalam_meaning: string;
+  content?: string;
+  examples?: Example[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface GrammarTopic {
+  id: string;
+  level: Level;
+  title: string;
+  slug: string;
+  short_description: string;
+  explanation_malayalam: string;
+  content: string;
+  examples?: Example[];
+  order_index?: number;
+  created_at?: string;
+}
+
+export interface GoetheMaterial {
+  id: string;
+  level: Level;
+  section: GoetheSection;
+  title: string;
+  slug: string;
+  description: string;
+  content: string;
+  tips?: string;
+  audio_url?: string;
+  created_at?: string;
+}
+
+export interface DialogueLine {
+  speaker: string;
+  german: string;
+  english: string;
+  malayalam: string;
+}
+
+export interface ConversationItem {
+  id: string;
+  level: Level;
+  title: string;
+  slug: string;
+  description?: string;
+  dialogue: DialogueLine[];
+  created_at?: string;
+}
+
+export interface UserRole {
+  id: string;
+  user_id: string;
+  email: string;
+  role: "admin" | "user";
+}
