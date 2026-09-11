@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -34,7 +34,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
@@ -88,7 +88,15 @@ export default function LoginPage() {
       if (error) {
         setMessage({ type: "error", text: error.message });
       } else {
+        const adminEmails = ["dailygermanmalayalam3@gmail.com"];
+        if (email && !adminEmails.includes(email.toLowerCase())) {
+          await supabase.auth.signOut();
+          setMessage({ type: "error", text: "Access Denied: Only authorized administrators can access this CMS." });
+          setLoading(false);
+          return;
+        }
         router.push("/");
+        router.refresh();
       }
     }
     setLoading(false);

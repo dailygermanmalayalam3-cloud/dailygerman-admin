@@ -7,9 +7,17 @@ import {
 } from "@/lib/db/content";
 import { BookOpen, FileText, Award, MessageSquare, PlusCircle, ArrowRight } from "lucide-react";
 
+import { isCurrentUserAdmin } from "@/lib/supabase/auth";
+import { redirect } from "next/navigation";
+
 export const revalidate = 0;
 
 export default async function AdminDashboardPage() {
+  const isAdmin = await isCurrentUserAdmin();
+  if (!isAdmin) {
+    redirect("/login");
+  }
+
   const [vocab, grammar, goethe, conversations] = await Promise.all([
     getVocabulary(),
     getGrammarTopics(),
