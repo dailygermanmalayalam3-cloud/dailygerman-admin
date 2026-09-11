@@ -1,4 +1,4 @@
-﻿import {
+import {
   initialVocabulary,
   initialGrammarTopics,
   initialGoetheMaterials,
@@ -156,7 +156,7 @@ export async function getConversationBySlug(slug: string): Promise<ConversationI
 export async function mutateVocabulary(item: Partial<VocabularyItem> & { title: string; level: Level; category: Category }): Promise<VocabularyItem> {
   const slug = item.slug || item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const payload: VocabularyItem = {
-    id: item.id || `vocab-${Date.now()}`,
+    id: item.id || crypto.randomUUID(),
     level: item.level,
     category: item.category,
     title: item.title,
@@ -169,15 +169,14 @@ export async function mutateVocabulary(item: Partial<VocabularyItem> & { title: 
     created_at: item.created_at || new Date().toISOString(),
   };
 
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (supabase) {
-      const { data, error } = await supabase.from("vocabulary").upsert(payload).select().single();
-      if (!error && data) return data as VocabularyItem;
-      if (error) console.error("Supabase upsert error:", error.message);
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("vocabulary").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
     }
-  } catch (err) {
-    console.warn("Failed Supabase upsert:", err);
+    if (data) return data as VocabularyItem;
   }
 
   const index = memoryVocab.findIndex((v) => v.id === payload.id);
@@ -190,14 +189,13 @@ export async function mutateVocabulary(item: Partial<VocabularyItem> & { title: 
 }
 
 export async function deleteVocabularyItem(id: string): Promise<boolean> {
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (supabase) {
-      const { error } = await supabase.from("vocabulary").delete().eq("id", id);
-      if (error) console.error("Supabase delete error:", error.message);
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("vocabulary").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
     }
-  } catch (err) {
-    console.warn("Failed Supabase delete:", err);
   }
   memoryVocab = memoryVocab.filter((v) => v.id !== id);
   return true;
@@ -206,7 +204,7 @@ export async function deleteVocabularyItem(id: string): Promise<boolean> {
 export async function mutateGrammarTopic(item: Partial<GrammarTopic> & { title: string; level: Level }): Promise<GrammarTopic> {
   const slug = item.slug || item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const payload: GrammarTopic = {
-    id: item.id || `grammar-${Date.now()}`,
+    id: item.id || crypto.randomUUID(),
     level: item.level,
     title: item.title,
     slug,
@@ -218,15 +216,14 @@ export async function mutateGrammarTopic(item: Partial<GrammarTopic> & { title: 
     created_at: item.created_at || new Date().toISOString(),
   };
 
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (supabase) {
-      const { data, error } = await supabase.from("grammar_topics").upsert(payload).select().single();
-      if (!error && data) return data as GrammarTopic;
-      if (error) console.error("Supabase upsert grammar error:", error.message);
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("grammar_topics").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert grammar error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
     }
-  } catch (err) {
-    console.warn("Failed Supabase upsert:", err);
+    if (data) return data as GrammarTopic;
   }
 
   const idx = memoryGrammar.findIndex((g) => g.id === payload.id);
@@ -236,14 +233,13 @@ export async function mutateGrammarTopic(item: Partial<GrammarTopic> & { title: 
 }
 
 export async function deleteGrammarTopicItem(id: string): Promise<boolean> {
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (supabase) {
-      const { error } = await supabase.from("grammar_topics").delete().eq("id", id);
-      if (error) console.error("Supabase delete grammar error:", error.message);
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("grammar_topics").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete grammar error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
     }
-  } catch (err) {
-    console.warn("Failed Supabase delete:", err);
   }
   memoryGrammar = memoryGrammar.filter((g) => g.id !== id);
   return true;
@@ -252,7 +248,7 @@ export async function deleteGrammarTopicItem(id: string): Promise<boolean> {
 export async function mutateGoetheMaterial(item: Partial<GoetheMaterial> & { title: string; level: Level; section: GoetheSection }): Promise<GoetheMaterial> {
   const slug = item.slug || item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const payload: GoetheMaterial = {
-    id: item.id || `goethe-${Date.now()}`,
+    id: item.id || crypto.randomUUID(),
     level: item.level,
     section: item.section,
     title: item.title,
@@ -264,15 +260,14 @@ export async function mutateGoetheMaterial(item: Partial<GoetheMaterial> & { tit
     created_at: item.created_at || new Date().toISOString(),
   };
 
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (supabase) {
-      const { data, error } = await supabase.from("goethe_materials").upsert(payload).select().single();
-      if (!error && data) return data as GoetheMaterial;
-      if (error) console.error("Supabase upsert goethe error:", error.message);
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("goethe_materials").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert goethe error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
     }
-  } catch (err) {
-    console.warn("Failed Supabase upsert:", err);
+    if (data) return data as GoetheMaterial;
   }
 
   const idx = memoryGoethe.findIndex((m) => m.id === payload.id);
@@ -282,14 +277,13 @@ export async function mutateGoetheMaterial(item: Partial<GoetheMaterial> & { tit
 }
 
 export async function deleteGoetheMaterialItem(id: string): Promise<boolean> {
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (supabase) {
-      const { error } = await supabase.from("goethe_materials").delete().eq("id", id);
-      if (error) console.error("Supabase delete goethe error:", error.message);
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("goethe_materials").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete goethe error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
     }
-  } catch (err) {
-    console.warn("Failed Supabase delete:", err);
   }
   memoryGoethe = memoryGoethe.filter((m) => m.id !== id);
   return true;
@@ -298,7 +292,7 @@ export async function deleteGoetheMaterialItem(id: string): Promise<boolean> {
 export async function mutateConversation(item: Partial<ConversationItem> & { title: string; level: Level }): Promise<ConversationItem> {
   const slug = item.slug || item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const payload: ConversationItem = {
-    id: item.id || `conv-${Date.now()}`,
+    id: item.id || crypto.randomUUID(),
     level: item.level,
     title: item.title,
     slug,
@@ -307,15 +301,14 @@ export async function mutateConversation(item: Partial<ConversationItem> & { tit
     created_at: item.created_at || new Date().toISOString(),
   };
 
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (supabase) {
-      const { data, error } = await supabase.from("conversations").upsert(payload).select().single();
-      if (!error && data) return data as ConversationItem;
-      if (error) console.error("Supabase upsert conversation error:", error.message);
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("conversations").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert conversation error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
     }
-  } catch (err) {
-    console.warn("Failed Supabase upsert:", err);
+    if (data) return data as ConversationItem;
   }
 
   const idx = memoryConversations.findIndex((c) => c.id === payload.id);
@@ -325,14 +318,13 @@ export async function mutateConversation(item: Partial<ConversationItem> & { tit
 }
 
 export async function deleteConversationItem(id: string): Promise<boolean> {
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (supabase) {
-      const { error } = await supabase.from("conversations").delete().eq("id", id);
-      if (error) console.error("Supabase delete conversation error:", error.message);
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("conversations").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete conversation error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
     }
-  } catch (err) {
-    console.warn("Failed Supabase delete:", err);
   }
   memoryConversations = memoryConversations.filter((c) => c.id !== id);
   return true;
