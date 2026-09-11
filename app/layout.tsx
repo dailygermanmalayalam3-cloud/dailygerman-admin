@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Geist, Noto_Sans_Malayalam } from "next/font/google";
 import "./globals.css";
 import AdminHeader from "@/components/AdminHeader";
@@ -17,6 +17,13 @@ const notoSansMalayalam = Noto_Sans_Malayalam({
 export const metadata: Metadata = {
   title: "Admin CMS | Daily German Malayalam",
   description: "Content Management Dashboard for Daily German Malayalam.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({

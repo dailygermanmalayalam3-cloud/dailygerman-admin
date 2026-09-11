@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { Shield, BookOpen, FileText, Award, MessageSquare, LogOut, Menu, X, ExternalLink } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -50,9 +51,19 @@ export default function AdminHeader() {
     return (
       <header className="border-b-2 border-black dark:border-white bg-[var(--background)] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-mono font-black text-lg tracking-wider bg-[#ffe600] text-black px-2 py-0.5 border border-black">ADMIN</span>
-            <span className="font-bold text-base tracking-tight">Daily German Malayalam</span>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/logo.webp"
+              alt="Daily German Malayalam"
+              width={48}
+              height={38}
+              className="h-9 w-auto object-contain shrink-0"
+              priority
+            />
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-black text-xs sm:text-sm tracking-wider bg-[#ffe600] text-black px-2 py-0.5 border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">ADMIN</span>
+              <span className="font-black text-sm sm:text-base tracking-tight">Daily German Malayalam</span>
+            </div>
           </div>
           <ThemeToggle />
         </div>
@@ -66,9 +77,17 @@ export default function AdminHeader() {
         <div className="flex items-center justify-between h-16">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 group">
-              <span className="font-mono font-black text-sm tracking-wider bg-[#ffe600] text-black px-2 py-0.5 border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">ADMIN</span>
-              <span className="font-extrabold text-lg tracking-tight group-hover:underline decoration-2">Daily German CMS</span>
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <Image
+                src="/logo.webp"
+                alt="Daily German Malayalam"
+                width={48}
+                height={38}
+                className="h-9 w-auto object-contain shrink-0 transition-transform group-hover:scale-105"
+                priority
+              />
+              <span className="font-mono font-black text-xs sm:text-sm tracking-wider bg-[#ffe600] text-black px-2 py-0.5 border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">ADMIN</span>
+              <span className="font-black text-base sm:text-lg tracking-tight group-hover:underline decoration-2">Daily German CMS</span>
             </Link>
           </div>
 

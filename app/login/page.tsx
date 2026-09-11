@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { ShieldCheck, AlertCircle } from "lucide-react";
 
@@ -46,6 +47,18 @@ function LoginForm() {
   return (
     <div className="max-w-md mx-auto my-12 px-4">
       <div className="border-2 border-black dark:border-neutral-700 bg-white dark:bg-[#141414] p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(250,204,21,0.3)] transition-all">
+        {/* Official Logo */}
+        <div className="flex justify-center mb-5">
+          <Image
+            src="/logo.webp"
+            alt="Daily German Malayalam"
+            width={160}
+            height={124}
+            className="h-24 w-auto object-contain drop-shadow-md"
+            priority
+          />
+        </div>
+
         {/* Header Badge */}
         <div className="flex items-center justify-center mb-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#ffe600] text-black border-2 border-black font-black text-xs uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
