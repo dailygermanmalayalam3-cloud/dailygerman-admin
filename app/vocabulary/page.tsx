@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { VocabularyItem, Level, Category } from "@/types";
+import { VocabularyItem, Level, Category, Example } from "@/types";
 import { Plus, Trash2, Edit3, ArrowLeft, Check, AlertCircle } from "lucide-react";
 
 const LEVELS: Level[] = ["A1", "A2", "B1", "B2"];
@@ -29,6 +29,7 @@ export default function AdminVocabularyPage() {
     english_meaning: "",
     malayalam_meaning: "",
     content: "",
+    examples: [] as Example[],
   });
 
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -59,9 +60,32 @@ export default function AdminVocabularyPage() {
       english_meaning: "",
       malayalam_meaning: "",
       content: "",
+      examples: [],
     });
     setEditingId(null);
     setShowForm(false);
+  };
+
+  const handleAddExample = () => {
+    setFormData((prev) => ({
+      ...prev,
+      examples: [...prev.examples, { german: "", english: "", malayalam: "" }],
+    }));
+  };
+
+  const handleUpdateExample = (index: number, field: keyof Example, value: string) => {
+    setFormData((prev) => {
+      const updated = [...prev.examples];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, examples: updated };
+    });
+  };
+
+  const handleRemoveExample = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      examples: prev.examples.filter((_, i) => i !== index),
+    }));
   };
 
   const handleEdit = (item: VocabularyItem) => {
@@ -73,6 +97,7 @@ export default function AdminVocabularyPage() {
       english_meaning: item.english_meaning,
       malayalam_meaning: item.malayalam_meaning,
       content: item.content || "",
+      examples: item.examples && Array.isArray(item.examples) ? [...item.examples] : [],
     });
     setEditingId(item.id);
     setShowForm(true);
@@ -99,9 +124,15 @@ export default function AdminVocabularyPage() {
     e.preventDefault();
     setStatusMsg(null);
 
+    // Clean up empty examples
+    const filteredExamples = formData.examples.filter(
+      (ex) => ex.german.trim() || ex.english.trim() || ex.malayalam.trim()
+    );
+
     const payload = {
       ...(editingId ? { id: editingId } : {}),
       ...formData,
+      examples: filteredExamples,
     };
 
     try {
@@ -280,6 +311,95 @@ export default function AdminVocabularyPage() {
             </div>
           </div>
 
+          {/* Example Sentences / Beispielsätze Builder */}
+          <div className="border-2 border-dashed border-black bg-neutral-50 p-4 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-black">
+                  Example Sentences / ഉദാഹരണ വാക്യങ്ങൾ (Optional)
+                </h3>
+                <p className="text-[11px] text-neutral-600">
+                  Add German sentences containing this word, along with English and Malayalam translations.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddExample}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black text-white hover:bg-[#ffe600] hover:text-black border border-black text-xs font-black uppercase tracking-wider transition-all cursor-pointer self-start sm:self-auto"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Sentence</span>
+              </button>
+            </div>
+
+            {formData.examples.length === 0 ? (
+              <div className="p-3 bg-white border border-neutral-300 text-neutral-500 text-xs text-center italic">
+                No example sentences added yet. Click &quot;Add Sentence&quot; above to include sentences with this word.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {formData.examples.map((ex, idx) => (
+                  <div
+                    key={idx}
+                    className="border-2 border-black bg-white p-3 space-y-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                      <span className="text-[10px] font-black uppercase bg-[#ffe600] border border-black px-2 py-0.5 text-black">
+                        Sentence #{idx + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveExample(idx)}
+                        className="text-xs text-red-600 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Remove
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-neutral-700 mb-1">
+                          German Sentence (containing word)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Ich trinke gerne frischen Kaffee."
+                          value={ex.german}
+                          onChange={(e) => handleUpdateExample(idx, "german", e.target.value)}
+                          className="w-full px-2.5 py-1.5 border border-black text-xs font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-neutral-700 mb-1">
+                          English Translation
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. I like to drink fresh coffee."
+                          value={ex.english}
+                          onChange={(e) => handleUpdateExample(idx, "english", e.target.value)}
+                          className="w-full px-2.5 py-1.5 border border-black text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-neutral-700 mb-1">
+                          Malayalam Translation
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. ഞാൻ പുതിയ കാപ്പി കുടിക്കാൻ ഇഷ്ടപ്പെടുന്നു."
+                          value={ex.malayalam}
+                          onChange={(e) => handleUpdateExample(idx, "malayalam", e.target.value)}
+                          className="w-full px-2.5 py-1.5 border border-black text-xs font-malayalam"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider mb-1">
               Detailed Notes / Explanation (Optional)
@@ -332,9 +452,10 @@ export default function AdminVocabularyPage() {
                 <tr>
                   <th className="p-3 border-r border-neutral-700">Level</th>
                   <th className="p-3 border-r border-neutral-700">Category</th>
-                  <th className="p-3 border-r border-neutral-700">German</th>
-                  <th className="p-3 border-r border-neutral-700">English</th>
-                  <th className="p-3 border-r border-neutral-700">Malayalam</th>
+                  <th className="p-3 border-r border-neutral-700">German Word</th>
+                  <th className="p-3 border-r border-neutral-700">English Meaning</th>
+                  <th className="p-3 border-r border-neutral-700">Malayalam Meaning</th>
+                  <th className="p-3 border-r border-neutral-700">Sentences</th>
                   <th className="p-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -357,6 +478,20 @@ export default function AdminVocabularyPage() {
                     </td>
                     <td className="p-3 text-neutral-900 font-malayalam border-r border-neutral-200">
                       {item.malayalam_meaning}
+                    </td>
+                    <td className="p-3 border-r border-neutral-200 whitespace-nowrap">
+                      {item.examples && item.examples.length > 0 ? (
+                        <div className="space-y-0.5">
+                          <span className="inline-block px-1.5 py-0.5 bg-neutral-100 border border-neutral-300 font-black text-[10px] text-neutral-800">
+                            {item.examples.length} {item.examples.length === 1 ? "Sentence" : "Sentences"}
+                          </span>
+                          <p className="text-[11px] font-medium text-neutral-600 truncate max-w-[180px]" title={item.examples[0].german}>
+                            {item.examples[0].german}
+                          </p>
+                        </div>
+                      ) : (
+                        <span className="text-neutral-400 font-bold">-</span>
+                      )}
                     </td>
                     <td className="p-3 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
