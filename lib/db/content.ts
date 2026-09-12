@@ -22,6 +22,10 @@ import {
   ReadingQuestion,
   WritingTopic,
   WritingSection,
+  MedicalCategory,
+  MedicalWord,
+  MedicalConversationTopic,
+  MedicalConversation,
 } from "@/types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -1033,4 +1037,264 @@ export async function deleteWritingSection(id: string): Promise<boolean> {
     }
   }
   return true;
-}
+}
+
+// ----------------- MEDICAL GERMAN MODULE -----------------
+
+// Categories
+export async function getMedicalCategories(): Promise<MedicalCategory[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("medical_categories")
+        .select("*")
+        .order("order_index", { ascending: true });
+      if (!error && data) return data as MedicalCategory[];
+      if (error) console.error("Supabase error fetching medical categories:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateMedicalCategory(
+  item: Partial<MedicalCategory> & { name: string }
+): Promise<MedicalCategory> {
+  const payload: MedicalCategory = {
+    id: item.id || crypto.randomUUID(),
+    name: item.name.trim(),
+    icon: item.icon || "🩺",
+    description: item.description || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("medical_categories").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert medical category error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as MedicalCategory;
+  }
+  return payload;
+}
+
+export async function deleteMedicalCategory(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("medical_categories").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete medical category error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
+// Words
+export async function getMedicalWords(categoryId?: string): Promise<MedicalWord[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase
+        .from("medical_words")
+        .select("*")
+        .order("order_index", { ascending: true })
+        .order("created_at", { ascending: true });
+      if (categoryId) query = query.eq("category_id", categoryId);
+      const { data, error } = await query;
+      if (!error && data) return data as MedicalWord[];
+      if (error) console.error("Supabase error fetching medical words:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateMedicalWord(
+  item: Partial<MedicalWord> & { category_id: string; german: string; english: string }
+): Promise<MedicalWord> {
+  const payload: MedicalWord = {
+    id: item.id || crypto.randomUUID(),
+    category_id: item.category_id,
+    german: item.german.trim(),
+    english: item.english.trim(),
+    malayalam: item.malayalam || "",
+    article: item.article || "",
+    plural: item.plural || "",
+    example_german: item.example_german || "",
+    example_english: item.example_english || "",
+    example_malayalam: item.example_malayalam || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("medical_words").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert medical word error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as MedicalWord;
+  }
+  return payload;
+}
+
+export async function deleteMedicalWord(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("medical_words").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete medical word error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
+// Conversation Topics
+export async function getMedicalConversationTopics(): Promise<MedicalConversationTopic[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("medical_conversation_topics")
+        .select("*, conversations:medical_conversations(*)")
+        .order("order_index", { ascending: true });
+      if (!error && data) {
+        data.forEach((topic: MedicalConversationTopic) => {
+          if (topic.conversations) {
+            topic.conversations.sort(
+              (a: MedicalConversation, b: MedicalConversation) =>
+                (a.order_index ?? 1) - (b.order_index ?? 1)
+            );
+          }
+        });
+        return data as MedicalConversationTopic[];
+      }
+      if (error) console.error("Supabase error fetching medical conversation topics:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateMedicalConversationTopic(
+  item: Partial<MedicalConversationTopic> & { title: string; slug: string }
+): Promise<MedicalConversationTopic> {
+  const payload: MedicalConversationTopic = {
+    id: item.id || crypto.randomUUID(),
+    title: item.title.trim(),
+    slug: item.slug.trim().toLowerCase(),
+    icon: item.icon || "🏥",
+    description: item.description || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("medical_conversation_topics")
+      .upsert(payload)
+      .select()
+      .single();
+    if (error) {
+      console.error("Supabase upsert medical conversation topic error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as MedicalConversationTopic;
+  }
+  return payload;
+}
+
+export async function deleteMedicalConversationTopic(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase
+      .from("medical_conversation_topics")
+      .delete()
+      .eq("id", id);
+    if (error) {
+      console.error("Supabase delete medical conversation topic error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
+// Conversations
+export async function getMedicalConversations(topicId?: string): Promise<MedicalConversation[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase
+        .from("medical_conversations")
+        .select("*")
+        .order("order_index", { ascending: true });
+      if (topicId) query = query.eq("topic_id", topicId);
+      const { data, error } = await query;
+      if (!error && data) return data as MedicalConversation[];
+      if (error) console.error("Supabase error fetching medical conversations:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateMedicalConversation(
+  item: Partial<MedicalConversation> & { topic_id: string; conversation_text: string }
+): Promise<MedicalConversation> {
+  const payload: MedicalConversation = {
+    id: item.id || crypto.randomUUID(),
+    topic_id: item.topic_id,
+    title: item.title || "Hospital Dialogue",
+    conversation_text: item.conversation_text.trim(),
+    explanation_malayalam: item.explanation_malayalam || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("medical_conversations")
+      .upsert(payload)
+      .select()
+      .single();
+    if (error) {
+      console.error("Supabase upsert medical conversation error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as MedicalConversation;
+  }
+  return payload;
+}
+
+export async function deleteMedicalConversation(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase
+      .from("medical_conversations")
+      .delete()
+      .eq("id", id);
+    if (error) {
+      console.error("Supabase delete medical conversation error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+

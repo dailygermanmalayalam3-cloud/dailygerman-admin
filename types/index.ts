@@ -208,3 +208,54 @@ export interface WritingTopic {
   created_at?: string;
   updated_at?: string;
 }
+
+// Medical German
+export interface MedicalCategory {
+  id: string;
+  name: string;
+  icon?: string;
+  description?: string;
+  order_index: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MedicalWord {
+  id: string;
+  category_id: string;
+  german: string;
+  english: string;
+  malayalam?: string;
+  article?: string;
+  plural?: string;
+  example_german?: string;
+  example_english?: string;
+  example_malayalam?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MedicalConversation {
+  id: string;
+  topic_id: string;
+  title?: string;
+  conversation_text: string;
+  explanation_malayalam?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MedicalConversationTopic {
+  id: string;
+  title: string;
+  slug: string;
+  icon?: string;
+  description?: string;
+  order_index?: number;
+  conversations?: MedicalConversation[];
+  created_at?: string;
+  updated_at?: string;
+}
+

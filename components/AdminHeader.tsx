@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Shield, BookOpen, FileText, Award, MessageSquare, LogOut, Menu, X, ExternalLink } from 'lucide-react';
+import { Shield, BookOpen, FileText, Award, MessageSquare, LogOut, Menu, X, ExternalLink, Stethoscope } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
 
@@ -46,6 +46,7 @@ export default function AdminHeader() {
     { label: 'Speaking', href: '/speaking', icon: MessageSquare },
     { label: 'Reading', href: '/reading', icon: BookOpen },
     { label: 'Writing', href: '/writing', icon: FileText },
+    { label: 'Medical', href: '/medical', icon: Stethoscope },
     { label: 'Exam Prep', href: '/goethe', icon: Award },
   ];
 
