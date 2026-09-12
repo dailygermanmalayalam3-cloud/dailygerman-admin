@@ -45,10 +45,10 @@ export default async function AdminDashboardPage() {
       color: "#fef08a",
     },
     {
-      title: "Goethe Prüfung",
+      title: "Exam Prep",
       count: goethe.length,
       unit: "exam materials",
-      description: "Manage Goethe preparation for Sprechen, Lesen, Schreiben, and Hören.",
+      description: "Manage Exam Preparation for Sprechen, Lesen, Schreiben, and Hören.",
       href: "/goethe",
       icon: Award,
       color: "#fde047",

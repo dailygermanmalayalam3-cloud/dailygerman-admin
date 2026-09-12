@@ -43,7 +43,7 @@ export default function AdminHeader() {
     { label: 'Overview', href: '/', icon: Shield },
     { label: 'Vocabulary', href: '/vocabulary', icon: BookOpen },
     { label: 'Grammar', href: '/grammar', icon: FileText },
-    { label: 'Goethe Prep', href: '/goethe', icon: Award },
+    { label: 'Exam Prep', href: '/goethe', icon: Award },
   ];
 
   if (pathname === '/login') {

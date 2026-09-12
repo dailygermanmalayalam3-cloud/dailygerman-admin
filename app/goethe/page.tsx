@@ -63,7 +63,7 @@ export default function AdminGoethePage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this Goethe preparation material?")) return;
+    if (!confirm("Are you sure you want to delete this Exam Prep material?")) return;
 
     try {
       const res = await fetch(`/api/admin/goethe?id=${id}`, { method: "DELETE" });
@@ -95,10 +95,10 @@ export default function AdminGoethePage() {
       if (res.ok && data.item) {
         if (editingId) {
           setItems((prev) => prev.map((i) => (i.id === editingId ? data.item : i)));
-          setStatusMsg({ type: "success", text: "Goethe material updated!" });
+          setStatusMsg({ type: "success", text: "Exam Prep material updated!" });
         } else {
           setItems((prev) => [...prev, data.item]);
-          setStatusMsg({ type: "success", text: "New Goethe material created!" });
+          setStatusMsg({ type: "success", text: "New Exam Prep material created!" });
         }
         resetForm();
       } else {
@@ -120,7 +120,7 @@ export default function AdminGoethePage() {
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
           </Link>
           <h1 className="text-2xl sm:text-3xl font-black text-black tracking-tight mt-1">
-            Manage Goethe Prüfung Materials
+            Manage Exam Prep Materials
           </h1>
         </div>
 
@@ -132,7 +132,7 @@ export default function AdminGoethePage() {
           className="inline-flex items-center gap-2 px-4 py-2 border-2 border-black bg-[#ffe600] text-black font-black text-xs uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>{showForm ? "Cancel" : "Add Goethe Material"}</span>
+          <span>{showForm ? "Cancel" : "Add Exam Prep Material"}</span>
         </button>
       </div>
 
@@ -155,7 +155,7 @@ export default function AdminGoethePage() {
           className="border-2 border-black bg-white p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] space-y-4"
         >
           <h2 className="text-lg font-black uppercase text-black border-b border-black pb-2">
-            {editingId ? "Edit Goethe Material" : "Add New Goethe Material"}
+            {editingId ? "Edit Exam Prep Material" : "Add New Exam Prep Material"}
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -257,7 +257,7 @@ export default function AdminGoethePage() {
           <p className="text-xs text-neutral-500">Loading materials...</p>
         ) : items.length === 0 ? (
           <div className="text-center py-12 border border-neutral-200 bg-neutral-50 p-6">
-            <p className="text-neutral-600 text-sm">No Goethe materials found.</p>
+            <p className="text-neutral-600 text-sm">No Exam Prep materials found.</p>
           </div>
         ) : (
           <div className="space-y-4">

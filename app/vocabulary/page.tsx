@@ -446,9 +446,10 @@ export default function AdminVocabularyPage() {
 
   const handleDeleteReadingExercise = async () => {
     if (!readingId) return;
+    const pTitle = readingTitle ? `"${readingTitle}"` : `Paragraph #${readingOrder}`;
     if (
       !confirm(
-        `Are you sure you want to delete this paragraph from ${readingCategory} (${readingLevel})?`
+        `Are you sure you want to delete ONLY this paragraph (${pTitle}) from ${readingCategory} (${readingLevel})?\n\nNote: Any other paragraphs in "${readingCategory}" will NOT be deleted.`
       )
     )
       return;
@@ -467,12 +468,30 @@ export default function AdminVocabularyPage() {
         }
         setStatusMsg({
           type: "success",
-          text: `Paragraph removed from ${readingCategory}.`,
+          text: `Paragraph ${pTitle} deleted.`,
         });
       }
     } catch {
-      setStatusMsg({ type: "error", text: "Failed to delete reading exercise." });
+      setStatusMsg({ type: "error", text: "Failed to delete paragraph." });
     }
+  };
+
+  const handleDeleteQuestion = (idx: number) => {
+    const q = readingQuestions[idx];
+    if (q.question.trim()) {
+      if (
+        !confirm(
+          `Are you sure you want to delete Question #${idx + 1} only?\n\nOther questions and this paragraph will NOT be deleted.\n\nRemember to click "Save Paragraph & Quiz" below to save your changes.`
+        )
+      ) {
+        return;
+      }
+    }
+    setReadingQuestions((prev) => prev.filter((_, i) => i !== idx));
+    setStatusMsg({
+      type: "success",
+      text: `Question #${idx + 1} removed. Click "Save Paragraph & Quiz" to commit changes.`,
+    });
   };
 
   const addQuestion = () => {
@@ -842,18 +861,26 @@ export default function AdminVocabularyPage() {
               <div className="flex flex-wrap gap-2 pt-2">
                 {readingList.map((item, idx) => {
                   const isCurrent = readingId === item.id;
+                  const qCount = (item.questions || []).length;
                   return (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => selectReadingForEdit(item)}
-                      className={`px-3 py-1.5 border-2 text-xs font-black uppercase transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 border-2 text-xs font-black uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
                         isCurrent
                           ? "border-black bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                           : "border-black bg-white hover:bg-neutral-200 text-black"
                       }`}
                     >
-                      {item.title || `Paragraph #${item.order_index ?? idx + 1}`}
+                      <span>{item.title || `Paragraph #${item.order_index ?? idx + 1}`}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                          isCurrent ? "bg-[#ffe600] text-black" : "bg-neutral-200 text-neutral-700"
+                        }`}
+                      >
+                        {qCount} {qCount === 1 ? "Q" : "Qs"}
+                      </span>
                     </button>
                   );
                 })}
@@ -972,10 +999,11 @@ export default function AdminVocabularyPage() {
                       </span>
                       <button
                         type="button"
-                        onClick={() => removeQuestion(qIdx)}
-                        className="text-xs text-red-600 font-black hover:underline flex items-center gap-1 cursor-pointer"
+                        onClick={() => handleDeleteQuestion(qIdx)}
+                        className="text-xs px-2.5 py-1 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-300 rounded font-black flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title={`Delete Question #${qIdx + 1} only`}
                       >
-                        <Trash2 className="w-3.5 h-3.5" /> Remove Question
+                        <Trash2 className="w-3.5 h-3.5" /> Delete Question #{qIdx + 1} Only
                       </button>
                     </div>
 
@@ -1083,21 +1111,22 @@ export default function AdminVocabularyPage() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between border-t-2 border-black pt-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t-2 border-black pt-4">
             <button
               type="submit"
               className="px-6 py-2.5 border-2 border-black bg-[#ffe600] text-black font-black text-sm uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer"
             >
-              💾 Save Reading Exercise &amp; Quiz
+              💾 Save Paragraph &amp; Quiz
             </button>
 
             {readingId && (
               <button
                 type="button"
                 onClick={handleDeleteReadingExercise}
-                className="px-4 py-2 border-2 border-red-600 bg-white text-red-600 hover:bg-red-600 hover:text-white font-black text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                className="px-4 py-2 border-2 border-red-600 bg-white text-red-600 hover:bg-red-600 hover:text-white font-black text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                title="Delete only this selected paragraph and its questions"
               >
-                🗑️ Delete Exercise
+                <Trash2 className="w-3.5 h-3.5" /> 🗑️ Delete This Paragraph Only
               </button>
             )}
           </div>
