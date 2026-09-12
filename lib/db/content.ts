@@ -15,6 +15,13 @@ import {
   GoetheSection,
   CategoryParagraph,
   CategoryQuestion,
+  SpeakingTopic,
+  SpeakingConversation,
+  ReadingTopic,
+  ReadingText,
+  ReadingQuestion,
+  WritingTopic,
+  WritingSection,
 } from "@/types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -652,3 +659,378 @@ export async function deleteCategoryQuestion(id: string): Promise<boolean> {
   }
   return true;
 }
+
+// ----------------- SPEAKING MODULE -----------------
+export async function getSpeakingTopics(level?: Level): Promise<SpeakingTopic[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase.from("speaking_topics").select("*, conversations:speaking_conversations(*)").order("order_index", { ascending: true });
+      if (level) query = query.eq("level", level);
+      const { data, error } = await query;
+      if (!error && data) return data as SpeakingTopic[];
+      if (error) console.error("Supabase error fetching speaking topics:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateSpeakingTopic(item: Partial<SpeakingTopic> & { level: Level; title: string; slug: string }): Promise<SpeakingTopic> {
+  const payload: SpeakingTopic = {
+    id: item.id || crypto.randomUUID(),
+    level: item.level,
+    title: item.title.trim(),
+    slug: item.slug.trim(),
+    description: item.description || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("speaking_topics").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert speaking topic error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as SpeakingTopic;
+  }
+  return payload;
+}
+
+export async function deleteSpeakingTopic(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("speaking_topics").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete speaking topic error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
+export async function getSpeakingConversations(topicId?: string): Promise<SpeakingConversation[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase.from("speaking_conversations").select("*").order("order_index", { ascending: true });
+      if (topicId) query = query.eq("topic_id", topicId);
+      const { data, error } = await query;
+      if (!error && data) return data as SpeakingConversation[];
+      if (error) console.error("Supabase error fetching speaking conversations:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateSpeakingConversation(item: Partial<SpeakingConversation> & { topic_id: string; conversation_text: string }): Promise<SpeakingConversation> {
+  const payload: SpeakingConversation = {
+    id: item.id || crypto.randomUUID(),
+    topic_id: item.topic_id,
+    title: item.title || "",
+    conversation_text: item.conversation_text.trim(),
+    explanation_malayalam: item.explanation_malayalam || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("speaking_conversations").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert speaking conversation error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as SpeakingConversation;
+  }
+  return payload;
+}
+
+export async function deleteSpeakingConversation(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("speaking_conversations").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete speaking conversation error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
+// ----------------- READING MODULE -----------------
+export async function getReadingTopics(level?: Level): Promise<ReadingTopic[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase
+        .from("reading_topics")
+        .select("*, texts:reading_texts(*), questions:reading_questions(*)")
+        .order("order_index", { ascending: true });
+      if (level) query = query.eq("level", level);
+      const { data, error } = await query;
+      if (!error && data) return data as ReadingTopic[];
+      if (error) console.error("Supabase error fetching reading topics:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateReadingTopic(item: Partial<ReadingTopic> & { level: Level; title: string; slug: string }): Promise<ReadingTopic> {
+  const payload: ReadingTopic = {
+    id: item.id || crypto.randomUUID(),
+    level: item.level,
+    title: item.title.trim(),
+    slug: item.slug.trim(),
+    description: item.description || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("reading_topics").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert reading topic error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as ReadingTopic;
+  }
+  return payload;
+}
+
+export async function deleteReadingTopic(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("reading_topics").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete reading topic error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
+export async function getReadingTexts(topicId?: string): Promise<ReadingText[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase.from("reading_texts").select("*").order("order_index", { ascending: true });
+      if (topicId) query = query.eq("topic_id", topicId);
+      const { data, error } = await query;
+      if (!error && data) return data as ReadingText[];
+      if (error) console.error("Supabase error fetching reading texts:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateReadingText(item: Partial<ReadingText> & { topic_id: string; content_german: string }): Promise<ReadingText> {
+  const payload: ReadingText = {
+    id: item.id || crypto.randomUUID(),
+    topic_id: item.topic_id,
+    title: item.title || "",
+    content_german: item.content_german.trim(),
+    content_english: item.content_english || "",
+    content_malayalam: item.content_malayalam || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("reading_texts").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert reading text error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as ReadingText;
+  }
+  return payload;
+}
+
+export async function deleteReadingText(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("reading_texts").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete reading text error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
+export async function getReadingQuestions(topicId?: string): Promise<ReadingQuestion[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase.from("reading_questions").select("*").order("order_index", { ascending: true });
+      if (topicId) query = query.eq("topic_id", topicId);
+      const { data, error } = await query;
+      if (!error && data) return data as ReadingQuestion[];
+      if (error) console.error("Supabase error fetching reading questions:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateReadingQuestion(item: Partial<ReadingQuestion> & { topic_id: string; question: string; options: string[]; correct_option_index: number }): Promise<ReadingQuestion> {
+  const payload: ReadingQuestion = {
+    id: item.id || crypto.randomUUID(),
+    topic_id: item.topic_id,
+    question: item.question.trim(),
+    question_english: item.question_english || "",
+    question_malayalam: item.question_malayalam || "",
+    options: item.options || [],
+    correct_option_index: Number(item.correct_option_index) || 0,
+    explanation: item.explanation || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("reading_questions").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert reading question error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as ReadingQuestion;
+  }
+  return payload;
+}
+
+export async function deleteReadingQuestion(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("reading_questions").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete reading question error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
+// ----------------- WRITING MODULE -----------------
+export async function getWritingTopics(level?: Level): Promise<WritingTopic[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase.from("writing_topics").select("*, sections:writing_sections(*)").order("order_index", { ascending: true });
+      if (level) query = query.eq("level", level);
+      const { data, error } = await query;
+      if (!error && data) return data as WritingTopic[];
+      if (error) console.error("Supabase error fetching writing topics:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateWritingTopic(item: Partial<WritingTopic> & { level: Level; title: string; slug: string }): Promise<WritingTopic> {
+  const payload: WritingTopic = {
+    id: item.id || crypto.randomUUID(),
+    level: item.level,
+    title: item.title.trim(),
+    slug: item.slug.trim(),
+    description: item.description || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("writing_topics").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert writing topic error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as WritingTopic;
+  }
+  return payload;
+}
+
+export async function deleteWritingTopic(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("writing_topics").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete writing topic error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
+export async function getWritingSections(topicId?: string): Promise<WritingSection[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase.from("writing_sections").select("*").order("order_index", { ascending: true });
+      if (topicId) query = query.eq("topic_id", topicId);
+      const { data, error } = await query;
+      if (!error && data) return data as WritingSection[];
+      if (error) console.error("Supabase error fetching writing sections:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+  return [];
+}
+
+export async function mutateWritingSection(item: Partial<WritingSection> & { topic_id: string; content: string }): Promise<WritingSection> {
+  const payload: WritingSection = {
+    id: item.id || crypto.randomUUID(),
+    topic_id: item.topic_id,
+    title: item.title || "",
+    section_type: item.section_type || "general",
+    content: item.content.trim(),
+    explanation_malayalam: item.explanation_malayalam || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("writing_sections").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase upsert writing section error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as WritingSection;
+  }
+  return payload;
+}
+
+export async function deleteWritingSection(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("writing_sections").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete writing section error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}

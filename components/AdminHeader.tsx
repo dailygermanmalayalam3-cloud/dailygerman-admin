@@ -43,6 +43,9 @@ export default function AdminHeader() {
     { label: 'Overview', href: '/', icon: Shield },
     { label: 'Vocabulary', href: '/vocabulary', icon: BookOpen },
     { label: 'Grammar', href: '/grammar', icon: FileText },
+    { label: 'Speaking', href: '/speaking', icon: MessageSquare },
+    { label: 'Reading', href: '/reading', icon: BookOpen },
+    { label: 'Writing', href: '/writing', icon: FileText },
     { label: 'Exam Prep', href: '/goethe', icon: Award },
   ];
 

@@ -119,3 +119,92 @@ export interface CategoryQuestion {
   created_at?: string;
   updated_at?: string;
 }
+
+// Speaking
+export interface SpeakingConversation {
+  id: string;
+  topic_id: string;
+  title?: string;
+  conversation_text: string;
+  explanation_malayalam?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SpeakingTopic {
+  id: string;
+  level: Level;
+  title: string;
+  slug: string;
+  description?: string;
+  order_index?: number;
+  conversations?: SpeakingConversation[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Reading
+export interface ReadingText {
+  id: string;
+  topic_id: string;
+  title?: string;
+  content_german: string;
+  content_english?: string;
+  content_malayalam?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ReadingQuestion {
+  id: string;
+  topic_id: string;
+  question: string;
+  question_english?: string;
+  question_malayalam?: string;
+  options: string[];
+  correct_option_index: number;
+  explanation?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ReadingTopic {
+  id: string;
+  level: Level;
+  title: string;
+  slug: string;
+  description?: string;
+  order_index?: number;
+  texts?: ReadingText[];
+  questions?: ReadingQuestion[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Writing
+export interface WritingSection {
+  id: string;
+  topic_id: string;
+  title?: string;
+  section_type: "task" | "example" | "phrases" | "instructions" | "general";
+  content: string;
+  explanation_malayalam?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface WritingTopic {
+  id: string;
+  level: Level;
+  title: string;
+  slug: string;
+  description?: string;
+  order_index?: number;
+  sections?: WritingSection[];
+  created_at?: string;
+  updated_at?: string;
+}

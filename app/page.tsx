@@ -4,8 +4,11 @@ import {
   getGrammarTopics,
   getGoetheMaterials,
   getVocabularyCategories,
+  getSpeakingTopics,
+  getReadingTopics,
+  getWritingTopics,
 } from "@/lib/db/content";
-import { BookOpen, FileText, Award, PlusCircle, ArrowRight } from "lucide-react";
+import { BookOpen, FileText, Award, MessageSquare, FileEdit, PlusCircle, ArrowRight } from "lucide-react";
 
 import { isCurrentUserAdmin } from "@/lib/supabase/auth";
 import { redirect } from "next/navigation";
@@ -18,9 +21,12 @@ export default async function AdminDashboardPage() {
     redirect("/login");
   }
 
-  const [vocab, grammar, goethe, categories] = await Promise.all([
+  const [vocab, grammar, speaking, reading, writing, goethe, categories] = await Promise.all([
     getVocabulary(),
     getGrammarTopics(),
+    getSpeakingTopics(),
+    getReadingTopics(),
+    getWritingTopics(),
     getGoetheMaterials(),
     getVocabularyCategories(),
   ]);
@@ -39,9 +45,36 @@ export default async function AdminDashboardPage() {
       title: "German Grammar",
       count: grammar.length,
       unit: "grammar topics",
-      description: "Manage grammar rules, Malayalam explanations, and structured examples.",
+      description: "Manage grammar rules, Malayalam explanations, video embeds, and workouts.",
       href: "/grammar",
       icon: FileText,
+      color: "#fef08a",
+    },
+    {
+      title: "Speaking Practice",
+      count: speaking.length,
+      unit: "situation topics",
+      description: "Manage conversation situations, numbered topics, and continuous dialogues.",
+      href: "/speaking",
+      icon: MessageSquare,
+      color: "#fde047",
+    },
+    {
+      title: "Reading Practice",
+      count: reading.length,
+      unit: "reading topics",
+      description: "Manage short German reading passages and 4-option interactive questions.",
+      href: "/reading",
+      icon: BookOpen,
+      color: "#fef9c3",
+    },
+    {
+      title: "Writing Practice",
+      count: writing.length,
+      unit: "writing topics",
+      description: "Manage writing tasks, instructions, sample letters, and useful phrases.",
+      href: "/writing",
+      icon: FileEdit,
       color: "#fef08a",
     },
     {
@@ -51,7 +84,7 @@ export default async function AdminDashboardPage() {
       description: "Manage Exam Preparation for Sprechen, Lesen, Schreiben, and Hören.",
       href: "/goethe",
       icon: Award,
-      color: "#fde047",
+      color: "#ffe600",
     },
   ];
 
