@@ -321,6 +321,12 @@ export default function AdminMedicalPage() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       notifySuccess(`Deleted situation "${title}".`);
+      if (selectedTopicId === id) {
+        setSelectedTopicId("");
+      }
+      if (editingTopic?.id === id) {
+        setEditingTopic(null);
+      }
       loadData();
     } catch (err: unknown) {
       setErrorMsg((err as Error).message);
@@ -664,6 +670,33 @@ export default function AdminMedicalPage() {
                   </option>
                 ))}
               </select>
+
+              {selectedTopicId && (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentTopic = topics.find((t) => t.id === selectedTopicId);
+                      if (currentTopic) openTopicModal(currentTopic);
+                    }}
+                    className="p-1.5 border border-neutral-300 dark:border-neutral-700 hover:bg-[#ffe600] hover:text-black text-neutral-700 dark:text-neutral-300 transition-colors"
+                    title="Edit Selected Situation"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentTopic = topics.find((t) => t.id === selectedTopicId);
+                      if (currentTopic) handleDeleteTopic(currentTopic.id, currentTopic.title);
+                    }}
+                    className="p-1.5 border border-neutral-300 dark:border-neutral-700 hover:bg-red-600 hover:text-white text-neutral-700 dark:text-neutral-300 transition-colors"
+                    title="Delete Selected Situation"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -672,8 +705,8 @@ export default function AdminMedicalPage() {
                 onClick={() => openTopicModal()}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-black dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 text-xs font-black uppercase text-black dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Situation Topic</span>
+                <FolderPlus className="w-3.5 h-3.5" />
+                <span>Manage Situations</span>
               </button>
               <button
                 type="button"
@@ -1029,10 +1062,10 @@ export default function AdminMedicalPage() {
       {/* ============================================================== */}
       {showTopicModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="border-2 border-black dark:border-white bg-white dark:bg-[#151515] p-6 max-w-lg w-full space-y-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+          <div className="border-2 border-black dark:border-white bg-white dark:bg-[#151515] p-6 max-w-lg w-full space-y-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-2">
               <h3 className="text-base font-black uppercase text-black dark:text-white">
-                {editingTopic ? "Edit Hospital Situation" : "Add Hospital Situation"}
+                {editingTopic ? "Edit Hospital Situation" : "Manage Hospital Situations"}
               </h3>
               <button onClick={() => setShowTopicModal(false)}>
                 <X className="w-5 h-5 text-neutral-500 hover:text-black dark:hover:text-white" />
@@ -1115,7 +1148,18 @@ export default function AdminMedicalPage() {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex items-center justify-between pt-2">
+                {editingTopic ? (
+                  <button
+                    type="button"
+                    onClick={() => openTopicModal()}
+                    className="text-xs font-bold text-neutral-500 hover:text-black dark:hover:text-white underline"
+                  >
+                    + Switch to Add New Situation
+                  </button>
+                ) : (
+                  <div />
+                )}
                 <button
                   type="submit"
                   disabled={saving}
@@ -1125,6 +1169,48 @@ export default function AdminMedicalPage() {
                 </button>
               </div>
             </form>
+
+            {/* List of existing situations */}
+            <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800 space-y-2">
+              <h4 className="text-xs font-black uppercase text-neutral-500">
+                Existing Hospital Situations ({topics.length})
+              </h4>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                {topics.map((t) => (
+                  <div
+                    key={t.id}
+                    className="p-2 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs bg-neutral-50 dark:bg-neutral-900"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-bold shrink-0">#{t.order_index}</span>
+                      <span className="shrink-0">{t.icon}</span>
+                      <span className="font-black truncate">{t.title}</span>
+                      <span className="text-[10px] text-neutral-400 shrink-0">
+                        ({conversations.filter((c) => c.topic_id === t.id).length} dialogues)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => openTopicModal(t)}
+                        className="p-1 border border-neutral-300 dark:border-neutral-700 hover:bg-[#ffe600] hover:text-black"
+                        title="Edit Situation"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTopic(t.id, t.title)}
+                        className="p-1 border border-neutral-300 dark:border-neutral-700 hover:bg-red-600 hover:text-white"
+                        title="Delete Situation"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
