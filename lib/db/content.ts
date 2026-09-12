@@ -17,17 +17,17 @@ import {
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const initialCategories: VocabularyCategory[] = [
-  { id: "cat-1", name: "Greetings", order_index: 1 },
-  { id: "cat-2", name: "Personal Info", order_index: 2 },
-  { id: "cat-3", name: "Language and Communication", order_index: 3 },
-  { id: "cat-4", name: "Family & Friends", order_index: 4 },
-  { id: "cat-5", name: "Food & Dining", order_index: 5 },
-  { id: "cat-6", name: "Shopping & Groceries", order_index: 6 },
-  { id: "cat-7", name: "Daily Routine & Time", order_index: 7 },
-  { id: "cat-8", name: "Housing & Living", order_index: 8 },
-  { id: "cat-9", name: "Work & Career", order_index: 9 },
-  { id: "cat-10", name: "Travel & Directions", order_index: 10 },
-  { id: "cat-11", name: "Medical German", order_index: 11 },
+  { id: "c4444444-4444-4444-8444-444444444401", name: "Greetings", order_index: 1 },
+  { id: "c4444444-4444-4444-8444-444444444402", name: "Personal Info", order_index: 2 },
+  { id: "c4444444-4444-4444-8444-444444444403", name: "Language and Communication", order_index: 3 },
+  { id: "c4444444-4444-4444-8444-444444444404", name: "Family & Friends", order_index: 4 },
+  { id: "c4444444-4444-4444-8444-444444444405", name: "Food & Dining", order_index: 5 },
+  { id: "c4444444-4444-4444-8444-444444444406", name: "Shopping & Groceries", order_index: 6 },
+  { id: "c4444444-4444-4444-8444-444444444407", name: "Daily Routine & Time", order_index: 7 },
+  { id: "c4444444-4444-4444-8444-444444444408", name: "Housing & Living", order_index: 8 },
+  { id: "c4444444-4444-4444-8444-444444444409", name: "Work & Career", order_index: 9 },
+  { id: "c4444444-4444-4444-8444-444444444410", name: "Travel & Directions", order_index: 10 },
+  { id: "c4444444-4444-4444-8444-444444444411", name: "Medical German", order_index: 11 },
 ];
 
 // Fallback in-memory cache ONLY when Supabase credentials are not configured in .env.local

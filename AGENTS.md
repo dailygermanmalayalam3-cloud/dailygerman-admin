@@ -26,3 +26,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
   2. Merge the tested branch (`git merge <branch-name>`).
   3. Push to remote (`git push origin main`).
   4. Clean up / delete the local feature branch if no longer needed.
+
+## 5. Strict Database UUID Standard (MANDATORY)
+- **ALL IDs across ALL database tables MUST strictly be UUIDs** (UUIDv4).
+- Never use non-UUID strings (e.g. `cat-1`, `vocab-1`, numeric IDs, or slug strings) as table primary keys or foreign keys.
+- Even when adding test data, seed data, mock records, or temporary rows for testing in the DB, **always use valid RFC 4122 UUIDs** (e.g., generated via `crypto.randomUUID()` or `gen_random_uuid()`).
+- All database table `id` columns in PostgreSQL are configured as native `UUID` with `DEFAULT gen_random_uuid()`. Non-UUID inputs will be rejected by PostgreSQL.

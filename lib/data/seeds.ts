@@ -2,7 +2,7 @@ import { VocabularyItem, GrammarTopic, GoetheMaterial } from "@/types";
 
 export const initialVocabulary: VocabularyItem[] = [
   {
-    id: "vocab-1",
+    id: "c1111111-1111-4111-8111-111111111101",
     level: "A1",
     category: "Vocabulary",
     title: "Guten Tag & Die Begrüßungen (Greetings)",
@@ -25,7 +25,7 @@ export const initialVocabulary: VocabularyItem[] = [
     ]
   },
   {
-    id: "vocab-2",
+    id: "c1111111-1111-4111-8111-111111111102",
     level: "A1",
     category: "Speaking",
     title: "Sich Vorstellen (Self Introduction)",
@@ -48,7 +48,7 @@ export const initialVocabulary: VocabularyItem[] = [
     ]
   },
   {
-    id: "vocab-3",
+    id: "c1111111-1111-4111-8111-111111111103",
     level: "A1",
     category: "Vocabulary",
     title: "Die Familie (Family Members)",
@@ -71,7 +71,7 @@ export const initialVocabulary: VocabularyItem[] = [
     ]
   },
   {
-    id: "vocab-4",
+    id: "c1111111-1111-4111-8111-111111111104",
     level: "A2",
     category: "Vocabulary",
     title: "Beim Einkaufen (Shopping & Groceries)",
@@ -94,7 +94,7 @@ export const initialVocabulary: VocabularyItem[] = [
     ]
   },
   {
-    id: "vocab-5",
+    id: "c1111111-1111-4111-8111-111111111105",
     level: "B1",
     category: "Speaking",
     title: "Meinung Äußern (Expressing Opinions)",
@@ -112,7 +112,7 @@ export const initialVocabulary: VocabularyItem[] = [
     ]
   },
   {
-    id: "vocab-6",
+    id: "c1111111-1111-4111-8111-111111111106",
     level: "B2",
     category: "Writing",
     title: "Beschwerdebrief formulieren (Writing a Complaint)",
@@ -133,7 +133,7 @@ export const initialVocabulary: VocabularyItem[] = [
 
 export const initialGrammarTopics: GrammarTopic[] = [
   {
-    id: "grammar-1",
+    id: "c2222222-2222-4222-8222-222222222201",
     level: "A1",
     title: "Bestimmte & Unbestimmte Artikel (der, die, das)",
     slug: "artikel-der-die-das",
@@ -155,7 +155,7 @@ export const initialGrammarTopics: GrammarTopic[] = [
     order_index: 1
   },
   {
-    id: "grammar-2",
+    id: "c2222222-2222-4222-8222-222222222202",
     level: "A1",
     title: "Der Akkusativ (The Direct Object Case)",
     slug: "akkusativ-a1",
@@ -177,7 +177,7 @@ export const initialGrammarTopics: GrammarTopic[] = [
     order_index: 2
   },
   {
-    id: "grammar-3",
+    id: "c2222222-2222-4222-8222-222222222203",
     level: "A2",
     title: "Das Perfekt (Past Tense with haben / sein)",
     slug: "perfekt-haben-sein",
@@ -199,7 +199,7 @@ export const initialGrammarTopics: GrammarTopic[] = [
     order_index: 3
   },
   {
-    id: "grammar-4",
+    id: "c2222222-2222-4222-8222-222222222204",
     level: "B1",
     title: "Konjunktiv II (Wishes, Politeness & Hypotheticals)",
     slug: "konjunktiv-ii-b1",
@@ -219,7 +219,7 @@ export const initialGrammarTopics: GrammarTopic[] = [
 
 export const initialGoetheMaterials: GoetheMaterial[] = [
   {
-    id: "goethe-1",
+    id: "c3333333-3333-4333-8333-333333333301",
     level: "A1",
     section: "Sprechen",
     title: "Teil 1: Sich vorstellen & Buchstabieren",
@@ -229,7 +229,7 @@ export const initialGoetheMaterials: GoetheMaterial[] = [
     tips: "Always practice spelling difficult Malayalam names using the German alphabet (e.g., J = Jot, V = Fau, W = We, Z = Tsett)."
   },
   {
-    id: "goethe-2",
+    id: "c3333333-3333-4333-8333-333333333302",
     level: "A1",
     section: "Lesen",
     title: "Teil 1: Kurze E-Mails & Notizen verstehen",
@@ -239,7 +239,7 @@ export const initialGoetheMaterials: GoetheMaterial[] = [
     tips: "Watch out for signal words like 'nicht', 'kein', 'leider', and exact times (um 14 Uhr vs. ab 14 Uhr)."
   },
   {
-    id: "goethe-3",
+    id: "c3333333-3333-4333-8333-333333333303",
     level: "A1",
     section: "Schreiben",
     title: "Teil 2: Eine kurze persönliche E-Mail schreiben",
@@ -249,7 +249,7 @@ export const initialGoetheMaterials: GoetheMaterial[] = [
     tips: "Never skip any bullet point. Each point carries marks for grammar, vocabulary, and relevance."
   },
   {
-    id: "goethe-4",
+    id: "c3333333-3333-4333-8333-333333333304",
     level: "A1",
     section: "Hören",
     title: "Teil 1 & 2: Alltagsgespräche & Durchsagen",
@@ -259,7 +259,7 @@ export const initialGoetheMaterials: GoetheMaterial[] = [
     tips: "Always read the questions during the pause before the audio plays so you know what key numbers, platforms, or times to listen for."
   },
   {
-    id: "goethe-5",
+    id: "c3333333-3333-4333-8333-333333333305",
     level: "B1",
     section: "Sprechen",
     title: "Teil 2 & 3: Präsentation & Diskussion",
