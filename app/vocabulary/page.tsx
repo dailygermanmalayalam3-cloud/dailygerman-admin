@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { VocabularyItem, VocabularyCategory, Level, Example, CategoryReadingExercise, ReadingQuestion } from "@/types";
-import { Plus, Trash2, Edit3, ArrowLeft, Check, AlertCircle, FolderPlus, ArrowUpDown, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
+import { VocabularyItem, VocabularyCategory, Level, Example, CategoryParagraph, CategoryQuestion } from "@/types";
+import { Plus, Trash2, Edit3, ArrowLeft, Check, AlertCircle, FolderPlus, ArrowUpDown, ChevronDown, ChevronUp, BookOpen, HelpCircle } from "lucide-react";
 
 const LEVELS: Level[] = ["A1", "A2", "B1", "B2"];
 
@@ -28,18 +28,32 @@ export default function AdminVocabularyPage() {
   const [showReadingManager, setShowReadingManager] = useState(false);
   const [editingItem, setEditingItem] = useState<VocabularyItem | null>(null);
 
-  // Reading Exercise & Quiz State (supports multiple paragraphs per topic)
+  // Reading & Quiz Sub-Tab
+  const [readingSubTab, setReadingSubTab] = useState<"paragraphs" | "questions">("paragraphs");
   const [readingCategory, setReadingCategory] = useState<string>("");
   const [readingLevel, setReadingLevel] = useState<Level>("A1");
-  const [readingList, setReadingList] = useState<CategoryReadingExercise[]>([]);
-  const [readingId, setReadingId] = useState<string | null>(null);
-  const [readingTitle, setReadingTitle] = useState("");
-  const [readingOrder, setReadingOrder] = useState<number>(1);
-  const [paragraphGerman, setParagraphGerman] = useState("");
-  const [paragraphEnglish, setParagraphEnglish] = useState("");
-  const [paragraphMalayalam, setParagraphMalayalam] = useState("");
-  const [readingQuestions, setReadingQuestions] = useState<ReadingQuestion[]>([]);
   const [readingLoading, setReadingLoading] = useState(false);
+
+  // Independent Paragraphs State
+  const [paragraphs, setParagraphs] = useState<CategoryParagraph[]>([]);
+  const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
+  const [paraTitle, setParaTitle] = useState("");
+  const [paraOrder, setParaOrder] = useState<number>(1);
+  const [paraGerman, setParaGerman] = useState("");
+  const [paraEnglish, setParaEnglish] = useState("");
+  const [paraMalayalam, setParaMalayalam] = useState("");
+
+  // Independent Questions State
+  const [questions, setQuestions] = useState<CategoryQuestion[]>([]);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [qGerman, setQGerman] = useState("");
+  const [qEnglish, setQEnglish] = useState("");
+  const [qMalayalam, setQMalayalam] = useState("");
+  const [qParagraphId, setQParagraphId] = useState<string>("");
+  const [qOptions, setQOptions] = useState<string[]>(["", "", "", ""]);
+  const [qCorrectIdx, setQCorrectIdx] = useState<number>(0);
+  const [qExplanation, setQExplanation] = useState("");
+  const [qOrder, setQOrder] = useState<number>(1);
 
   // Category Manager State
   const [newCatName, setNewCatName] = useState("");
@@ -326,44 +340,72 @@ export default function AdminVocabularyPage() {
     }
   };
 
-  // ---------------- READING EXERCISE & QUIZ HANDLERS ----------------
-  const selectReadingForEdit = (ex: CategoryReadingExercise) => {
-    setReadingId(ex.id);
-    setReadingTitle(ex.title || "");
-    setReadingOrder(ex.order_index ?? 1);
-    setParagraphGerman(ex.paragraph_german || "");
-    setParagraphEnglish(ex.paragraph_english || "");
-    setParagraphMalayalam(ex.paragraph_malayalam || "");
-    setReadingQuestions(ex.questions || []);
+  // ---------------- INDEPENDENT PARAGRAPH & QUESTION HANDLERS ----------------
+  const resetParagraphForm = (nextOrder = 1) => {
+    setSelectedParagraphId(null);
+    setParaTitle("");
+    setParaOrder(nextOrder);
+    setParaGerman("");
+    setParaEnglish("");
+    setParaMalayalam("");
   };
 
-  const resetReadingForm = (nextOrder = 1) => {
-    setReadingId(null);
-    setReadingTitle("");
-    setReadingOrder(nextOrder);
-    setParagraphGerman("");
-    setParagraphEnglish("");
-    setParagraphMalayalam("");
-    setReadingQuestions([]);
+  const selectParagraphForEdit = (p: CategoryParagraph) => {
+    setSelectedParagraphId(p.id);
+    setParaTitle(p.title || "");
+    setParaOrder(p.order_index ?? 1);
+    setParaGerman(p.paragraph_german || "");
+    setParaEnglish(p.paragraph_english || "");
+    setParaMalayalam(p.paragraph_malayalam || "");
   };
 
-  const loadReadingExercise = async (categoryName: string, level: Level) => {
-    if (!categoryName) return;
+  const resetQuestionForm = (nextOrder = 1) => {
+    setEditingQuestionId(null);
+    setQGerman("");
+    setQEnglish("");
+    setQMalayalam("");
+    setQParagraphId("");
+    setQOptions(["", "", "", ""]);
+    setQCorrectIdx(0);
+    setQExplanation("");
+    setQOrder(nextOrder);
+  };
+
+  const selectQuestionForEdit = (q: CategoryQuestion) => {
+    setEditingQuestionId(q.id);
+    setQGerman(q.question_german);
+    setQEnglish(q.question_english || "");
+    setQMalayalam(q.question_malayalam || "");
+    setQParagraphId(q.paragraph_id || "");
+    setQOptions(q.options && q.options.length === 4 ? [...q.options] : ["", "", "", ""]);
+    setQCorrectIdx(q.correct_option_index ?? 0);
+    setQExplanation(q.explanation || "");
+    setQOrder(q.order_index ?? 1);
+    setReadingSubTab("questions");
+  };
+
+  const loadParagraphsAndQuestions = async (cat: string, lvl: Level) => {
+    if (!cat) return;
     setReadingLoading(true);
     try {
-      const res = await fetch(
-        `/api/admin/reading-exercises?category=${encodeURIComponent(categoryName)}&level=${level}`
-      );
-      const data = await res.json();
-      const list: CategoryReadingExercise[] = data.items || [];
-      setReadingList(list);
-      if (list.length > 0) {
-        selectReadingForEdit(list[0]);
+      const [pRes, qRes] = await Promise.all([
+        fetch(`/api/admin/paragraphs?category=${encodeURIComponent(cat)}&level=${lvl}`),
+        fetch(`/api/admin/questions?category=${encodeURIComponent(cat)}&level=${lvl}`),
+      ]);
+      const pData = await pRes.json();
+      const qData = await qRes.json();
+      const pList: CategoryParagraph[] = pData.items || [];
+      const qList: CategoryQuestion[] = qData.items || [];
+      setParagraphs(pList);
+      setQuestions(qList);
+      if (pList.length > 0) {
+        selectParagraphForEdit(pList[0]);
       } else {
-        resetReadingForm(1);
+        resetParagraphForm(1);
       }
+      resetQuestionForm(qList.length + 1);
     } catch {
-      setStatusMsg({ type: "error", text: "Failed to load reading exercise." });
+      setStatusMsg({ type: "error", text: "Failed to load paragraphs & questions." });
     } finally {
       setReadingLoading(false);
     }
@@ -375,51 +417,34 @@ export default function AdminVocabularyPage() {
     if (nextState) {
       setShowCategoryManager(false);
       setShowAddWords(false);
-      loadReadingExercise(readingCategory || selectedCategory, readingLevel);
+      loadParagraphsAndQuestions(readingCategory || selectedCategory, readingLevel);
     }
   };
 
-  const handleSaveReadingExercise = async (e: React.FormEvent) => {
+  const handleSaveParagraph = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!readingCategory) {
       setStatusMsg({ type: "error", text: "Please select a category." });
       return;
     }
-    if (!paragraphGerman.trim()) {
+    if (!paraGerman.trim()) {
       setStatusMsg({ type: "error", text: "German reading paragraph cannot be empty." });
       return;
     }
 
-    // Validate questions
-    for (let i = 0; i < readingQuestions.length; i++) {
-      const q = readingQuestions[i];
-      if (!q.question.trim()) {
-        setStatusMsg({ type: "error", text: `Question #${i + 1} text is required.` });
-        return;
-      }
-      if (q.options.some((opt) => !opt.trim())) {
-        setStatusMsg({
-          type: "error",
-          text: `Question #${i + 1} requires all 4 options to be filled.`,
-        });
-        return;
-      }
-    }
-
     try {
       const payload = {
-        id: readingId || undefined,
+        id: selectedParagraphId || undefined,
         category_name: readingCategory,
         level: readingLevel,
-        title: readingTitle.trim(),
-        order_index: Number(readingOrder) || 1,
-        paragraph_german: paragraphGerman.trim(),
-        paragraph_english: paragraphEnglish.trim(),
-        paragraph_malayalam: paragraphMalayalam.trim(),
-        questions: readingQuestions,
+        title: paraTitle.trim(),
+        order_index: Number(paraOrder) || 1,
+        paragraph_german: paraGerman.trim(),
+        paragraph_english: paraEnglish.trim(),
+        paragraph_malayalam: paraMalayalam.trim(),
       };
 
-      const res = await fetch("/api/admin/reading-exercises", {
+      const res = await fetch("/api/admin/paragraphs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -427,44 +452,46 @@ export default function AdminVocabularyPage() {
 
       const data = await res.json();
       if (res.ok && data.item) {
-        setReadingId(data.item.id);
-        setReadingList((prev) => {
+        setSelectedParagraphId(data.item.id);
+        setParagraphs((prev) => {
           const filtered = prev.filter((x) => x.id !== data.item.id);
           return [...filtered, data.item].sort((a, b) => (a.order_index ?? 1) - (b.order_index ?? 1));
         });
         setStatusMsg({
           type: "success",
-          text: `Saved paragraph & quiz for ${readingCategory} (${readingLevel})!`,
+          text: `Paragraph saved for ${readingCategory} (${readingLevel})!`,
         });
       } else {
-        throw new Error(data.error || "Failed to save reading exercise");
+        throw new Error(data.error || "Failed to save paragraph");
       }
     } catch (err: unknown) {
       setStatusMsg({ type: "error", text: (err as Error).message });
     }
   };
 
-  const handleDeleteReadingExercise = async () => {
-    if (!readingId) return;
-    const pTitle = readingTitle ? `"${readingTitle}"` : `Paragraph #${readingOrder}`;
+  const handleDeleteParagraph = async () => {
+    if (!selectedParagraphId) return;
+    const pTitle = paraTitle ? `"${paraTitle}"` : `Paragraph #${paraOrder}`;
     if (
       !confirm(
-        `Are you sure you want to delete ONLY this paragraph (${pTitle}) from ${readingCategory} (${readingLevel})?\n\nNote: Any other paragraphs in "${readingCategory}" will NOT be deleted.`
+        `Are you sure you want to delete ONLY this paragraph (${pTitle}) from ${readingCategory} (${readingLevel})?\n\nNote: Any questions linked specifically to this paragraph will also be removed. Standalone questions and other paragraphs will NOT be affected.`
       )
     )
       return;
 
     try {
-      const res = await fetch(`/api/admin/reading-exercises?id=${readingId}`, {
+      const res = await fetch(`/api/admin/paragraphs?id=${selectedParagraphId}`, {
         method: "DELETE",
       });
       if (res.ok) {
-        const remaining = readingList.filter((x) => x.id !== readingId);
-        setReadingList(remaining);
+        const remaining = paragraphs.filter((x) => x.id !== selectedParagraphId);
+        setParagraphs(remaining);
+        // Remove locally questions that were linked to this paragraph
+        setQuestions((prev) => prev.filter((q) => q.paragraph_id !== selectedParagraphId));
         if (remaining.length > 0) {
-          selectReadingForEdit(remaining[0]);
+          selectParagraphForEdit(remaining[0]);
         } else {
-          resetReadingForm(1);
+          resetParagraphForm(1);
         }
         setStatusMsg({
           type: "success",
@@ -476,66 +503,96 @@ export default function AdminVocabularyPage() {
     }
   };
 
-  const handleDeleteQuestion = (idx: number) => {
-    const q = readingQuestions[idx];
-    if (q.question.trim()) {
-      if (
-        !confirm(
-          `Are you sure you want to delete Question #${idx + 1} only?\n\nOther questions and this paragraph will NOT be deleted.\n\nRemember to click "Save Paragraph & Quiz" below to save your changes.`
-        )
-      ) {
-        return;
-      }
+  const handleSaveQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!readingCategory) {
+      setStatusMsg({ type: "error", text: "Please select a category." });
+      return;
     }
-    setReadingQuestions((prev) => prev.filter((_, i) => i !== idx));
-    setStatusMsg({
-      type: "success",
-      text: `Question #${idx + 1} removed. Click "Save Paragraph & Quiz" to commit changes.`,
-    });
+    if (!qGerman.trim()) {
+      setStatusMsg({ type: "error", text: "Question text in German is required." });
+      return;
+    }
+    if (qOptions.some((opt) => !opt.trim())) {
+      setStatusMsg({ type: "error", text: "All 4 answer options must be filled." });
+      return;
+    }
+
+    try {
+      const payload = {
+        id: editingQuestionId || undefined,
+        category_name: readingCategory,
+        level: readingLevel,
+        paragraph_id: qParagraphId || null,
+        question_german: qGerman.trim(),
+        question_english: qEnglish.trim(),
+        question_malayalam: qMalayalam.trim(),
+        options: qOptions.map((o) => o.trim()),
+        correct_option_index: qCorrectIdx,
+        explanation: qExplanation.trim(),
+        order_index: Number(qOrder) || 1,
+      };
+
+      const res = await fetch("/api/admin/questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.item) {
+        setQuestions((prev) => {
+          const filtered = prev.filter((x) => x.id !== data.item.id);
+          return [...filtered, data.item].sort((a, b) => (a.order_index ?? 1) - (b.order_index ?? 1));
+        });
+        resetQuestionForm(questions.length + 1);
+        setStatusMsg({
+          type: "success",
+          text: `Question saved for ${readingCategory} (${readingLevel})!`,
+        });
+      } else {
+        throw new Error(data.error || "Failed to save question");
+      }
+    } catch (err: unknown) {
+      setStatusMsg({ type: "error", text: (err as Error).message });
+    }
   };
 
-  const addQuestion = () => {
-    setReadingQuestions((prev) => [
-      ...prev,
-      {
-        id: "q-" + Date.now(),
-        question: "",
-        question_english: "",
-        question_malayalam: "",
-        options: ["", "", "", ""],
-        correct_option_index: 0,
-        explanation: "",
-      },
-    ]);
+  const handleDeleteQuestion = async (id: string, qText: string) => {
+    if (
+      !confirm(
+        `Are you sure you want to delete this question?\n\n"${qText || "Selected Question"}"\n\nNote: This will delete ONLY this single question. Paragraphs and other questions will remain untouched.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/questions?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setQuestions((prev) => prev.filter((q) => q.id !== id));
+        if (editingQuestionId === id) {
+          resetQuestionForm(questions.length);
+        }
+        setStatusMsg({
+          type: "success",
+          text: "Question deleted successfully.",
+        });
+      } else {
+        throw new Error("Failed to delete question");
+      }
+    } catch {
+      setStatusMsg({ type: "error", text: "Failed to delete question." });
+    }
   };
 
-  const removeQuestion = (idx: number) => {
-    setReadingQuestions((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const updateQuestionText = (idx: number, field: string, val: string) => {
-    setReadingQuestions((prev) => {
-      const next = [...prev];
-      next[idx] = { ...next[idx], [field]: val };
-      return next;
-    });
-  };
-
-  const updateOptionText = (qIdx: number, optIdx: number, val: string) => {
-    setReadingQuestions((prev) => {
-      const next = [...prev];
-      const opts = [...next[qIdx].options];
-      opts[optIdx] = val;
-      next[qIdx] = { ...next[qIdx], options: opts };
-      return next;
-    });
-  };
-
-  const setCorrectOption = (qIdx: number, optIdx: number) => {
-    setReadingQuestions((prev) => {
-      const next = [...prev];
-      next[qIdx] = { ...next[qIdx], correct_option_index: optIdx };
-      return next;
+  const handleUpdateOption = (index: number, value: string) => {
+    setQOptions((prev) => {
+      const copy = [...prev];
+      copy[index] = value;
+      return copy;
     });
   };
 
@@ -769,24 +826,21 @@ export default function AdminVocabularyPage() {
 
       {/* ---------------- READING PRACTICE & QUIZ MANAGER PANEL ---------------- */}
       {showReadingManager && (
-        <form
-          onSubmit={handleSaveReadingExercise}
-          className="border-2 border-black bg-white p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] space-y-6"
-        >
+        <div className="border-2 border-black bg-white p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] space-y-6">
           <div className="border-b-2 border-black pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <h2 className="text-lg font-black uppercase text-black flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-black" />
-                Optional Reading Paragraph & 4-Option Quiz
+                Manage Reading Paragraphs &amp; Quiz Questions
               </h2>
               <p className="text-xs text-neutral-600 font-medium mt-0.5">
-                Add a short German paragraph using the category&apos;s words and comprehension questions. Learners can test their understanding after studying the vocabulary.
+                Paragraphs and quiz questions are completely independent. Add reading passages, create comprehension questions tied to a paragraph, or standalone vocabulary quiz questions.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setShowReadingManager(false)}
-              className="text-xs font-black uppercase underline hover:text-neutral-600 self-start sm:self-auto"
+              className="text-xs font-black uppercase underline hover:text-neutral-600 self-start sm:self-auto cursor-pointer"
             >
               Close
             </button>
@@ -803,7 +857,7 @@ export default function AdminVocabularyPage() {
                 onChange={(e) => {
                   const newCat = e.target.value;
                   setReadingCategory(newCat);
-                  loadReadingExercise(newCat, readingLevel);
+                  loadParagraphsAndQuestions(newCat, readingLevel);
                 }}
                 className="w-full px-3 py-2 border-2 border-black bg-white text-sm font-black"
               >
@@ -824,7 +878,7 @@ export default function AdminVocabularyPage() {
                 onChange={(e) => {
                   const newLvl = e.target.value as Level;
                   setReadingLevel(newLvl);
-                  loadReadingExercise(readingCategory, newLvl);
+                  loadParagraphsAndQuestions(readingCategory, newLvl);
                 }}
                 className="w-full px-3 py-2 border-2 border-black bg-white text-sm font-black"
               >
@@ -837,300 +891,474 @@ export default function AdminVocabularyPage() {
             </div>
           </div>
 
-          {/* Paragraphs in this Topic Selector */}
-          <div className="space-y-2 p-4 bg-neutral-100 border-2 border-black">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <span className="text-xs font-black uppercase tracking-wider text-black">
-                  Paragraphs in {readingCategory} ({readingLevel}) — {readingList.length} total
-                </span>
-                <p className="text-[11px] text-neutral-600">
-                  Select a paragraph below to edit it, or click &quot;+ Add New Paragraph&quot; to create another one!
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => resetReadingForm(readingList.length + 1)}
-                className="inline-flex items-center gap-1 text-xs font-black uppercase text-black bg-[#ffe600] px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#ffea33] cursor-pointer self-start sm:self-auto"
-              >
-                <Plus className="w-3.5 h-3.5" /> + Add New Paragraph
-              </button>
-            </div>
-
-            {readingList.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2">
-                {readingList.map((item, idx) => {
-                  const isCurrent = readingId === item.id;
-                  const qCount = (item.questions || []).length;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => selectReadingForEdit(item)}
-                      className={`px-3 py-1.5 border-2 text-xs font-black uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
-                        isCurrent
-                          ? "border-black bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                          : "border-black bg-white hover:bg-neutral-200 text-black"
-                      }`}
-                    >
-                      <span>{item.title || `Paragraph #${item.order_index ?? idx + 1}`}</span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
-                          isCurrent ? "bg-[#ffe600] text-black" : "bg-neutral-200 text-neutral-700"
-                        }`}
-                      >
-                        {qCount} {qCount === 1 ? "Q" : "Qs"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+          {/* Sub-Tabs: Paragraphs vs Questions */}
+          <div className="flex border-b-2 border-black gap-2">
+            <button
+              type="button"
+              onClick={() => setReadingSubTab("paragraphs")}
+              className={`px-5 py-2.5 font-black text-xs uppercase tracking-wider transition-all border-2 border-b-0 border-black cursor-pointer flex items-center gap-2 ${
+                readingSubTab === "paragraphs"
+                  ? "bg-[#ffe600] text-black shadow-[2px_-2px_0px_0px_rgba(0,0,0,1)]"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+              }`}
+            >
+              <span>📄 Reading Paragraphs</span>
+              <span className="px-2 py-0.5 rounded-full bg-black text-white text-[10px]">
+                {paragraphs.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setReadingSubTab("questions")}
+              className={`px-5 py-2.5 font-black text-xs uppercase tracking-wider transition-all border-2 border-b-0 border-black cursor-pointer flex items-center gap-2 ${
+                readingSubTab === "questions"
+                  ? "bg-[#ffe600] text-black shadow-[2px_-2px_0px_0px_rgba(0,0,0,1)]"
+                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+              }`}
+            >
+              <span>❓ Quiz Questions</span>
+              <span className="px-2 py-0.5 rounded-full bg-black text-white text-[10px]">
+                {questions.length}
+              </span>
+            </button>
           </div>
 
-          {/* Title & Order Index */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
-                Paragraph Title / Heading (Optional)
-              </label>
-              <input
-                type="text"
-                value={readingTitle}
-                onChange={(e) => setReadingTitle(e.target.value)}
-                placeholder="e.g., Passage 1: Am Morgen im Restaurant"
-                className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
-                Display Order
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={readingOrder}
-                onChange={(e) => setReadingOrder(Number(e.target.value) || 1)}
-                className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white"
-              />
-            </div>
-          </div>
-
-          {/* Paragraph Section */}
-          <div className="space-y-4 border-t-2 border-dashed border-neutral-300 pt-4">
-            <h3 className="text-sm font-black uppercase tracking-wider text-black">
-              1. German Reading Paragraph (Using category words) *
-            </h3>
-            <div>
-              <textarea
-                value={paragraphGerman}
-                onChange={(e) => setParagraphGerman(e.target.value)}
-                placeholder="Write a short, engaging German paragraph using the words from this category..."
-                rows={4}
-                className="w-full p-3 border-2 border-black text-sm font-bold placeholder:font-normal focus:bg-[#fffdf0]"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1 text-neutral-700">
-                  English Translation (Optional)
-                </label>
-                <textarea
-                  value={paragraphEnglish}
-                  onChange={(e) => setParagraphEnglish(e.target.value)}
-                  placeholder="English translation of the paragraph..."
-                  rows={3}
-                  className="w-full p-2.5 border border-black text-xs font-medium"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-black uppercase tracking-wider mb-1 text-neutral-700 font-malayalam">
-                  മലയാളം വിവർത്തനം (Malayalam - Optional)
-                </label>
-                <textarea
-                  value={paragraphMalayalam}
-                  onChange={(e) => setParagraphMalayalam(e.target.value)}
-                  placeholder="ഖണ്ഡികയുടെ മലയാള വിവർത്തനം..."
-                  rows={3}
-                  className="w-full p-2.5 border border-black text-xs font-medium font-malayalam"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Questions Section */}
-          <div className="space-y-4 border-t-2 border-dashed border-neutral-300 pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-black">
-                  2. Questions Based on Paragraph (Optional)
-                </h3>
-                <p className="text-xs text-neutral-500">
-                  Each question must have 4 answer options with one marked as correct.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={addQuestion}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black bg-[#ffe600] text-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Question</span>
-              </button>
-            </div>
-
-            {readingQuestions.length === 0 ? (
-              <div className="text-center py-6 border-2 border-dashed border-neutral-300 bg-neutral-50 p-4 text-xs font-bold text-neutral-500">
-                No questions added yet. Click &quot;+ Add Question&quot; to create a comprehension quiz based on the paragraph.
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {readingQuestions.map((q, qIdx) => (
-                  <div
-                    key={q.id || qIdx}
-                    className="border-2 border-black bg-neutral-50 p-4 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] space-y-3"
+          {/* TAB 1: PARAGRAPHS */}
+          {readingSubTab === "paragraphs" && (
+            <div className="space-y-6">
+              {/* Paragraph Switcher / Add Button */}
+              <div className="space-y-2 p-4 bg-neutral-100 border-2 border-black">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <span className="text-xs font-black uppercase tracking-wider text-black">
+                      Paragraphs in {readingCategory} ({readingLevel}) — {paragraphs.length} total
+                    </span>
+                    <p className="text-[11px] text-neutral-600">
+                      Select a paragraph to edit or click &quot;+ Add New Paragraph&quot; to write a new one.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => resetParagraphForm(paragraphs.length + 1)}
+                    className="inline-flex items-center gap-1 text-xs font-black uppercase text-black bg-[#ffe600] px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#ffea33] cursor-pointer self-start sm:self-auto"
                   >
-                    <div className="flex items-center justify-between border-b border-black/20 pb-2">
-                      <span className="px-2 py-0.5 bg-black text-white font-black text-xs">
-                        Question #{qIdx + 1}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteQuestion(qIdx)}
-                        className="text-xs px-2.5 py-1 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-300 rounded font-black flex items-center gap-1.5 transition-colors cursor-pointer"
-                        title={`Delete Question #${qIdx + 1} only`}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" /> Delete Question #{qIdx + 1} Only
-                      </button>
-                    </div>
+                    <Plus className="w-3.5 h-3.5" /> + Add New Paragraph
+                  </button>
+                </div>
 
-                    <div>
-                      <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
-                        Question in German *
-                      </label>
-                      <input
-                        type="text"
-                        value={q.question}
-                        onChange={(e) => updateQuestionText(qIdx, "question", e.target.value)}
-                        placeholder="e.g., Was macht Anna am Morgen?"
-                        className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white"
-                        required
-                      />
-                    </div>
+                {paragraphs.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {paragraphs.map((item, idx) => {
+                      const isCurrent = selectedParagraphId === item.id;
+                      const linkedQs = questions.filter((q) => q.paragraph_id === item.id).length;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => selectParagraphForEdit(item)}
+                          className={`px-3 py-1.5 border-2 text-xs font-black uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
+                            isCurrent
+                              ? "border-black bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                              : "border-black bg-white hover:bg-neutral-200 text-black"
+                          }`}
+                        >
+                          <span>{item.title || `Paragraph #${item.order_index ?? idx + 1}`}</span>
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                              isCurrent ? "bg-[#ffe600] text-black" : "bg-neutral-200 text-neutral-700"
+                            }`}
+                          >
+                            {linkedQs} Qs
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] font-bold uppercase text-neutral-600 mb-1">
-                          Question in English (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={q.question_english || ""}
-                          onChange={(e) => updateQuestionText(qIdx, "question_english", e.target.value)}
-                          placeholder="e.g., What does Anna do in the morning?"
-                          className="w-full px-2.5 py-1.5 border border-black text-xs bg-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold uppercase text-neutral-600 mb-1 font-malayalam">
-                          Question in Malayalam (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={q.question_malayalam || ""}
-                          onChange={(e) => updateQuestionText(qIdx, "question_malayalam", e.target.value)}
-                          placeholder="ചോദ്യം മലയാളത്തിൽ..."
-                          className="w-full px-2.5 py-1.5 border border-black text-xs bg-white font-malayalam"
-                        />
-                      </div>
-                    </div>
+              {/* Paragraph Form */}
+              <form onSubmit={handleSaveParagraph} className="space-y-4 border-2 border-black p-5 bg-white">
+                <div className="flex items-center justify-between border-b border-black pb-2">
+                  <h3 className="text-sm font-black uppercase text-black">
+                    {selectedParagraphId ? `Edit Paragraph #${paraOrder}` : "+ Create New Paragraph"}
+                  </h3>
+                  {selectedParagraphId && (
+                    <button
+                      type="button"
+                      onClick={() => resetParagraphForm(paragraphs.length + 1)}
+                      className="text-xs font-bold text-neutral-600 underline hover:text-black cursor-pointer"
+                    >
+                      Clear / Create New
+                    </button>
+                  )}
+                </div>
 
-                    {/* 4 Answer Options */}
-                    <div className="space-y-2 pt-2">
-                      <label className="block text-xs font-black uppercase tracking-wider text-black">
-                        4 Answer Options (Click number/radio button to mark the CORRECT answer)
-                      </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {q.options.map((opt, optIdx) => {
-                          const isCorrect = q.correct_option_index === optIdx;
-                          return (
-                            <div
-                              key={optIdx}
-                              className={`p-2 border-2 flex items-center gap-2 transition-all ${
-                                isCorrect
-                                  ? "border-green-600 bg-green-50 shadow-[2px_2px_0px_0px_#16a34a]"
-                                  : "border-black bg-white"
-                              }`}
-                            >
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                      Paragraph Title / Heading (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={paraTitle}
+                      onChange={(e) => setParaTitle(e.target.value)}
+                      placeholder="e.g., Passage 1: Am Morgen im Restaurant"
+                      className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                      Display Order
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={paraOrder}
+                      onChange={(e) => setParaOrder(Number(e.target.value) || 1)}
+                      className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                    German Reading Paragraph *
+                  </label>
+                  <textarea
+                    value={paraGerman}
+                    onChange={(e) => setParaGerman(e.target.value)}
+                    placeholder="Write a short, engaging German paragraph using vocabulary words from this category..."
+                    rows={4}
+                    className="w-full p-3 border-2 border-black text-sm font-bold placeholder:font-normal focus:bg-[#fffdf0]"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider mb-1 text-neutral-700">
+                      English Translation (Optional)
+                    </label>
+                    <textarea
+                      value={paraEnglish}
+                      onChange={(e) => setParaEnglish(e.target.value)}
+                      placeholder="English translation of the paragraph..."
+                      rows={3}
+                      className="w-full p-2.5 border border-black text-xs font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider mb-1 text-neutral-700 font-malayalam">
+                      മലയാളം വിവർത്തനം (Malayalam - Optional)
+                    </label>
+                    <textarea
+                      value={paraMalayalam}
+                      onChange={(e) => setParaMalayalam(e.target.value)}
+                      placeholder="ഖണ്ഡികയുടെ മലയാള വിവർത്തനം..."
+                      rows={3}
+                      className="w-full p-2.5 border border-black text-xs font-medium font-malayalam"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t-2 border-black pt-4">
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 border-2 border-black bg-[#ffe600] text-black font-black text-sm uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer"
+                  >
+                    💾 Save Paragraph
+                  </button>
+
+                  {selectedParagraphId && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteParagraph}
+                      className="px-4 py-2 border-2 border-red-600 bg-white text-red-600 hover:bg-red-600 hover:text-white font-black text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                      title="Delete only this selected paragraph"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> 🗑️ Delete This Paragraph Only
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* TAB 2: QUESTIONS */}
+          {readingSubTab === "questions" && (
+            <div className="space-y-6">
+              {/* Question Creation/Edit Form */}
+              <form onSubmit={handleSaveQuestion} className="border-2 border-black p-5 bg-white space-y-4">
+                <div className="flex items-center justify-between border-b border-black pb-2">
+                  <h3 className="text-sm font-black uppercase text-black flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-black" />
+                    {editingQuestionId ? `Edit Question #${qOrder}` : "+ Add New Quiz Question"}
+                  </h3>
+                  {editingQuestionId && (
+                    <button
+                      type="button"
+                      onClick={() => resetQuestionForm(questions.length + 1)}
+                      className="text-xs font-bold text-neutral-600 underline hover:text-black cursor-pointer"
+                    >
+                      Cancel Edit / Create New
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                      Link to Paragraph (Optional)
+                    </label>
+                    <select
+                      value={qParagraphId}
+                      onChange={(e) => setQParagraphId(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white"
+                    >
+                      <option value="">General Category Quiz (Standalone / No Paragraph)</option>
+                      {paragraphs.map((p, pIdx) => (
+                        <option key={p.id} value={p.id}>
+                          Paragraph #{p.order_index ?? pIdx + 1}: {p.title || p.paragraph_german.slice(0, 40) + "..."}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-neutral-500 mt-1">
+                      Choose whether this question tests comprehension of a specific paragraph or general category vocabulary.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                      Display Order
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={qOrder}
+                      onChange={(e) => setQOrder(Number(e.target.value) || 1)}
+                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                    Question in German *
+                  </label>
+                  <input
+                    type="text"
+                    value={qGerman}
+                    onChange={(e) => setQGerman(e.target.value)}
+                    placeholder="e.g., Was macht Anna am Morgen?"
+                    className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-neutral-600 mb-1">
+                      Question in English (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={qEnglish}
+                      onChange={(e) => setQEnglish(e.target.value)}
+                      placeholder="e.g., What does Anna do in the morning?"
+                      className="w-full px-2.5 py-1.5 border border-black text-xs bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-neutral-600 mb-1 font-malayalam">
+                      Question in Malayalam (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={qMalayalam}
+                      onChange={(e) => setQMalayalam(e.target.value)}
+                      placeholder="ചോദ്യം മലയാളത്തിൽ..."
+                      className="w-full px-2.5 py-1.5 border border-black text-xs bg-white font-malayalam"
+                    />
+                  </div>
+                </div>
+
+                {/* 4 Answer Options */}
+                <div className="space-y-2 pt-2">
+                  <label className="block text-xs font-black uppercase tracking-wider text-black">
+                    4 Answer Options (Click number/button to mark the CORRECT answer)
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {qOptions.map((opt, optIdx) => {
+                      const isCorrect = qCorrectIdx === optIdx;
+                      return (
+                        <div
+                          key={optIdx}
+                          className={`p-2 border-2 flex items-center gap-2 transition-all ${
+                            isCorrect
+                              ? "border-green-600 bg-green-50 shadow-[2px_2px_0px_0px_#16a34a]"
+                              : "border-black bg-white"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setQCorrectIdx(optIdx)}
+                            className={`w-7 h-7 shrink-0 flex items-center justify-center border font-black text-xs transition-colors cursor-pointer ${
+                              isCorrect
+                                ? "bg-green-600 text-white border-green-700"
+                                : "bg-neutral-100 hover:bg-neutral-200 border-neutral-400 text-black"
+                            }`}
+                            title={isCorrect ? "Correct Answer" : "Click to mark as Correct Answer"}
+                          >
+                            {isCorrect ? "✓" : optIdx + 1}
+                          </button>
+                          <input
+                            type="text"
+                            value={opt}
+                            onChange={(e) => handleUpdateOption(optIdx, e.target.value)}
+                            placeholder={`Option ${optIdx + 1}${isCorrect ? " (Correct Answer)" : ""}`}
+                            className="w-full px-2 py-1 text-xs font-bold border border-neutral-300 bg-transparent focus:border-black"
+                            required
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Explanation */}
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-neutral-600 mb-1">
+                    Explanation / Why this is correct (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={qExplanation}
+                    onChange={(e) => setQExplanation(e.target.value)}
+                    placeholder="e.g., Anna trinkt am Morgen gerne Kaffee laut Abschnitt 1."
+                    className="w-full px-2.5 py-1.5 border border-neutral-400 text-xs bg-white"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between border-t-2 border-black pt-4">
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 border-2 border-black bg-[#ffe600] text-black font-black text-sm uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer"
+                  >
+                    💾 Save Question
+                  </button>
+                  {editingQuestionId && (
+                    <button
+                      type="button"
+                      onClick={() => resetQuestionForm(questions.length + 1)}
+                      className="px-4 py-2 border border-black text-xs font-bold uppercase hover:bg-neutral-100 cursor-pointer"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              {/* Questions List for this Category & Level */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-black">
+                    Questions in {readingCategory} ({readingLevel}) — {questions.length} total
+                  </h3>
+                </div>
+
+                {questions.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed border-neutral-300 bg-neutral-50 p-4 text-xs font-bold text-neutral-500">
+                    No questions added yet for this category and level. Fill out the form above to add one!
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {questions.map((q, idx) => {
+                      const linkedP = paragraphs.find((p) => p.id === q.paragraph_id);
+                      return (
+                        <div
+                          key={q.id}
+                          className="border-2 border-black bg-white p-4 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] space-y-3"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-black/10 pb-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="px-2 py-0.5 bg-black text-white font-black text-xs">
+                                #{q.order_index ?? idx + 1}
+                              </span>
+                              {linkedP ? (
+                                <span className="px-2 py-0.5 bg-blue-100 text-blue-800 border border-blue-300 text-[10px] font-bold">
+                                  Linked to: {linkedP.title || `Paragraph #${linkedP.order_index ?? 1}`}
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 bg-neutral-100 text-neutral-700 border border-neutral-300 text-[10px] font-bold">
+                                  General Category Quiz
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 self-end sm:self-auto">
                               <button
                                 type="button"
-                                onClick={() => setCorrectOption(qIdx, optIdx)}
-                                className={`w-7 h-7 shrink-0 flex items-center justify-center border font-black text-xs transition-colors cursor-pointer ${
-                                  isCorrect
-                                    ? "bg-green-600 text-white border-green-700"
-                                    : "bg-neutral-100 hover:bg-neutral-200 border-neutral-400 text-black"
-                                }`}
-                                title={isCorrect ? "Marked as Correct Answer" : "Click to mark as Correct Answer"}
+                                onClick={() => selectQuestionForEdit(q)}
+                                className="px-2.5 py-1 text-xs border border-black font-black hover:bg-[#ffe600] flex items-center gap-1 cursor-pointer transition-colors"
                               >
-                                {isCorrect ? "✓" : optIdx + 1}
+                                <Edit3 className="w-3.5 h-3.5" /> Edit
                               </button>
-                              <input
-                                type="text"
-                                value={opt}
-                                onChange={(e) => updateOptionText(qIdx, optIdx, e.target.value)}
-                                placeholder={`Option ${optIdx + 1}${isCorrect ? " (Correct Answer)" : ""}`}
-                                className="w-full px-2 py-1 text-xs font-bold border border-neutral-300 bg-transparent focus:border-black"
-                                required
-                              />
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteQuestion(q.id, q.question_german)}
+                                className="px-2.5 py-1 text-xs bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-300 font-black flex items-center gap-1 cursor-pointer transition-colors"
+                                title="Delete only this single question"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </button>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                          </div>
 
-                    {/* Explanation */}
-                    <div className="pt-1">
-                      <label className="block text-[11px] font-bold uppercase text-neutral-600 mb-1">
-                        Explanation / Why this is correct (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={q.explanation || ""}
-                        onChange={(e) => updateQuestionText(qIdx, "explanation", e.target.value)}
-                        placeholder="e.g., Anna trinkt am Morgen gerne Kaffee laut Abschnitt 1."
-                        className="w-full px-2.5 py-1.5 border border-neutral-400 text-xs bg-white"
-                      />
-                    </div>
+                          <div>
+                            <h4 className="text-sm font-black text-black">{q.question_german}</h4>
+                            {q.question_english && (
+                              <p className="text-xs text-neutral-600 mt-0.5">{q.question_english}</p>
+                            )}
+                            {q.question_malayalam && (
+                              <p className="text-xs text-neutral-600 font-malayalam mt-0.5">{q.question_malayalam}</p>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            {q.options.map((opt, optIdx) => {
+                              const isCorrect = q.correct_option_index === optIdx;
+                              return (
+                                <div
+                                  key={optIdx}
+                                  className={`text-xs px-2.5 py-1.5 border font-bold flex items-center gap-2 ${
+                                    isCorrect
+                                      ? "border-green-600 bg-green-50 text-green-800"
+                                      : "border-neutral-300 bg-neutral-50 text-neutral-700"
+                                  }`}
+                                >
+                                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${isCorrect ? "bg-green-600 text-white font-black" : "bg-neutral-200"}`}>
+                                    {isCorrect ? "✓" : optIdx + 1}
+                                  </span>
+                                  <span>{opt}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {q.explanation && (
+                            <p className="text-[11px] text-neutral-500 italic border-t border-neutral-200 pt-1">
+                              Explanation: {q.explanation}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t-2 border-black pt-4">
-            <button
-              type="submit"
-              className="px-6 py-2.5 border-2 border-black bg-[#ffe600] text-black font-black text-sm uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer"
-            >
-              💾 Save Paragraph &amp; Quiz
-            </button>
-
-            {readingId && (
-              <button
-                type="button"
-                onClick={handleDeleteReadingExercise}
-                className="px-4 py-2 border-2 border-red-600 bg-white text-red-600 hover:bg-red-600 hover:text-white font-black text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                title="Delete only this selected paragraph and its questions"
-              >
-                <Trash2 className="w-3.5 h-3.5" /> 🗑️ Delete This Paragraph Only
-              </button>
-            )}
-          </div>
-        </form>
+            </div>
+          )}
+        </div>
       )}
 
       {/* ---------------- BATCH WORD ENTRY / EDIT FORM ---------------- */}

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getCategoryReadingExercises,
-  mutateCategoryReadingExercise,
-  deleteCategoryReadingExercise,
+  getCategoryParagraphs,
+  mutateCategoryParagraph,
+  deleteCategoryParagraph,
 } from "@/lib/db/content";
 import { Level } from "@/types";
 
@@ -14,13 +14,13 @@ export async function GET(req: NextRequest) {
     const level = searchParams.get("level") as Level | null;
     const category = searchParams.get("category");
 
-    const items = await getCategoryReadingExercises(
+    const items = await getCategoryParagraphs(
       level || undefined,
       category || undefined
     );
     return NextResponse.json({ items });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Failed to fetch reading exercises";
+    const message = err instanceof Error ? err.message : "Failed to fetch paragraphs";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -35,10 +35,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const saved = await mutateCategoryReadingExercise(body);
+    const saved = await mutateCategoryParagraph(body);
     return NextResponse.json({ item: saved });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Failed to save reading exercise";
+    const message = err instanceof Error ? err.message : "Failed to save paragraph";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -48,13 +48,13 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) {
-      return NextResponse.json({ error: "Missing exercise id." }, { status: 400 });
+      return NextResponse.json({ error: "Missing paragraph id." }, { status: 400 });
     }
 
-    await deleteCategoryReadingExercise(id);
+    await deleteCategoryParagraph(id);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Failed to delete reading exercise";
+    const message = err instanceof Error ? err.message : "Failed to delete paragraph";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

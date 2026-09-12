@@ -11,7 +11,8 @@ import {
   Level,
   Category,
   GoetheSection,
-  CategoryReadingExercise,
+  CategoryParagraph,
+  CategoryQuestion,
 } from "@/types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -375,31 +376,31 @@ export async function deleteGoetheMaterialItem(id: string): Promise<boolean> {
   return true;
 }
 
-// ----------------- CATEGORY READING EXERCISES & QUIZ -----------------
-export async function getCategoryReadingExercises(
+// ----------------- CATEGORY PARAGRAPHS -----------------
+export async function getCategoryParagraphs(
   level?: Level,
   categoryName?: string
-): Promise<CategoryReadingExercise[]> {
+): Promise<CategoryParagraph[]> {
   const supabase = await createServerSupabaseClient();
   if (supabase) {
     let query = supabase
-      .from("category_reading_exercises")
+      .from("category_paragraphs")
       .select("*")
       .order("order_index", { ascending: true })
       .order("created_at", { ascending: true });
     if (level) query = query.eq("level", level);
     if (categoryName) query = query.eq("category_name", categoryName);
     const { data, error } = await query;
-    if (!error && data) return data as CategoryReadingExercise[];
-    if (error) console.error("Supabase getCategoryReadingExercises error:", error.message);
+    if (!error && data) return data as CategoryParagraph[];
+    if (error) console.error("Supabase getCategoryParagraphs error:", error.message);
   }
   return [];
 }
 
-export async function mutateCategoryReadingExercise(
-  item: Partial<CategoryReadingExercise> & { category_name: string; level: Level; paragraph_german: string }
-): Promise<CategoryReadingExercise> {
-  const payload: CategoryReadingExercise = {
+export async function mutateCategoryParagraph(
+  item: Partial<CategoryParagraph> & { category_name: string; level: Level; paragraph_german: string }
+): Promise<CategoryParagraph> {
+  const payload: CategoryParagraph = {
     id: item.id || crypto.randomUUID(),
     category_name: item.category_name,
     level: item.level,
@@ -408,7 +409,6 @@ export async function mutateCategoryReadingExercise(
     paragraph_german: item.paragraph_german,
     paragraph_english: item.paragraph_english || "",
     paragraph_malayalam: item.paragraph_malayalam || "",
-    questions: item.questions || [],
     created_at: item.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -416,25 +416,107 @@ export async function mutateCategoryReadingExercise(
   const supabase = await createServerSupabaseClient();
   if (supabase) {
     const { data, error } = await supabase
-      .from("category_reading_exercises")
+      .from("category_paragraphs")
       .upsert(payload)
       .select()
       .single();
     if (error) {
-      console.error("Supabase upsert category_reading_exercises error:", error.message);
+      console.error("Supabase upsert category_paragraphs error:", error.message);
       throw new Error(`Supabase error: ${error.message}`);
     }
-    if (data) return data as CategoryReadingExercise;
+    if (data) return data as CategoryParagraph;
   }
   return payload;
 }
 
-export async function deleteCategoryReadingExercise(id: string): Promise<boolean> {
+export async function deleteCategoryParagraph(id: string): Promise<boolean> {
   const supabase = await createServerSupabaseClient();
   if (supabase) {
-    const { error } = await supabase.from("category_reading_exercises").delete().eq("id", id);
+    const { error } = await supabase.from("category_paragraphs").delete().eq("id", id);
     if (error) {
-      console.error("Supabase delete category_reading_exercises error:", error.message);
+      console.error("Supabase delete category_paragraphs error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
+// ----------------- CATEGORY QUESTIONS -----------------
+export async function getCategoryQuestions(
+  level?: Level,
+  categoryName?: string,
+  paragraphId?: string | null
+): Promise<CategoryQuestion[]> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    let query = supabase
+      .from("category_questions")
+      .select("*")
+      .order("order_index", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (level) query = query.eq("level", level);
+    if (categoryName) query = query.eq("category_name", categoryName);
+    if (paragraphId !== undefined) {
+      if (paragraphId === null) {
+        query = query.is("paragraph_id", null);
+      } else {
+        query = query.eq("paragraph_id", paragraphId);
+      }
+    }
+    const { data, error } = await query;
+    if (!error && data) return data as CategoryQuestion[];
+    if (error) console.error("Supabase getCategoryQuestions error:", error.message);
+  }
+  return [];
+}
+
+export async function mutateCategoryQuestion(
+  item: Partial<CategoryQuestion> & {
+    category_name: string;
+    level: Level;
+    question_german: string;
+    options: string[];
+    correct_option_index: number;
+  }
+): Promise<CategoryQuestion> {
+  const payload: CategoryQuestion = {
+    id: item.id || crypto.randomUUID(),
+    category_name: item.category_name,
+    level: item.level,
+    paragraph_id: item.paragraph_id || null,
+    question_german: item.question_german,
+    question_english: item.question_english || "",
+    question_malayalam: item.question_malayalam || "",
+    options: item.options,
+    correct_option_index: item.correct_option_index,
+    explanation: item.explanation || "",
+    order_index: item.order_index ?? 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("category_questions")
+      .upsert(payload)
+      .select()
+      .single();
+    if (error) {
+      console.error("Supabase upsert category_questions error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as CategoryQuestion;
+  }
+  return payload;
+}
+
+export async function deleteCategoryQuestion(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("category_questions").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete category_questions error:", error.message);
       throw new Error(`Supabase delete error: ${error.message}`);
     }
   }

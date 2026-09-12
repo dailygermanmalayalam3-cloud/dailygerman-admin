@@ -65,17 +65,7 @@ export interface UserRole {
   role: "admin" | "user";
 }
 
-export interface ReadingQuestion {
-  id: string;
-  question: string;
-  question_english?: string;
-  question_malayalam?: string;
-  options: string[];
-  correct_option_index: number;
-  explanation?: string;
-}
-
-export interface CategoryReadingExercise {
+export interface CategoryParagraph {
   id: string;
   category_name: string;
   level: Level;
@@ -84,7 +74,22 @@ export interface CategoryReadingExercise {
   paragraph_german: string;
   paragraph_english?: string;
   paragraph_malayalam?: string;
-  questions: ReadingQuestion[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CategoryQuestion {
+  id: string;
+  category_name: string;
+  level: Level;
+  paragraph_id?: string | null;
+  question_german: string;
+  question_english?: string;
+  question_malayalam?: string;
+  options: string[];
+  correct_option_index: number;
+  explanation?: string;
+  order_index?: number;
   created_at?: string;
   updated_at?: string;
 }
