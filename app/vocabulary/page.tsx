@@ -28,10 +28,13 @@ export default function AdminVocabularyPage() {
   const [showReadingManager, setShowReadingManager] = useState(false);
   const [editingItem, setEditingItem] = useState<VocabularyItem | null>(null);
 
-  // Reading Exercise & Quiz State
+  // Reading Exercise & Quiz State (supports multiple paragraphs per topic)
   const [readingCategory, setReadingCategory] = useState<string>("");
   const [readingLevel, setReadingLevel] = useState<Level>("A1");
+  const [readingList, setReadingList] = useState<CategoryReadingExercise[]>([]);
   const [readingId, setReadingId] = useState<string | null>(null);
+  const [readingTitle, setReadingTitle] = useState("");
+  const [readingOrder, setReadingOrder] = useState<number>(1);
   const [paragraphGerman, setParagraphGerman] = useState("");
   const [paragraphEnglish, setParagraphEnglish] = useState("");
   const [paragraphMalayalam, setParagraphMalayalam] = useState("");
@@ -324,6 +327,26 @@ export default function AdminVocabularyPage() {
   };
 
   // ---------------- READING EXERCISE & QUIZ HANDLERS ----------------
+  const selectReadingForEdit = (ex: CategoryReadingExercise) => {
+    setReadingId(ex.id);
+    setReadingTitle(ex.title || "");
+    setReadingOrder(ex.order_index ?? 1);
+    setParagraphGerman(ex.paragraph_german || "");
+    setParagraphEnglish(ex.paragraph_english || "");
+    setParagraphMalayalam(ex.paragraph_malayalam || "");
+    setReadingQuestions(ex.questions || []);
+  };
+
+  const resetReadingForm = (nextOrder = 1) => {
+    setReadingId(null);
+    setReadingTitle("");
+    setReadingOrder(nextOrder);
+    setParagraphGerman("");
+    setParagraphEnglish("");
+    setParagraphMalayalam("");
+    setReadingQuestions([]);
+  };
+
   const loadReadingExercise = async (categoryName: string, level: Level) => {
     if (!categoryName) return;
     setReadingLoading(true);
@@ -332,19 +355,12 @@ export default function AdminVocabularyPage() {
         `/api/admin/reading-exercises?category=${encodeURIComponent(categoryName)}&level=${level}`
       );
       const data = await res.json();
-      if (data.items && data.items.length > 0) {
-        const ex = data.items[0];
-        setReadingId(ex.id);
-        setParagraphGerman(ex.paragraph_german || "");
-        setParagraphEnglish(ex.paragraph_english || "");
-        setParagraphMalayalam(ex.paragraph_malayalam || "");
-        setReadingQuestions(ex.questions || []);
+      const list: CategoryReadingExercise[] = data.items || [];
+      setReadingList(list);
+      if (list.length > 0) {
+        selectReadingForEdit(list[0]);
       } else {
-        setReadingId(null);
-        setParagraphGerman("");
-        setParagraphEnglish("");
-        setParagraphMalayalam("");
-        setReadingQuestions([]);
+        resetReadingForm(1);
       }
     } catch {
       setStatusMsg({ type: "error", text: "Failed to load reading exercise." });
@@ -395,6 +411,8 @@ export default function AdminVocabularyPage() {
         id: readingId || undefined,
         category_name: readingCategory,
         level: readingLevel,
+        title: readingTitle.trim(),
+        order_index: Number(readingOrder) || 1,
         paragraph_german: paragraphGerman.trim(),
         paragraph_english: paragraphEnglish.trim(),
         paragraph_malayalam: paragraphMalayalam.trim(),
@@ -410,9 +428,13 @@ export default function AdminVocabularyPage() {
       const data = await res.json();
       if (res.ok && data.item) {
         setReadingId(data.item.id);
+        setReadingList((prev) => {
+          const filtered = prev.filter((x) => x.id !== data.item.id);
+          return [...filtered, data.item].sort((a, b) => (a.order_index ?? 1) - (b.order_index ?? 1));
+        });
         setStatusMsg({
           type: "success",
-          text: `Saved reading exercise & quiz for ${readingCategory} (${readingLevel})!`,
+          text: `Saved paragraph & quiz for ${readingCategory} (${readingLevel})!`,
         });
       } else {
         throw new Error(data.error || "Failed to save reading exercise");
@@ -426,7 +448,7 @@ export default function AdminVocabularyPage() {
     if (!readingId) return;
     if (
       !confirm(
-        `Are you sure you want to delete the reading exercise for ${readingCategory} (${readingLevel})?`
+        `Are you sure you want to delete this paragraph from ${readingCategory} (${readingLevel})?`
       )
     )
       return;
@@ -436,14 +458,16 @@ export default function AdminVocabularyPage() {
         method: "DELETE",
       });
       if (res.ok) {
-        setReadingId(null);
-        setParagraphGerman("");
-        setParagraphEnglish("");
-        setParagraphMalayalam("");
-        setReadingQuestions([]);
+        const remaining = readingList.filter((x) => x.id !== readingId);
+        setReadingList(remaining);
+        if (remaining.length > 0) {
+          selectReadingForEdit(remaining[0]);
+        } else {
+          resetReadingForm(1);
+        }
         setStatusMsg({
           type: "success",
-          text: `Reading exercise for ${readingCategory} removed.`,
+          text: `Paragraph removed from ${readingCategory}.`,
         });
       }
     } catch {
@@ -794,16 +818,75 @@ export default function AdminVocabularyPage() {
             </div>
           </div>
 
-          {/* Existing Status Indicator */}
-          <div className="flex items-center gap-2 text-xs font-bold">
-            <span
-              className={`px-2 py-0.5 border border-black ${
-                readingId ? "bg-green-100 text-green-800" : "bg-neutral-100 text-neutral-600"
-              }`}
-            >
-              {readingId ? "✓ Editing Existing Exercise" : "+ Creating New Exercise"}
-            </span>
-            {readingLoading && <span className="text-neutral-500">Loading...</span>}
+          {/* Paragraphs in this Topic Selector */}
+          <div className="space-y-2 p-4 bg-neutral-100 border-2 border-black">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span className="text-xs font-black uppercase tracking-wider text-black">
+                  Paragraphs in {readingCategory} ({readingLevel}) — {readingList.length} total
+                </span>
+                <p className="text-[11px] text-neutral-600">
+                  Select a paragraph below to edit it, or click &quot;+ Add New Paragraph&quot; to create another one!
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => resetReadingForm(readingList.length + 1)}
+                className="inline-flex items-center gap-1 text-xs font-black uppercase text-black bg-[#ffe600] px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#ffea33] cursor-pointer self-start sm:self-auto"
+              >
+                <Plus className="w-3.5 h-3.5" /> + Add New Paragraph
+              </button>
+            </div>
+
+            {readingList.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {readingList.map((item, idx) => {
+                  const isCurrent = readingId === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => selectReadingForEdit(item)}
+                      className={`px-3 py-1.5 border-2 text-xs font-black uppercase transition-all cursor-pointer ${
+                        isCurrent
+                          ? "border-black bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                          : "border-black bg-white hover:bg-neutral-200 text-black"
+                      }`}
+                    >
+                      {item.title || `Paragraph #${item.order_index ?? idx + 1}`}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Title & Order Index */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                Paragraph Title / Heading (Optional)
+              </label>
+              <input
+                type="text"
+                value={readingTitle}
+                onChange={(e) => setReadingTitle(e.target.value)}
+                placeholder="e.g., Passage 1: Am Morgen im Restaurant"
+                className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                Display Order
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={readingOrder}
+                onChange={(e) => setReadingOrder(Number(e.target.value) || 1)}
+                className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white"
+              />
+            </div>
           </div>
 
           {/* Paragraph Section */}

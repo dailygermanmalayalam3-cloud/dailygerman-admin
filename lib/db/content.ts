@@ -382,7 +382,11 @@ export async function getCategoryReadingExercises(
 ): Promise<CategoryReadingExercise[]> {
   const supabase = await createServerSupabaseClient();
   if (supabase) {
-    let query = supabase.from("category_reading_exercises").select("*");
+    let query = supabase
+      .from("category_reading_exercises")
+      .select("*")
+      .order("order_index", { ascending: true })
+      .order("created_at", { ascending: true });
     if (level) query = query.eq("level", level);
     if (categoryName) query = query.eq("category_name", categoryName);
     const { data, error } = await query;
@@ -399,6 +403,8 @@ export async function mutateCategoryReadingExercise(
     id: item.id || crypto.randomUUID(),
     category_name: item.category_name,
     level: item.level,
+    title: item.title || "",
+    order_index: item.order_index ?? 1,
     paragraph_german: item.paragraph_german,
     paragraph_english: item.paragraph_english || "",
     paragraph_malayalam: item.paragraph_malayalam || "",
@@ -411,7 +417,7 @@ export async function mutateCategoryReadingExercise(
   if (supabase) {
     const { data, error } = await supabase
       .from("category_reading_exercises")
-      .upsert(payload, { onConflict: "category_name,level" })
+      .upsert(payload)
       .select()
       .single();
     if (error) {

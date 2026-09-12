@@ -79,6 +79,8 @@ export interface CategoryReadingExercise {
   id: string;
   category_name: string;
   level: Level;
+  title?: string;
+  order_index?: number;
   paragraph_german: string;
   paragraph_english?: string;
   paragraph_malayalam?: string;
