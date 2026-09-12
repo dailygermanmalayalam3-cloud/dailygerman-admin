@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { VocabularyItem, VocabularyCategory, Level, Example } from "@/types";
-import { Plus, Trash2, Edit3, ArrowLeft, Check, AlertCircle, FolderPlus, ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
+import { VocabularyItem, VocabularyCategory, Level, Example, CategoryReadingExercise, ReadingQuestion } from "@/types";
+import { Plus, Trash2, Edit3, ArrowLeft, Check, AlertCircle, FolderPlus, ArrowUpDown, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 
 const LEVELS: Level[] = ["A1", "A2", "B1", "B2"];
 
@@ -25,7 +25,18 @@ export default function AdminVocabularyPage() {
   // Panels
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showAddWords, setShowAddWords] = useState(false);
+  const [showReadingManager, setShowReadingManager] = useState(false);
   const [editingItem, setEditingItem] = useState<VocabularyItem | null>(null);
+
+  // Reading Exercise & Quiz State
+  const [readingCategory, setReadingCategory] = useState<string>("");
+  const [readingLevel, setReadingLevel] = useState<Level>("A1");
+  const [readingId, setReadingId] = useState<string | null>(null);
+  const [paragraphGerman, setParagraphGerman] = useState("");
+  const [paragraphEnglish, setParagraphEnglish] = useState("");
+  const [paragraphMalayalam, setParagraphMalayalam] = useState("");
+  const [readingQuestions, setReadingQuestions] = useState<ReadingQuestion[]>([]);
+  const [readingLoading, setReadingLoading] = useState(false);
 
   // Category Manager State
   const [newCatName, setNewCatName] = useState("");
@@ -64,6 +75,7 @@ export default function AdminVocabularyPage() {
         setCategories(loadedCats);
         if (loadedCats.length > 0) {
           setSelectedCategory(loadedCats[0].name);
+          setReadingCategory(loadedCats[0].name);
           setNewCatOrder(loadedCats.length + 1);
         }
         setLoading(false);
@@ -311,6 +323,179 @@ export default function AdminVocabularyPage() {
     }
   };
 
+  // ---------------- READING EXERCISE & QUIZ HANDLERS ----------------
+  const loadReadingExercise = async (categoryName: string, level: Level) => {
+    if (!categoryName) return;
+    setReadingLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/reading-exercises?category=${encodeURIComponent(categoryName)}&level=${level}`
+      );
+      const data = await res.json();
+      if (data.items && data.items.length > 0) {
+        const ex = data.items[0];
+        setReadingId(ex.id);
+        setParagraphGerman(ex.paragraph_german || "");
+        setParagraphEnglish(ex.paragraph_english || "");
+        setParagraphMalayalam(ex.paragraph_malayalam || "");
+        setReadingQuestions(ex.questions || []);
+      } else {
+        setReadingId(null);
+        setParagraphGerman("");
+        setParagraphEnglish("");
+        setParagraphMalayalam("");
+        setReadingQuestions([]);
+      }
+    } catch {
+      setStatusMsg({ type: "error", text: "Failed to load reading exercise." });
+    } finally {
+      setReadingLoading(false);
+    }
+  };
+
+  const handleOpenReadingManager = () => {
+    const nextState = !showReadingManager;
+    setShowReadingManager(nextState);
+    if (nextState) {
+      setShowCategoryManager(false);
+      setShowAddWords(false);
+      loadReadingExercise(readingCategory || selectedCategory, readingLevel);
+    }
+  };
+
+  const handleSaveReadingExercise = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!readingCategory) {
+      setStatusMsg({ type: "error", text: "Please select a category." });
+      return;
+    }
+    if (!paragraphGerman.trim()) {
+      setStatusMsg({ type: "error", text: "German reading paragraph cannot be empty." });
+      return;
+    }
+
+    // Validate questions
+    for (let i = 0; i < readingQuestions.length; i++) {
+      const q = readingQuestions[i];
+      if (!q.question.trim()) {
+        setStatusMsg({ type: "error", text: `Question #${i + 1} text is required.` });
+        return;
+      }
+      if (q.options.some((opt) => !opt.trim())) {
+        setStatusMsg({
+          type: "error",
+          text: `Question #${i + 1} requires all 4 options to be filled.`,
+        });
+        return;
+      }
+    }
+
+    try {
+      const payload = {
+        id: readingId || undefined,
+        category_name: readingCategory,
+        level: readingLevel,
+        paragraph_german: paragraphGerman.trim(),
+        paragraph_english: paragraphEnglish.trim(),
+        paragraph_malayalam: paragraphMalayalam.trim(),
+        questions: readingQuestions,
+      };
+
+      const res = await fetch("/api/admin/reading-exercises", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.item) {
+        setReadingId(data.item.id);
+        setStatusMsg({
+          type: "success",
+          text: `Saved reading exercise & quiz for ${readingCategory} (${readingLevel})!`,
+        });
+      } else {
+        throw new Error(data.error || "Failed to save reading exercise");
+      }
+    } catch (err: unknown) {
+      setStatusMsg({ type: "error", text: (err as Error).message });
+    }
+  };
+
+  const handleDeleteReadingExercise = async () => {
+    if (!readingId) return;
+    if (
+      !confirm(
+        `Are you sure you want to delete the reading exercise for ${readingCategory} (${readingLevel})?`
+      )
+    )
+      return;
+
+    try {
+      const res = await fetch(`/api/admin/reading-exercises?id=${readingId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setReadingId(null);
+        setParagraphGerman("");
+        setParagraphEnglish("");
+        setParagraphMalayalam("");
+        setReadingQuestions([]);
+        setStatusMsg({
+          type: "success",
+          text: `Reading exercise for ${readingCategory} removed.`,
+        });
+      }
+    } catch {
+      setStatusMsg({ type: "error", text: "Failed to delete reading exercise." });
+    }
+  };
+
+  const addQuestion = () => {
+    setReadingQuestions((prev) => [
+      ...prev,
+      {
+        id: "q-" + Date.now(),
+        question: "",
+        question_english: "",
+        question_malayalam: "",
+        options: ["", "", "", ""],
+        correct_option_index: 0,
+        explanation: "",
+      },
+    ]);
+  };
+
+  const removeQuestion = (idx: number) => {
+    setReadingQuestions((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const updateQuestionText = (idx: number, field: string, val: string) => {
+    setReadingQuestions((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: val };
+      return next;
+    });
+  };
+
+  const updateOptionText = (qIdx: number, optIdx: number, val: string) => {
+    setReadingQuestions((prev) => {
+      const next = [...prev];
+      const opts = [...next[qIdx].options];
+      opts[optIdx] = val;
+      next[qIdx] = { ...next[qIdx], options: opts };
+      return next;
+    });
+  };
+
+  const setCorrectOption = (qIdx: number, optIdx: number) => {
+    setReadingQuestions((prev) => {
+      const next = [...prev];
+      next[qIdx] = { ...next[qIdx], correct_option_index: optIdx };
+      return next;
+    });
+  };
+
   // Filtered list
   const filteredItems = items.filter((item) => {
     if (filterLevel !== "All" && item.level !== filterLevel) return false;
@@ -344,6 +529,7 @@ export default function AdminVocabularyPage() {
             onClick={() => {
               setShowCategoryManager(!showCategoryManager);
               setShowAddWords(false);
+              setShowReadingManager(false);
             }}
             className="inline-flex items-center gap-2 px-3 py-2 border-2 border-black bg-white text-black font-black text-xs uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-100 transition-all cursor-pointer"
           >
@@ -352,9 +538,18 @@ export default function AdminVocabularyPage() {
           </button>
 
           <button
+            onClick={handleOpenReadingManager}
+            className="inline-flex items-center gap-2 px-3 py-2 border-2 border-black bg-white text-black font-black text-xs uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#ffe600] transition-all cursor-pointer"
+          >
+            <BookOpen className="w-4 h-4 text-black" />
+            <span>{showReadingManager ? "Close Reading" : "📖 Reading & Quiz"}</span>
+          </button>
+
+          <button
             onClick={() => {
               setShowAddWords(!showAddWords);
               setShowCategoryManager(false);
+              setShowReadingManager(false);
               setEditingItem(null);
             }}
             className="inline-flex items-center gap-2 px-4 py-2 border-2 border-black bg-[#ffe600] text-black font-black text-xs uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer"
@@ -527,6 +722,303 @@ export default function AdminVocabularyPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ---------------- READING PRACTICE & QUIZ MANAGER PANEL ---------------- */}
+      {showReadingManager && (
+        <form
+          onSubmit={handleSaveReadingExercise}
+          className="border-2 border-black bg-white p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] space-y-6"
+        >
+          <div className="border-b-2 border-black pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-black uppercase text-black flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-black" />
+                Optional Reading Paragraph & 4-Option Quiz
+              </h2>
+              <p className="text-xs text-neutral-600 font-medium mt-0.5">
+                Add a short German paragraph using the category&apos;s words and comprehension questions. Learners can test their understanding after studying the vocabulary.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowReadingManager(false)}
+              className="text-xs font-black uppercase underline hover:text-neutral-600 self-start sm:self-auto"
+            >
+              Close
+            </button>
+          </div>
+
+          {/* Category & Level Selector */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-neutral-50 border-2 border-black">
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                Select Topic Category
+              </label>
+              <select
+                value={readingCategory}
+                onChange={(e) => {
+                  const newCat = e.target.value;
+                  setReadingCategory(newCat);
+                  loadReadingExercise(newCat, readingLevel);
+                }}
+                className="w-full px-3 py-2 border-2 border-black bg-white text-sm font-black"
+              >
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.name}>
+                    #{cat.order_index} - {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                Select Level
+              </label>
+              <select
+                value={readingLevel}
+                onChange={(e) => {
+                  const newLvl = e.target.value as Level;
+                  setReadingLevel(newLvl);
+                  loadReadingExercise(readingCategory, newLvl);
+                }}
+                className="w-full px-3 py-2 border-2 border-black bg-white text-sm font-black"
+              >
+                {LEVELS.map((lvl) => (
+                  <option key={lvl} value={lvl}>
+                    {lvl} Deutsch
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Existing Status Indicator */}
+          <div className="flex items-center gap-2 text-xs font-bold">
+            <span
+              className={`px-2 py-0.5 border border-black ${
+                readingId ? "bg-green-100 text-green-800" : "bg-neutral-100 text-neutral-600"
+              }`}
+            >
+              {readingId ? "✓ Editing Existing Exercise" : "+ Creating New Exercise"}
+            </span>
+            {readingLoading && <span className="text-neutral-500">Loading...</span>}
+          </div>
+
+          {/* Paragraph Section */}
+          <div className="space-y-4 border-t-2 border-dashed border-neutral-300 pt-4">
+            <h3 className="text-sm font-black uppercase tracking-wider text-black">
+              1. German Reading Paragraph (Using category words) *
+            </h3>
+            <div>
+              <textarea
+                value={paragraphGerman}
+                onChange={(e) => setParagraphGerman(e.target.value)}
+                placeholder="Write a short, engaging German paragraph using the words from this category..."
+                rows={4}
+                className="w-full p-3 border-2 border-black text-sm font-bold placeholder:font-normal focus:bg-[#fffdf0]"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider mb-1 text-neutral-700">
+                  English Translation (Optional)
+                </label>
+                <textarea
+                  value={paragraphEnglish}
+                  onChange={(e) => setParagraphEnglish(e.target.value)}
+                  placeholder="English translation of the paragraph..."
+                  rows={3}
+                  className="w-full p-2.5 border border-black text-xs font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider mb-1 text-neutral-700 font-malayalam">
+                  മലയാളം വിവർത്തനം (Malayalam - Optional)
+                </label>
+                <textarea
+                  value={paragraphMalayalam}
+                  onChange={(e) => setParagraphMalayalam(e.target.value)}
+                  placeholder="ഖണ്ഡികയുടെ മലയാള വിവർത്തനം..."
+                  rows={3}
+                  className="w-full p-2.5 border border-black text-xs font-medium font-malayalam"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Questions Section */}
+          <div className="space-y-4 border-t-2 border-dashed border-neutral-300 pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wider text-black">
+                  2. Questions Based on Paragraph (Optional)
+                </h3>
+                <p className="text-xs text-neutral-500">
+                  Each question must have 4 answer options with one marked as correct.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={addQuestion}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black bg-[#ffe600] text-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Question</span>
+              </button>
+            </div>
+
+            {readingQuestions.length === 0 ? (
+              <div className="text-center py-6 border-2 border-dashed border-neutral-300 bg-neutral-50 p-4 text-xs font-bold text-neutral-500">
+                No questions added yet. Click &quot;+ Add Question&quot; to create a comprehension quiz based on the paragraph.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {readingQuestions.map((q, qIdx) => (
+                  <div
+                    key={q.id || qIdx}
+                    className="border-2 border-black bg-neutral-50 p-4 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] space-y-3"
+                  >
+                    <div className="flex items-center justify-between border-b border-black/20 pb-2">
+                      <span className="px-2 py-0.5 bg-black text-white font-black text-xs">
+                        Question #{qIdx + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeQuestion(qIdx)}
+                        className="text-xs text-red-600 font-black hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Remove Question
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black uppercase tracking-wider mb-1 text-black">
+                        Question in German *
+                      </label>
+                      <input
+                        type="text"
+                        value={q.question}
+                        onChange={(e) => updateQuestionText(qIdx, "question", e.target.value)}
+                        placeholder="e.g., Was macht Anna am Morgen?"
+                        className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white"
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase text-neutral-600 mb-1">
+                          Question in English (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={q.question_english || ""}
+                          onChange={(e) => updateQuestionText(qIdx, "question_english", e.target.value)}
+                          placeholder="e.g., What does Anna do in the morning?"
+                          className="w-full px-2.5 py-1.5 border border-black text-xs bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold uppercase text-neutral-600 mb-1 font-malayalam">
+                          Question in Malayalam (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={q.question_malayalam || ""}
+                          onChange={(e) => updateQuestionText(qIdx, "question_malayalam", e.target.value)}
+                          placeholder="ചോദ്യം മലയാളത്തിൽ..."
+                          className="w-full px-2.5 py-1.5 border border-black text-xs bg-white font-malayalam"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 4 Answer Options */}
+                    <div className="space-y-2 pt-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                        4 Answer Options (Click number/radio button to mark the CORRECT answer)
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {q.options.map((opt, optIdx) => {
+                          const isCorrect = q.correct_option_index === optIdx;
+                          return (
+                            <div
+                              key={optIdx}
+                              className={`p-2 border-2 flex items-center gap-2 transition-all ${
+                                isCorrect
+                                  ? "border-green-600 bg-green-50 shadow-[2px_2px_0px_0px_#16a34a]"
+                                  : "border-black bg-white"
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setCorrectOption(qIdx, optIdx)}
+                                className={`w-7 h-7 shrink-0 flex items-center justify-center border font-black text-xs transition-colors cursor-pointer ${
+                                  isCorrect
+                                    ? "bg-green-600 text-white border-green-700"
+                                    : "bg-neutral-100 hover:bg-neutral-200 border-neutral-400 text-black"
+                                }`}
+                                title={isCorrect ? "Marked as Correct Answer" : "Click to mark as Correct Answer"}
+                              >
+                                {isCorrect ? "✓" : optIdx + 1}
+                              </button>
+                              <input
+                                type="text"
+                                value={opt}
+                                onChange={(e) => updateOptionText(qIdx, optIdx, e.target.value)}
+                                placeholder={`Option ${optIdx + 1}${isCorrect ? " (Correct Answer)" : ""}`}
+                                className="w-full px-2 py-1 text-xs font-bold border border-neutral-300 bg-transparent focus:border-black"
+                                required
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Explanation */}
+                    <div className="pt-1">
+                      <label className="block text-[11px] font-bold uppercase text-neutral-600 mb-1">
+                        Explanation / Why this is correct (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={q.explanation || ""}
+                        onChange={(e) => updateQuestionText(qIdx, "explanation", e.target.value)}
+                        placeholder="e.g., Anna trinkt am Morgen gerne Kaffee laut Abschnitt 1."
+                        className="w-full px-2.5 py-1.5 border border-neutral-400 text-xs bg-white"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-between border-t-2 border-black pt-4">
+            <button
+              type="submit"
+              className="px-6 py-2.5 border-2 border-black bg-[#ffe600] text-black font-black text-sm uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer"
+            >
+              💾 Save Reading Exercise &amp; Quiz
+            </button>
+
+            {readingId && (
+              <button
+                type="button"
+                onClick={handleDeleteReadingExercise}
+                className="px-4 py-2 border-2 border-red-600 bg-white text-red-600 hover:bg-red-600 hover:text-white font-black text-xs uppercase tracking-wider transition-colors cursor-pointer"
+              >
+                🗑️ Delete Exercise
+              </button>
+            )}
+          </div>
+        </form>
       )}
 
       {/* ---------------- BATCH WORD ENTRY / EDIT FORM ---------------- */}

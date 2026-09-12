@@ -64,3 +64,25 @@ export interface UserRole {
   email: string;
   role: "admin" | "user";
 }
+
+export interface ReadingQuestion {
+  id: string;
+  question: string;
+  question_english?: string;
+  question_malayalam?: string;
+  options: string[];
+  correct_option_index: number;
+  explanation?: string;
+}
+
+export interface CategoryReadingExercise {
+  id: string;
+  category_name: string;
+  level: Level;
+  paragraph_german: string;
+  paragraph_english?: string;
+  paragraph_malayalam?: string;
+  questions: ReadingQuestion[];
+  created_at?: string;
+  updated_at?: string;
+}

@@ -11,6 +11,7 @@ import {
   Level,
   Category,
   GoetheSection,
+  CategoryReadingExercise,
 } from "@/types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -371,5 +372,65 @@ export async function deleteGoetheMaterialItem(id: string): Promise<boolean> {
     }
   }
   memoryGoethe = memoryGoethe.filter((m) => m.id !== id);
+  return true;
+}
+
+// ----------------- CATEGORY READING EXERCISES & QUIZ -----------------
+export async function getCategoryReadingExercises(
+  level?: Level,
+  categoryName?: string
+): Promise<CategoryReadingExercise[]> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    let query = supabase.from("category_reading_exercises").select("*");
+    if (level) query = query.eq("level", level);
+    if (categoryName) query = query.eq("category_name", categoryName);
+    const { data, error } = await query;
+    if (!error && data) return data as CategoryReadingExercise[];
+    if (error) console.error("Supabase getCategoryReadingExercises error:", error.message);
+  }
+  return [];
+}
+
+export async function mutateCategoryReadingExercise(
+  item: Partial<CategoryReadingExercise> & { category_name: string; level: Level; paragraph_german: string }
+): Promise<CategoryReadingExercise> {
+  const payload: CategoryReadingExercise = {
+    id: item.id || crypto.randomUUID(),
+    category_name: item.category_name,
+    level: item.level,
+    paragraph_german: item.paragraph_german,
+    paragraph_english: item.paragraph_english || "",
+    paragraph_malayalam: item.paragraph_malayalam || "",
+    questions: item.questions || [],
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("category_reading_exercises")
+      .upsert(payload, { onConflict: "category_name,level" })
+      .select()
+      .single();
+    if (error) {
+      console.error("Supabase upsert category_reading_exercises error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as CategoryReadingExercise;
+  }
+  return payload;
+}
+
+export async function deleteCategoryReadingExercise(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("category_reading_exercises").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete category_reading_exercises error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
   return true;
 }
