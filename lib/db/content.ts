@@ -25,6 +25,7 @@ export const initialCategories: VocabularyCategory[] = [
   { id: "cat-8", name: "Housing & Living", order_index: 8 },
   { id: "cat-9", name: "Work & Career", order_index: 9 },
   { id: "cat-10", name: "Travel & Directions", order_index: 10 },
+  { id: "cat-11", name: "Medical German", order_index: 11 },
 ];
 
 // Fallback in-memory cache ONLY when Supabase credentials are not configured in .env.local
