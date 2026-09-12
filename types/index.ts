@@ -28,6 +28,7 @@ export interface VocabularyItem {
   malayalam_meaning: string;
   content?: string;
   examples?: Example[];
+  order_index?: number;
   created_at?: string;
   updated_at?: string;
 }

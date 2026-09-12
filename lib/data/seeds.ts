@@ -11,6 +11,7 @@ export const initialVocabulary: VocabularyItem[] = [
     english_meaning: "Good day! How are you?",
     malayalam_meaning: "ശുഭദിനം! നിങ്ങൾക്ക് എങ്ങനെയുണ്ട്?",
     content: "German greetings change depending on the time of day and the level of formality. 'Guten Tag' is universally accepted during daytime.",
+    order_index: 1,
     examples: [
       {
         german: "Guten Morgen, Herr Müller!",
@@ -34,6 +35,7 @@ export const initialVocabulary: VocabularyItem[] = [
     english_meaning: "My name is Rahul and I come from India.",
     malayalam_meaning: "എന്റെ പേര് രാഹുൽ എന്നാണ്, ഞാൻ ഇന്ത്യയിൽ നിന്നാണ് വരുന്നത്.",
     content: "Essential phrases for introducing yourself in German for A1 speaking exams and daily life.",
+    order_index: 1,
     examples: [
       {
         german: "Woher kommen Sie?",
@@ -57,6 +59,7 @@ export const initialVocabulary: VocabularyItem[] = [
     english_meaning: "Mother, Father, Parents",
     malayalam_meaning: "അമ്മ, അച്ഛൻ, മാതാപിതാക്കൾ",
     content: "Learn essential family vocabulary in German with correct articles (der, die, das).",
+    order_index: 2,
     examples: [
       {
         german: "Das ist meine Mutter.",
@@ -80,6 +83,7 @@ export const initialVocabulary: VocabularyItem[] = [
     english_meaning: "What can I get you? I would like one kilogram of apples.",
     malayalam_meaning: "എന്താണ് വേണ്ടത്? എനിക്ക് ഒരു കിലോ ആപ്പിൾ വേണമായിരുന്നു.",
     content: "Polite expressions with 'hätte gern' and 'möchte' used at the supermarket and bakery.",
+    order_index: 1,
     examples: [
       {
         german: "Wie viel kostet das?",
@@ -103,6 +107,7 @@ export const initialVocabulary: VocabularyItem[] = [
     english_meaning: "In my opinion, environmental protection is very important.",
     malayalam_meaning: "എന്റെ അഭിപ്രായത്തിൽ പരിസ്ഥിതി സംരക്ഷണം വളരെ പ്രധാനമാണ്.",
     content: "Key phrases to introduce arguments and opinions during B1 presentations and discussions.",
+    order_index: 1,
     examples: [
       {
         german: "Ich bin der Ansicht, dass wir mehr Deutsch üben sollten.",
@@ -121,6 +126,7 @@ export const initialVocabulary: VocabularyItem[] = [
     english_meaning: "I would hereby like to complain about the deficient service.",
     malayalam_meaning: "മോശമായ സേവനത്തെക്കുറിച്ച് ഇതിനാൽ ഞാൻ പരാതിപ്പെടാൻ ആഗ്രഹിക്കുന്നു.",
     content: "Formal complaint structures and connectors used in Goethe B2 writing modules.",
+    order_index: 1,
     examples: [
       {
         german: "Aus diesem Grund fordere ich eine angemessene Rückerstattung.",

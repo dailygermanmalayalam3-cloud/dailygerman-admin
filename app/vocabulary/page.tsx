@@ -15,6 +15,7 @@ interface WordEntryInput {
   sentence_german: string;
   sentence_english: string;
   sentence_malayalam: string;
+  order_index?: number;
 }
 
 export default function AdminVocabularyPage() {
@@ -71,6 +72,7 @@ export default function AdminVocabularyPage() {
       sentence_german: "",
       sentence_english: "",
       sentence_malayalam: "",
+      order_index: 1,
     },
   ]);
 
@@ -210,6 +212,7 @@ export default function AdminVocabularyPage() {
         sentence_german: "",
         sentence_english: "",
         sentence_malayalam: "",
+        order_index: prev.length + 1,
       },
     ]);
   };
@@ -218,7 +221,7 @@ export default function AdminVocabularyPage() {
     setWordEntries((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleWordEntryChange = (index: number, field: keyof WordEntryInput, value: string) => {
+  const handleWordEntryChange = (index: number, field: keyof WordEntryInput, value: any) => {
     setWordEntries((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
@@ -242,7 +245,7 @@ export default function AdminVocabularyPage() {
       return;
     }
 
-    const payloadWords = validRows.map((w) => {
+    const payloadWords = validRows.map((w, idx) => {
       const examples: Example[] = [];
       if (w.sentence_german && w.sentence_german.trim()) {
         examples.push({
@@ -261,6 +264,7 @@ export default function AdminVocabularyPage() {
         english_meaning: w.english_meaning.trim(),
         malayalam_meaning: w.malayalam_meaning.trim(),
         examples,
+        order_index: w.order_index !== undefined ? Number(w.order_index) : idx + 1,
       };
     });
 
@@ -275,7 +279,9 @@ export default function AdminVocabularyPage() {
       if (res.ok && data.items) {
         setItems((prev) => {
           const newIds = new Set(data.items.map((x: VocabularyItem) => x.id));
-          return [...data.items, ...prev.filter((i) => !newIds.has(i.id))];
+          return [...data.items, ...prev.filter((i) => !newIds.has(i.id))].sort(
+            (a, b) => (a.order_index ?? 1) - (b.order_index ?? 1)
+          );
         });
         setStatusMsg({
           type: "success",
@@ -291,6 +297,7 @@ export default function AdminVocabularyPage() {
             sentence_german: "",
             sentence_english: "",
             sentence_malayalam: "",
+            order_index: 1,
           },
         ]);
         setShowAddWords(false);
@@ -303,7 +310,7 @@ export default function AdminVocabularyPage() {
     }
   };
 
-  // ---------------- SINGLE WORD EDIT ----------------
+  // ---------------- SINGLE WORD EDIT & QUICK REORDER ----------------
   const handleEditSingle = (item: VocabularyItem) => {
     setSelectedCategory(item.category);
     setSelectedLevel(item.level);
@@ -316,12 +323,37 @@ export default function AdminVocabularyPage() {
         sentence_german: item.examples?.[0]?.german || "",
         sentence_english: item.examples?.[0]?.english || "",
         sentence_malayalam: item.examples?.[0]?.malayalam || "",
+        order_index: item.order_index ?? 1,
       },
     ]);
     setEditingItem(item);
     setShowAddWords(true);
     setShowCategoryManager(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleUpdateWordOrder = async (item: VocabularyItem, newOrder: number) => {
+    try {
+      const res = await fetch("/api/admin/vocabulary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...item,
+          order_index: newOrder,
+        }),
+      });
+      if (res.ok) {
+        setItems((prev) =>
+          prev
+            .map((w) => (w.id === item.id ? { ...w, order_index: newOrder } : w))
+            .sort((a, b) => (a.order_index ?? 1) - (b.order_index ?? 1))
+        );
+      } else {
+        throw new Error("Failed to update order");
+      }
+    } catch {
+      setStatusMsg({ type: "error", text: "Could not update word order." });
+    }
   };
 
   const handleDeleteWord = async (id: string) => {
@@ -597,11 +629,13 @@ export default function AdminVocabularyPage() {
   };
 
   // Filtered list
-  const filteredItems = items.filter((item) => {
-    if (filterLevel !== "All" && item.level !== filterLevel) return false;
-    if (filterCategory !== "All" && item.category !== filterCategory) return false;
-    return true;
-  });
+  const filteredItems = items
+    .filter((item) => {
+      if (filterLevel !== "All" && item.level !== filterLevel) return false;
+      if (filterCategory !== "All" && item.category !== filterCategory) return false;
+      return true;
+    })
+    .sort((a, b) => (a.order_index ?? 1) - (b.order_index ?? 1));
 
   return (
     <div className="space-y-8">
@@ -1456,9 +1490,25 @@ export default function AdminVocabularyPage() {
                   className="border-2 border-black bg-white p-4 space-y-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                 >
                   <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
-                    <span className="text-[11px] font-black uppercase bg-[#ffe600] border border-black px-2 py-0.5 text-black">
-                      Word #{idx + 1}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] font-black uppercase bg-[#ffe600] border border-black px-2 py-0.5 text-black">
+                        Word #{idx + 1}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <label className="text-[10px] font-bold uppercase text-neutral-600">
+                          Order:
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={entry.order_index ?? idx + 1}
+                          onChange={(e) =>
+                            handleWordEntryChange(idx, "order_index", parseInt(e.target.value) || 1)
+                          }
+                          className="w-16 px-1.5 py-0.5 border border-black text-xs font-black text-center"
+                        />
+                      </div>
+                    </div>
                     {wordEntries.length > 1 && !editingItem && (
                       <button
                         type="button"
@@ -1634,6 +1684,7 @@ export default function AdminVocabularyPage() {
             <table className="w-full text-left text-xs border-collapse">
               <thead className="bg-black text-white uppercase text-[11px] font-black">
                 <tr>
+                  <th className="p-3 border-r border-neutral-700">Order</th>
                   <th className="p-3 border-r border-neutral-700">Level</th>
                   <th className="p-3 border-r border-neutral-700">Category</th>
                   <th className="p-3 border-r border-neutral-700">German Word</th>
@@ -1646,6 +1697,31 @@ export default function AdminVocabularyPage() {
               <tbody className="divide-y divide-neutral-200">
                 {filteredItems.map((item) => (
                   <tr key={item.id} className="hover:bg-neutral-50 transition-colors">
+                    <td className="p-3 font-bold border-r border-neutral-200 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-6 h-6 flex items-center justify-center bg-[#ffe600] border border-black font-black text-xs text-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                          {item.order_index ?? 1}
+                        </span>
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateWordOrder(item, Math.max(1, (item.order_index ?? 1) - 1))}
+                            className="p-1 border border-black hover:bg-neutral-100 cursor-pointer"
+                            title="Move up"
+                          >
+                            <ChevronUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateWordOrder(item, (item.order_index ?? 1) + 1)}
+                            className="p-1 border border-black hover:bg-neutral-100 cursor-pointer"
+                            title="Move down"
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </td>
                     <td className="p-3 font-black border-r border-neutral-200">
                       <span className="px-2 py-0.5 bg-[#ffe600] border border-black text-black">
                         {item.level}

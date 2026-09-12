@@ -41,7 +41,7 @@ export async function getVocabulary(level?: Level, category?: Category): Promise
   try {
     const supabase = await createServerSupabaseClient();
     if (supabase) {
-      let query = supabase.from("vocabulary").select("*").order("created_at", { ascending: false });
+      let query = supabase.from("vocabulary").select("*").order("order_index", { ascending: true }).order("created_at", { ascending: false });
       if (level) query = query.eq("level", level);
       if (category) query = query.eq("category", category);
       const { data, error } = await query;
@@ -56,11 +56,13 @@ export async function getVocabulary(level?: Level, category?: Category): Promise
     console.warn("Supabase connection unavailable, using fallback:", err);
   }
 
-  return memoryVocab.filter((item) => {
-    if (level && item.level !== level) return false;
-    if (category && item.category !== category) return false;
-    return true;
-  });
+  return memoryVocab
+    .filter((item) => {
+      if (level && item.level !== level) return false;
+      if (category && item.category !== category) return false;
+      return true;
+    })
+    .sort((a, b) => (a.order_index ?? 1) - (b.order_index ?? 1));
 }
 
 export async function getVocabularyBySlug(slug: string): Promise<VocabularyItem | null> {
@@ -214,6 +216,7 @@ export async function mutateVocabulary(item: Partial<VocabularyItem> & { level: 
     malayalam_meaning: item.malayalam_meaning || "",
     content: item.content || "",
     examples: item.examples || [],
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
     created_at: item.created_at || new Date().toISOString(),
   };
 
@@ -237,7 +240,7 @@ export async function mutateVocabulary(item: Partial<VocabularyItem> & { level: 
 }
 
 export async function batchMutateVocabulary(words: (Partial<VocabularyItem> & { level: Level; category: Category; german_content: string; english_meaning: string; malayalam_meaning: string })[]): Promise<VocabularyItem[]> {
-  const payloads: VocabularyItem[] = words.map((item) => {
+  const payloads: VocabularyItem[] = words.map((item, idx) => {
     const german = item.german_content.trim();
     const title = item.title?.trim() || german;
     const randomSuffix = Math.random().toString(36).substring(2, 6);
@@ -253,6 +256,7 @@ export async function batchMutateVocabulary(words: (Partial<VocabularyItem> & { 
       malayalam_meaning: item.malayalam_meaning || "",
       content: item.content || "",
       examples: item.examples || [],
+      order_index: item.order_index !== undefined ? Number(item.order_index) : (idx + 1),
       created_at: item.created_at || new Date().toISOString(),
     };
   });
