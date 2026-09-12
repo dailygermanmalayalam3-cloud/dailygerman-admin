@@ -32,3 +32,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Never use non-UUID strings (e.g. `cat-1`, `vocab-1`, numeric IDs, or slug strings) as table primary keys or foreign keys.
 - Even when adding test data, seed data, mock records, or temporary rows for testing in the DB, **always use valid RFC 4122 UUIDs** (e.g., generated via `crypto.randomUUID()` or `gen_random_uuid()`).
 - All database table `id` columns in PostgreSQL are configured as native `UUID` with `DEFAULT gen_random_uuid()`. Non-UUID inputs will be rejected by PostgreSQL.
+
+## 6. Theme & Responsive Rendering Integrity (MANDATORY)
+- **Dark Mode & Light Mode Compatibility**:
+  - Any UI modifications MUST strictly support both dark mode and light mode without visual regressions, unreadable text, broken contrast, or theme toggle flickering.
+  - Always pair color classes with appropriate `dark:` variants (e.g. background, text, borders, shadows, inputs, modals, buttons).
+- **Cross-Device Responsive Design**:
+  - Any layout or component changes MUST render cleanly across all device form factors — including mobile browsers (smartphones, small viewports), tablets, and desktop screens.
+  - Avoid fixed widths that cause horizontal scroll overflow on mobile screens; use responsive utilities (`sm:`, `md:`, `lg:`, `overflow-x-auto`, flex-wrap, grid layouts).
+  - Verify touch targets and readable typography on mobile viewports.
+
