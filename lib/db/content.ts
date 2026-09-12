@@ -7,6 +7,8 @@ import {
   VocabularyItem,
   VocabularyCategory,
   GrammarTopic,
+  GrammarVideo,
+  GrammarExercise,
   GoetheMaterial,
   Level,
   Category,
@@ -33,6 +35,8 @@ export const initialCategories: VocabularyCategory[] = [
 // Fallback in-memory cache ONLY when Supabase credentials are not configured in .env.local
 let memoryVocab = [...initialVocabulary];
 let memoryGrammar = [...initialGrammarTopics];
+let memoryGrammarVideos: GrammarVideo[] = [];
+let memoryGrammarExercises: GrammarExercise[] = [];
 let memoryGoethe = [...initialGoetheMaterials];
 let memoryCategories = [...initialCategories];
 
@@ -333,6 +337,128 @@ export async function deleteGrammarTopicItem(id: string): Promise<boolean> {
     }
   }
   memoryGrammar = memoryGrammar.filter((g) => g.id !== id);
+  return true;
+}
+
+// ----------------- GRAMMAR VIDEOS -----------------
+export async function getGrammarVideos(topicId?: string): Promise<GrammarVideo[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase.from("grammar_videos").select("*").order("order_index", { ascending: true });
+      if (topicId) query = query.eq("topic_id", topicId);
+      const { data, error } = await query;
+      if (!error && data) return data as GrammarVideo[];
+      if (error) console.error("Supabase error fetching grammar videos:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+
+  return memoryGrammarVideos
+    .filter((v) => (!topicId ? true : v.topic_id === topicId))
+    .sort((a, b) => (a.order_index ?? 1) - (b.order_index ?? 1));
+}
+
+export async function mutateGrammarVideo(item: Partial<GrammarVideo> & { topic_id: string; video_url: string }): Promise<GrammarVideo> {
+  const payload: GrammarVideo = {
+    id: item.id || crypto.randomUUID(),
+    topic_id: item.topic_id,
+    title: item.title || "",
+    video_url: item.video_url.trim(),
+    description: item.description || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("grammar_videos").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase error upserting grammar video:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as GrammarVideo;
+  }
+
+  const idx = memoryGrammarVideos.findIndex((v) => v.id === payload.id);
+  if (idx >= 0) memoryGrammarVideos[idx] = payload;
+  else memoryGrammarVideos.push(payload);
+  return payload;
+}
+
+export async function deleteGrammarVideo(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("grammar_videos").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete grammar video error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  memoryGrammarVideos = memoryGrammarVideos.filter((v) => v.id !== id);
+  return true;
+}
+
+// ----------------- GRAMMAR EXERCISES -----------------
+export async function getGrammarExercises(topicId?: string): Promise<GrammarExercise[]> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (supabase) {
+      let query = supabase.from("grammar_exercises").select("*").order("order_index", { ascending: true });
+      if (topicId) query = query.eq("topic_id", topicId);
+      const { data, error } = await query;
+      if (!error && data) return data as GrammarExercise[];
+      if (error) console.error("Supabase error fetching grammar exercises:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase connection unavailable:", err);
+  }
+
+  return memoryGrammarExercises
+    .filter((e) => (!topicId ? true : e.topic_id === topicId))
+    .sort((a, b) => (a.order_index ?? 1) - (b.order_index ?? 1));
+}
+
+export async function mutateGrammarExercise(item: Partial<GrammarExercise> & { topic_id: string; content: string }): Promise<GrammarExercise> {
+  const payload: GrammarExercise = {
+    id: item.id || crypto.randomUUID(),
+    topic_id: item.topic_id,
+    title: item.title || "",
+    content: item.content.trim(),
+    solution: item.solution || "",
+    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("grammar_exercises").upsert(payload).select().single();
+    if (error) {
+      console.error("Supabase error upserting grammar exercise:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    if (data) return data as GrammarExercise;
+  }
+
+  const idx = memoryGrammarExercises.findIndex((e) => e.id === payload.id);
+  if (idx >= 0) memoryGrammarExercises[idx] = payload;
+  else memoryGrammarExercises.push(payload);
+  return payload;
+}
+
+export async function deleteGrammarExercise(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("grammar_exercises").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase delete grammar exercise error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  memoryGrammarExercises = memoryGrammarExercises.filter((e) => e.id !== id);
   return true;
 }
 

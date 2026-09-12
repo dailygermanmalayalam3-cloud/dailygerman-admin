@@ -33,17 +33,42 @@ export interface VocabularyItem {
   updated_at?: string;
 }
 
+export interface GrammarVideo {
+  id: string;
+  topic_id: string;
+  title?: string;
+  video_url: string;
+  description?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface GrammarExercise {
+  id: string;
+  topic_id: string;
+  title?: string;
+  content: string;
+  solution?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface GrammarTopic {
   id: string;
   level: Level;
   title: string;
   slug: string;
-  short_description: string;
-  explanation_malayalam: string;
-  content: string;
+  short_description?: string;
+  explanation_malayalam?: string;
+  content?: string;
   examples?: Example[];
   order_index?: number;
+  videos?: GrammarVideo[];
+  exercises?: GrammarExercise[];
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface GoetheMaterial {
