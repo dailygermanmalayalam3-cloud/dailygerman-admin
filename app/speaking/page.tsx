@@ -653,14 +653,14 @@ export default function AdminSpeakingPage() {
                       </label>
                       <textarea
                         required
-                        rows={7}
+                        rows={8}
                         value={convText}
                         onChange={(e) => setConvText(e.target.value)}
-                        placeholder={`Patient: Guten Morgen. Ich habe einen Termin.\nRezeptionistin: Guten Morgen. Wie heißen Sie?\nPatient: Ich heiße Thomas Müller.\nRezeptionistin: Bitte nehmen Sie im Wartezimmer Platz.`}
+                        placeholder={`Patient: Guten Morgen. Ich habe einen Termin.\nGood Morning. I have an appointment.\nസുപ്രഭാതം. എനിക്ക് ഒരു അപ്പോയിന്റ്മെന്റ് ഉണ്ട്.\nRezeptionistin: Guten Morgen. Wie heißen Sie?\nGood Morning. What is your name?\nസുപ്രഭാതം. എന്താണ് താങ്കളുടെ പേര്?`}
                         className="w-full p-3 text-xs sm:text-sm font-mono leading-relaxed border border-black dark:border-neutral-700 bg-white dark:bg-[#121212] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#ffe600]"
                       />
                       <p className="text-[10px] text-neutral-500 font-medium">
-                        Tip: Format each line as <strong>Speaker: Message</strong> (e.g. &quot;Patient: Guten Morgen&quot;) for clean automatic speech bubble rendering in the learner view.
+                        Tip: Format each dialogue turn as <strong>Speaker: German line</strong>, followed by the English translation line, and the Malayalam translation line. The Learner app will automatically group them into speech bubbles with trilingual toggles.
                       </p>
                     </div>
 
