@@ -12,6 +12,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 2. Mandatory Local Testing
 - Before merging any changes into `main`, test locally:
+  - Run `npm test` to ensure 100% passing tests with 0 failures across all backend test suites.
   - Run `npm run build` to ensure 0 TypeScript / compilation errors.
   - Verify changes on the local dev server (port 3001 for Admin CMS, port 3000 for Learner UI) and confirm functionality.
 
@@ -48,3 +49,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - **Execute Both Queries**: Run both the original (existing) query and the new proposed optimized query directly through MCP tools (e.g., Supabase MCP `execute_sql`).
   - **Verify Output Equivalence**: Rigorously verify that both queries return identical data, column structures, sorting, and row counts.
   - **Save Only After Verification**: Only after confirming that both queries yield the exact same response may the changes be applied and saved to the feature branch.
+
+## 8. Backend Test Suite & Pre-Push Verification Standard (MANDATORY)
+- **Comprehensive Backend Coverage**:
+  - All backend modules, API routes, database access layers (`lib/db/*`), middleware security/rate limiting, authentication, and validation logic MUST have comprehensive automated unit/integration tests.
+- **Mandatory Test Addition on Backend Changes**:
+  - Whenever any backend endpoint, database query, or server-side logic is added or modified, corresponding new testcases MUST be created to cover:
+    - Happy paths (valid payloads, standard queries, correct responses, expected status codes)
+    - Error handling & edge cases (invalid inputs, missing/malformed UUIDs, unauthorized access, database errors, missing parameters)
+- **Full Test Run Before Push & Merge**:
+  - **ALL testcases MUST be executed and achieve 100% pass rate (`npm test`)** before pushing changes to remote and before requesting permission to merge into `main`.
+  - Pushing or merging with failing, skipped, or pending tests is strictly prohibited.
+
