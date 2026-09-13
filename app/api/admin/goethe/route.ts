@@ -1,5 +1,6 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { mutateGoetheMaterial, deleteGoetheMaterialItem } from "@/lib/db/content";
+import { revalidateLearnerPaths } from "@/lib/revalidate";
 
 export async function POST(req: Request) {
   try {
@@ -8,6 +9,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
     const result = await mutateGoetheMaterial(body);
+    await revalidateLearnerPaths(["/", "/goethe"]);
     return NextResponse.json({ success: true, item: result });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
@@ -20,6 +22,7 @@ export async function DELETE(req: Request) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
     await deleteGoetheMaterialItem(id);
+    await revalidateLearnerPaths(["/", "/goethe"]);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

@@ -5,6 +5,7 @@ import {
   deleteCategoryParagraph,
 } from "@/lib/db/content";
 import { Level } from "@/types";
+import { revalidateLearnerPaths } from "@/lib/revalidate";
 
 export const revalidate = 0;
 
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     const saved = await mutateCategoryParagraph(body);
+    await revalidateLearnerPaths(["/", `/${body.level.toLowerCase()}`]);
     return NextResponse.json({ item: saved });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to save paragraph";
@@ -52,6 +54,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     await deleteCategoryParagraph(id);
+    await revalidateLearnerPaths(["/", "/a1", "/a2", "/b1", "/b2"]);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to delete paragraph";

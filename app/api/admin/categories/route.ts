@@ -4,6 +4,7 @@ import {
   mutateVocabularyCategory,
   deleteVocabularyCategory,
 } from "@/lib/db/content";
+import { revalidateLearnerPaths } from "@/lib/revalidate";
 
 export async function GET() {
   try {
@@ -27,6 +28,7 @@ export async function POST(req: Request) {
       order_index: Number(body.order_index) || 1,
     });
 
+    await revalidateLearnerPaths(["/", "/a1", "/a2", "/b1", "/b2"]);
     return NextResponse.json({ success: true, item });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
@@ -40,6 +42,7 @@ export async function DELETE(req: Request) {
     if (!id) return NextResponse.json({ error: "Missing category id" }, { status: 400 });
 
     await deleteVocabularyCategory(id);
+    await revalidateLearnerPaths(["/", "/a1", "/a2", "/b1", "/b2"]);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

@@ -4,6 +4,7 @@ import {
   mutateMedicalWord,
   deleteMedicalWord,
 } from "@/lib/db/content";
+import { revalidateLearnerPaths } from "@/lib/revalidate";
 
 export const revalidate = 0;
 
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
       );
     }
     const item = await mutateMedicalWord(body);
+    await revalidateLearnerPaths(["/", "/medical"]);
     return NextResponse.json({ success: true, item });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
@@ -40,6 +42,7 @@ export async function DELETE(req: Request) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
     await deleteMedicalWord(id);
+    await revalidateLearnerPaths(["/", "/medical"]);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

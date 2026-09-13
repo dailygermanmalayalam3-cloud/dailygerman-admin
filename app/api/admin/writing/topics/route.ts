@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getWritingTopics, mutateWritingTopic, deleteWritingTopic } from "@/lib/db/content";
 import { Level } from "@/types";
+import { revalidateLearnerPaths } from "@/lib/revalidate";
 
 export const revalidate = 0;
 
@@ -22,6 +23,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields (level, title, slug)" }, { status: 400 });
     }
     const item = await mutateWritingTopic(body);
+    const paths = ["/", "/writing", `/${body.level.toLowerCase()}`];
+    if (body.slug) paths.push(`/writing/${body.slug}`);
+    await revalidateLearnerPaths(paths);
     return NextResponse.json({ success: true, item });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
@@ -34,6 +38,7 @@ export async function DELETE(req: Request) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
     await deleteWritingTopic(id);
+    await revalidateLearnerPaths(["/", "/writing", "/a1", "/a2", "/b1", "/b2"]);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

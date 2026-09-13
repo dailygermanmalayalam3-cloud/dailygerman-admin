@@ -5,6 +5,7 @@ import {
   deleteCategoryQuestion,
 } from "@/lib/db/content";
 import { Level } from "@/types";
+import { revalidateLearnerPaths } from "@/lib/revalidate";
 
 export const revalidate = 0;
 
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     const saved = await mutateCategoryQuestion(body);
+    await revalidateLearnerPaths(["/", `/${body.level.toLowerCase()}`]);
     return NextResponse.json({ item: saved });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to save question";
@@ -64,6 +66,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     await deleteCategoryQuestion(id);
+    await revalidateLearnerPaths(["/", "/a1", "/a2", "/b1", "/b2"]);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to delete question";

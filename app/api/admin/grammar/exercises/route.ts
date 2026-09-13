@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getGrammarExercises, mutateGrammarExercise, deleteGrammarExercise } from "@/lib/db/content";
+import { revalidateLearnerPaths } from "@/lib/revalidate";
 
 export const revalidate = 0;
 
@@ -21,6 +22,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields (topic_id, content)" }, { status: 400 });
     }
     const item = await mutateGrammarExercise(body);
+    await revalidateLearnerPaths(["/grammar", "/a1", "/a2", "/b1", "/b2"]);
     return NextResponse.json({ success: true, item });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
@@ -33,6 +35,7 @@ export async function DELETE(req: Request) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
     await deleteGrammarExercise(id);
+    await revalidateLearnerPaths(["/grammar", "/a1", "/a2", "/b1", "/b2"]);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
