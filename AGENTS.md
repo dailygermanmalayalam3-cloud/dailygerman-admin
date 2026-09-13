@@ -42,3 +42,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - Avoid fixed widths that cause horizontal scroll overflow on mobile screens; use responsive utilities (`sm:`, `md:`, `lg:`, `overflow-x-auto`, flex-wrap, grid layouts).
   - Verify touch targets and readable typography on mobile viewports.
 
+## 7. Read Query Optimization Verification Standard (MANDATORY)
+- **Side-by-Side Verification via MCP Before Saving**:
+  - Whenever asked to optimize any database or API read query, **NEVER** save or commit the query modifications immediately.
+  - **Execute Both Queries**: Run both the original (existing) query and the new proposed optimized query directly through MCP tools (e.g., Supabase MCP `execute_sql`).
+  - **Verify Output Equivalence**: Rigorously verify that both queries return identical data, column structures, sorting, and row counts.
+  - **Save Only After Verification**: Only after confirming that both queries yield the exact same response may the changes be applied and saved to the feature branch.
