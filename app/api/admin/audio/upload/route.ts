@@ -26,13 +26,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No audio file provided" }, { status: 400 });
     }
 
-    // Determine extension from mime type
-    const mimeType = file.type || "audio/webm";
+    // Determine extension and clean base MIME type (e.g. "audio/webm;codecs=opus" -> "audio/webm")
+    const rawMime = file.type || "audio/webm";
+    const cleanMime = rawMime.split(";")[0].trim() || "audio/webm";
     let ext = "webm";
-    if (mimeType.includes("mp4") || mimeType.includes("m4a")) ext = "mp4";
-    else if (mimeType.includes("mpeg") || mimeType.includes("mp3")) ext = "mp3";
-    else if (mimeType.includes("ogg")) ext = "ogg";
-    else if (mimeType.includes("wav")) ext = "wav";
+    if (rawMime.includes("mp4") || rawMime.includes("m4a")) ext = "mp4";
+    else if (rawMime.includes("mpeg") || rawMime.includes("mp3")) ext = "mp3";
+    else if (rawMime.includes("ogg")) ext = "ogg";
+    else if (rawMime.includes("wav")) ext = "wav";
 
     const uniqueId = crypto.randomUUID();
     const filePath = `${prefix}/${uniqueId}.${ext}`;
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
     const { error: uploadError } = await supabase.storage
       .from("pronunciations")
       .upload(filePath, buffer, {
-        contentType: mimeType,
+        contentType: cleanMime,
         upsert: true,
       });
 
