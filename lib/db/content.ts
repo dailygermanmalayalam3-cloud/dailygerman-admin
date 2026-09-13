@@ -231,6 +231,8 @@ export async function mutateVocabulary(item: Partial<VocabularyItem> & { level: 
     malayalam_meaning: item.malayalam_meaning || "",
     content: item.content || "",
     examples: item.examples || [],
+    audio_url: item.audio_url || undefined,
+    sentence_audio_url: item.sentence_audio_url || undefined,
     order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
     created_at: item.created_at || new Date().toISOString(),
   };
@@ -271,6 +273,8 @@ export async function batchMutateVocabulary(words: (Partial<VocabularyItem> & { 
       malayalam_meaning: item.malayalam_meaning || "",
       content: item.content || "",
       examples: item.examples || [],
+      audio_url: item.audio_url || undefined,
+      sentence_audio_url: item.sentence_audio_url || undefined,
       order_index: item.order_index !== undefined ? Number(item.order_index) : (idx + 1),
       created_at: item.created_at || new Date().toISOString(),
     };

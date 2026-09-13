@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { VocabularyItem, VocabularyCategory, Level, Example, CategoryParagraph, CategoryQuestion } from "@/types";
-import { Plus, Trash2, Edit3, ArrowLeft, Check, AlertCircle, FolderPlus, ArrowUpDown, ChevronDown, ChevronUp, BookOpen, HelpCircle } from "lucide-react";
+import { Plus, Trash2, Edit3, ArrowLeft, Check, AlertCircle, FolderPlus, ArrowUpDown, ChevronDown, ChevronUp, BookOpen, HelpCircle, Volume2 } from "lucide-react";
+import AudioRecorder from "@/components/AudioRecorder";
 
 const LEVELS: Level[] = ["A1", "A2", "B1", "B2"];
 
@@ -15,6 +16,8 @@ interface WordEntryInput {
   sentence_german: string;
   sentence_english: string;
   sentence_malayalam: string;
+  audio_url?: string;
+  sentence_audio_url?: string;
   order_index?: number;
 }
 
@@ -212,6 +215,8 @@ export default function AdminVocabularyPage() {
         sentence_german: "",
         sentence_english: "",
         sentence_malayalam: "",
+        audio_url: "",
+        sentence_audio_url: "",
         order_index: prev.length + 1,
       },
     ]);
@@ -264,6 +269,8 @@ export default function AdminVocabularyPage() {
         english_meaning: w.english_meaning.trim(),
         malayalam_meaning: w.malayalam_meaning.trim(),
         examples,
+        audio_url: w.audio_url || undefined,
+        sentence_audio_url: w.sentence_audio_url || undefined,
         order_index: w.order_index !== undefined ? Number(w.order_index) : idx + 1,
       };
     });
@@ -297,6 +304,8 @@ export default function AdminVocabularyPage() {
             sentence_german: "",
             sentence_english: "",
             sentence_malayalam: "",
+            audio_url: "",
+            sentence_audio_url: "",
             order_index: 1,
           },
         ]);
@@ -323,6 +332,8 @@ export default function AdminVocabularyPage() {
         sentence_german: item.examples?.[0]?.german || "",
         sentence_english: item.examples?.[0]?.english || "",
         sentence_malayalam: item.examples?.[0]?.malayalam || "",
+        audio_url: item.audio_url || "",
+        sentence_audio_url: item.sentence_audio_url || "",
         order_index: item.order_index ?? 1,
       },
     ]);
@@ -1592,6 +1603,24 @@ export default function AdminVocabularyPage() {
                       />
                     </div>
                   </div>
+
+                  {/* Audio Pronunciation Voice Recording (Word & Sentence) */}
+                  <div className="pt-2 border-t border-dashed border-neutral-300 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <AudioRecorder
+                      label="🎤 German Word Pronunciation"
+                      audioUrl={entry.audio_url}
+                      prefix="vocab"
+                      onAudioUploaded={(url) => handleWordEntryChange(idx, "audio_url", url)}
+                      onAudioRemoved={() => handleWordEntryChange(idx, "audio_url", "")}
+                    />
+                    <AudioRecorder
+                      label="🎤 Example Sentence Pronunciation"
+                      audioUrl={entry.sentence_audio_url}
+                      prefix="sentence"
+                      onAudioUploaded={(url) => handleWordEntryChange(idx, "sentence_audio_url", url)}
+                      onAudioRemoved={() => handleWordEntryChange(idx, "sentence_audio_url", "")}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -1731,7 +1760,14 @@ export default function AdminVocabularyPage() {
                       {item.category}
                     </td>
                     <td className="p-3 font-bold text-black border-r border-neutral-200">
-                      {item.german_content}
+                      <div className="flex items-center gap-1.5">
+                        <span>{item.german_content}</span>
+                        {item.audio_url && (
+                          <span title="Voice Pronunciation Attached" className="p-0.5 bg-[#ffe600] border border-black text-black text-[10px]">
+                            <Volume2 className="w-3 h-3" />
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-3 text-neutral-700 border-r border-neutral-200">
                       {item.english_meaning}
