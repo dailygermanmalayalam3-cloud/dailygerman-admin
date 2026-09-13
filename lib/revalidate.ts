@@ -2,7 +2,7 @@ export async function revalidateLearnerPaths(paths: string[]): Promise<void> {
   const learnerUrl =
     process.env.LEARNER_APP_URL ||
     process.env.NEXT_PUBLIC_LEARNER_APP_URL ||
-    "https://dailygerman.vercel.app";
+    "https://dailygerman-nu.vercel.app";
   const secret = process.env.REVALIDATION_SECRET;
 
   if (!secret) {
