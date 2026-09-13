@@ -61,3 +61,19 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - **ALL testcases MUST be executed and achieve 100% pass rate (`npm test`)** before pushing changes to remote and before requesting permission to merge into `main`.
   - Pushing or merging with failing, skipped, or pending tests is strictly prohibited.
 
+## 9. Full-Site Edge Caching & End-to-End Revalidation Lifecycle (MANDATORY)
+- **Zero-Dynamic Read Policy**:
+  - All public user-facing learner pages MUST remain statically pre-rendered (`○ Static` or `● SSG`) with Edge ISR caching (`export const revalidate = 120`).
+  - **NEVER** read `searchParams` directly in Server Component page signatures, as this instantly converts routes to slow, database-hitting `ƒ Dynamic` rendering. Always delegate URL/filter state to client components wrapped in `<Suspense>`.
+- **Mandatory `generateStaticParams()` for Slug Routes**:
+  - Whenever any dynamic slug route (`[slug]`) is created or modified, `export async function generateStaticParams()` MUST be implemented so all existing entity slugs are statically pre-rendered at build time.
+- **Synchronized Revalidation Allowlist (`/api/revalidate`)**:
+  - Whenever a new page route or URL prefix is created in the Learner App, its exact path or prefix MUST be registered in `app/api/revalidate/route.ts` (`ALLOWED_EXACT_PATHS` or `ALLOWED_PREFIXES`).
+- **Mandatory On-Demand Cache Invalidation in Admin CMS**:
+  - Whenever any new Admin CMS mutation endpoint (POST/PUT/PATCH/DELETE) is added or modified in `DailyGermanAdmin`:
+    - It MUST call `await revalidateLearnerPaths([...])` targeting all affected Learner App routes (e.g., homepage `/`, level pages `/${level}`, module index pages, and specific `/path/${slug}` detail pages).
+    - Cache invalidation MUST be non-blocking with timeout so admin operations never hang or fail if revalidation is delayed.
+- **Build Verification Requirement**:
+  - After adding any new route or endpoint, run `npm run build` to verify that the route table confirms `○ (Static)` or `● (SSG)`, with 0 unintended `ƒ (Dynamic)` routes.
+
+
