@@ -171,28 +171,50 @@ export async function getVocabularyCategories(): Promise<VocabularyCategory[]> {
 }
 
 export async function mutateVocabularyCategory(cat: { id?: string; name: string; order_index: number }): Promise<VocabularyCategory> {
+  const name = cat.name.trim();
+  const order_index = Number(cat.order_index) || 1;
   const payload: VocabularyCategory = {
-    id: cat.id || `cat-${Date.now()}`,
-    name: cat.name.trim(),
-    order_index: Number(cat.order_index) || 1,
+    id: cat.id || crypto.randomUUID(),
+    name,
+    order_index,
     created_at: new Date().toISOString(),
   };
 
   const supabase = await createServerSupabaseClient();
   if (supabase) {
-    const { data, error } = await supabase
-      .from("vocabulary_categories")
-      .upsert(payload, { onConflict: "name" })
-      .select()
-      .single();
-    if (error) {
-      console.error("Supabase category upsert error:", error.message);
-      throw new Error(`Supabase error: ${error.message}`);
+    let result;
+    if (cat.id) {
+      // Existing category being updated by ID
+      const { data, error } = await supabase
+        .from("vocabulary_categories")
+        .update({ name, order_index })
+        .eq("id", cat.id)
+        .select()
+        .single();
+      if (error) {
+        console.error("Supabase category update error:", error.message);
+        throw new Error(`Supabase error: ${error.message}`);
+      }
+      result = data;
+    } else {
+      // New category insertion with UUID
+      const { data, error } = await supabase
+        .from("vocabulary_categories")
+        .upsert(payload, { onConflict: "name" })
+        .select()
+        .single();
+      if (error) {
+        console.error("Supabase category upsert error:", error.message);
+        throw new Error(`Supabase error: ${error.message}`);
+      }
+      result = data;
     }
-    if (data) return data as VocabularyCategory;
+    if (result) return result as VocabularyCategory;
   }
 
-  const idx = memoryCategories.findIndex((c) => c.name.toLowerCase() === payload.name.toLowerCase());
+  const idx = memoryCategories.findIndex(
+    (c) => (cat.id && c.id === cat.id) || c.name.toLowerCase() === payload.name.toLowerCase()
+  );
   if (idx >= 0) {
     memoryCategories[idx] = { ...memoryCategories[idx], ...payload };
   } else {

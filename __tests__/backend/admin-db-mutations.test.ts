@@ -7,6 +7,8 @@ import {
   deleteGrammarTopicItem,
   mutateGoetheMaterial,
   deleteGoetheMaterialItem,
+  mutateVocabularyCategory,
+  deleteVocabularyCategory,
   getVocabulary,
   getGrammarTopics,
 } from "@/lib/db/content";
@@ -137,6 +139,43 @@ describe("Admin Backend - Database Mutations & Strict UUID Standard", () => {
       });
 
       const deleted = await deleteGoetheMaterialItem(material.id);
+      expect(deleted).toBe(true);
+    });
+  });
+
+  describe("Category Mutations", () => {
+    it("should assign a valid UUIDv4 when creating a new category without ID", async () => {
+      const category = await mutateVocabularyCategory({
+        name: "Sports & Hobbies",
+        order_index: 12,
+      });
+
+      expect(category.id).toBeDefined();
+      expect(category.id).toMatch(UUID_REGEX);
+      expect(category.name).toBe("Sports & Hobbies");
+      expect(category.order_index).toBe(12);
+    });
+
+    it("should maintain existing UUID and update properties when editing an existing category", async () => {
+      const existingId = crypto.randomUUID();
+      const updated = await mutateVocabularyCategory({
+        id: existingId,
+        name: "Sports Updated",
+        order_index: 15,
+      });
+
+      expect(updated.id).toBe(existingId);
+      expect(updated.name).toBe("Sports Updated");
+      expect(updated.order_index).toBe(15);
+    });
+
+    it("should delete category successfully", async () => {
+      const category = await mutateVocabularyCategory({
+        name: "Temporary Category",
+        order_index: 99,
+      });
+
+      const deleted = await deleteVocabularyCategory(category.id);
       expect(deleted).toBe(true);
     });
   });
