@@ -178,5 +178,33 @@ describe("Admin Backend - Database Mutations & Strict UUID Standard", () => {
       const deleted = await deleteVocabularyCategory(category.id);
       expect(deleted).toBe(true);
     });
+
+    it("should cascade category rename to vocabulary words under that category", async () => {
+      const cat = await mutateVocabularyCategory({
+        name: "Old Category Name",
+        order_index: 20,
+      });
+
+      const word = await mutateVocabulary({
+        level: "A1",
+        category: "Old Category Name",
+        german_content: "Kaskade",
+        english_meaning: "Cascade",
+        malayalam_meaning: "കസ്കേഡ്",
+      });
+
+      expect(word.category).toBe("Old Category Name");
+
+      // Rename category
+      await mutateVocabularyCategory({
+        id: cat.id,
+        name: "New Renamed Category",
+        order_index: 20,
+      });
+
+      const allWords = await getVocabulary("A1");
+      const updatedWord = allWords.find((w) => w.id === word.id);
+      expect(updatedWord?.category).toBe("New Renamed Category");
+    });
   });
 });

@@ -184,7 +184,15 @@ export async function mutateVocabularyCategory(cat: { id?: string; name: string;
   if (supabase) {
     let result;
     if (cat.id) {
-      // Existing category being updated by ID
+      // 1. Fetch current category name to check if renamed
+      const { data: currentCat } = await supabase
+        .from("vocabulary_categories")
+        .select("name")
+        .eq("id", cat.id)
+        .maybeSingle();
+      const oldName = currentCat?.name;
+
+      // 2. Existing category being updated by ID
       const { data, error } = await supabase
         .from("vocabulary_categories")
         .update({ name, order_index })
@@ -196,6 +204,15 @@ export async function mutateVocabularyCategory(cat: { id?: string; name: string;
         throw new Error(`Supabase error: ${error.message}`);
       }
       result = data;
+
+      // 3. Cascade rename across all related content tables
+      if (oldName && oldName !== name) {
+        await Promise.all([
+          supabase.from("vocabulary").update({ category: name }).eq("category", oldName),
+          supabase.from("category_paragraphs").update({ category_name: name }).eq("category_name", oldName),
+          supabase.from("category_questions").update({ category_name: name }).eq("category_name", oldName),
+        ]);
+      }
     } else {
       // New category insertion with UUID
       const { data, error } = await supabase
@@ -215,22 +232,55 @@ export async function mutateVocabularyCategory(cat: { id?: string; name: string;
   const idx = memoryCategories.findIndex(
     (c) => (cat.id && c.id === cat.id) || c.name.toLowerCase() === payload.name.toLowerCase()
   );
+  const oldMemName = idx >= 0 ? memoryCategories[idx].name : null;
   if (idx >= 0) {
     memoryCategories[idx] = { ...memoryCategories[idx], ...payload };
   } else {
     memoryCategories.push(payload);
   }
+
+  if (oldMemName && oldMemName !== name) {
+    memoryVocab.forEach((w) => {
+      if (w.category.toLowerCase() === oldMemName.toLowerCase()) {
+        w.category = name;
+      }
+    });
+  }
+
   return payload;
 }
 
 export async function deleteVocabularyCategory(id: string): Promise<boolean> {
   const supabase = await createServerSupabaseClient();
   if (supabase) {
+    const { data: currentCat } = await supabase
+      .from("vocabulary_categories")
+      .select("name")
+      .eq("id", id)
+      .maybeSingle();
+
     const { error } = await supabase.from("vocabulary_categories").delete().eq("id", id);
     if (error) {
       console.error("Supabase delete category error:", error.message);
       throw new Error(`Supabase error: ${error.message}`);
     }
+
+    if (currentCat?.name) {
+      await Promise.all([
+        supabase.from("vocabulary").update({ category: "General Vocabulary" }).eq("category", currentCat.name),
+        supabase.from("category_paragraphs").update({ category_name: "General Vocabulary" }).eq("category_name", currentCat.name),
+        supabase.from("category_questions").update({ category_name: "General Vocabulary" }).eq("category_name", currentCat.name),
+      ]);
+    }
+  }
+
+  const catToDelete = memoryCategories.find((c) => c.id === id);
+  if (catToDelete) {
+    memoryVocab.forEach((w) => {
+      if (w.category.toLowerCase() === catToDelete.name.toLowerCase()) {
+        w.category = "General Vocabulary";
+      }
+    });
   }
 
   memoryCategories = memoryCategories.filter((c) => c.id !== id);
