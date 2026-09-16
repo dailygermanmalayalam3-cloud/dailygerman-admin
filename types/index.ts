@@ -263,3 +263,21 @@ export interface MedicalConversationTopic {
   updated_at?: string;
 }
 
+// User Suggestions & Feedback
+export type SuggestionStatus = "unread" | "read" | "in_progress" | "resolved" | "archived";
+
+export interface Suggestion {
+  id: string;
+  name: string;
+  email: string;
+  subject?: string;
+  suggestion: string;
+  ip_address?: string;
+  device_fingerprint?: string;
+  user_agent?: string;
+  status: SuggestionStatus;
+  admin_notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+

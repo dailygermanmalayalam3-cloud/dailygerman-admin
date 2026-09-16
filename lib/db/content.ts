@@ -26,6 +26,8 @@ import {
   MedicalWord,
   MedicalConversationTopic,
   MedicalConversation,
+  Suggestion,
+  SuggestionStatus,
 } from "@/types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -1375,4 +1377,75 @@ export async function deleteMedicalConversation(id: string): Promise<boolean> {
   }
   return true;
 }
+
+// ==========================================================================
+// User Suggestions & Feedback Functions
+// ==========================================================================
+export async function getSuggestions(status?: string, search?: string): Promise<Suggestion[]> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    let query = supabase
+      .from("suggestions")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (status && status !== "all") {
+      query = query.eq("status", status);
+    }
+
+    if (search && search.trim()) {
+      const s = search.trim();
+      query = query.or(`name.ilike.%${s}%,email.ilike.%${s}%,suggestion.ilike.%${s}%,subject.ilike.%${s}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error("Supabase getSuggestions error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    return (data || []) as Suggestion[];
+  }
+  return [];
+}
+
+export async function updateSuggestion(
+  id: string,
+  updates: { status?: SuggestionStatus; admin_notes?: string }
+): Promise<Suggestion | null> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const payload: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (updates.status !== undefined) payload.status = updates.status;
+    if (updates.admin_notes !== undefined) payload.admin_notes = updates.admin_notes;
+
+    const { data, error } = await supabase
+      .from("suggestions")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase updateSuggestion error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    return data as Suggestion;
+  }
+  return null;
+}
+
+export async function deleteSuggestion(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("suggestions").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase deleteSuggestion error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
 
