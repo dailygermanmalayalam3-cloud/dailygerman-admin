@@ -28,6 +28,7 @@ import {
   MedicalConversation,
   Suggestion,
   SuggestionStatus,
+  BlacklistedUser,
 } from "@/types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -1447,5 +1448,71 @@ export async function deleteSuggestion(id: string): Promise<boolean> {
   }
   return true;
 }
+
+// ----------------- USER BLACKLIST -----------------
+export async function getBlacklistedUsers(): Promise<BlacklistedUser[]> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("blacklisted_users")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Supabase getBlacklistedUsers error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    return (data || []) as BlacklistedUser[];
+  }
+  return [];
+}
+
+export async function blacklistUser(item: {
+  user_name?: string;
+  email?: string;
+  ip_address?: string;
+  device_fingerprint?: string;
+  reason?: string;
+}): Promise<BlacklistedUser> {
+  const supabase = await createServerSupabaseClient();
+  const payload: BlacklistedUser = {
+    id: crypto.randomUUID(),
+    user_name: item.user_name || undefined,
+    email: item.email ? item.email.trim().toLowerCase() : undefined,
+    ip_address: item.ip_address || undefined,
+    device_fingerprint: item.device_fingerprint || undefined,
+    reason: item.reason || "Malicious or abusive behavior",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("blacklisted_users")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase blacklistUser error:", error.message);
+      throw new Error(`Supabase error: ${error.message}`);
+    }
+    return data as BlacklistedUser;
+  }
+  return payload;
+}
+
+export async function unblacklistUser(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { error } = await supabase.from("blacklisted_users").delete().eq("id", id);
+    if (error) {
+      console.error("Supabase unblacklistUser error:", error.message);
+      throw new Error(`Supabase delete error: ${error.message}`);
+    }
+  }
+  return true;
+}
+
 
 

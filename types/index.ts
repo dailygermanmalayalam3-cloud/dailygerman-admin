@@ -281,3 +281,14 @@ export interface Suggestion {
   updated_at?: string;
 }
 
+export interface BlacklistedUser {
+  id: string;
+  user_name?: string;
+  email?: string;
+  ip_address?: string;
+  device_fingerprint?: string;
+  reason?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
