@@ -35,9 +35,25 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - All database table `id` columns in PostgreSQL are configured as native `UUID` with `DEFAULT gen_random_uuid()`. Non-UUID inputs will be rejected by PostgreSQL.
 
 ## 6. Theme & Responsive Rendering Integrity (MANDATORY)
-- **Dark Mode & Light Mode Compatibility**:
-  - Any UI modifications MUST strictly support both dark mode and light mode without visual regressions, unreadable text, broken contrast, or theme toggle flickering.
-  - Always pair color classes with appropriate `dark:` variants (e.g. background, text, borders, shadows, inputs, modals, buttons).
+- **Multi-Theme System Standard (5 Palettes × 2 Modes = 10 Visual Configurations)**:
+  - The Learner App strictly supports 5 distinct theme palettes (`classic`, `sepia`, `monochrome`, `forest`, `nordic`), each with independent **Light Mode** and **Dark Mode** support.
+  - **Zero Hardcoded Raw Colors**: UI components, cards, navigation, typography, badges, and modals MUST NEVER use hardcoded raw colors (e.g. raw `bg-white`, `bg-[#141414]`, `text-black`, `text-neutral-900`, hardcoded hex borders/shadows) that bypass semantic theme tokens.
+  - All styling MUST route through semantic theme CSS custom properties (`--bg-primary`, `--bg-surface`, `--bg-card`, `--text-primary`, `--text-secondary`, `--border-color`, `--accent`, `--accent-fg`, `--badge-bg`, `--badge-text`, `--card-shadow`) or theme-mapped utility classes.
+- **Strict Token Parity (Rule of 10)**:
+  - Whenever any new CSS variable or color token is introduced in `app/globals.css`, it MUST be defined across ALL 5 palettes in both light and dark mode:
+    1. `:root` (Classic Light)
+    2. `.dark` (Classic Dark)
+    3. `[data-theme="sepia"]` (Sepia Light) & `[data-theme="sepia"].dark` (Sepia Dark)
+    4. `[data-theme="monochrome"]` (Monochrome Light) & `[data-theme="monochrome"].dark` (Monochrome Dark)
+    5. `[data-theme="forest"]` (Forest Light) & `[data-theme="forest"].dark` (Forest Dark)
+    6. `[data-theme="nordic"]` (Nordic Light) & `[data-theme="nordic"].dark` (Nordic Dark)
+  - Partial token definitions or missing variables in any palette are strictly prohibited.
+- **Automated Theme Regression Checking (`npm test`)**:
+  - An automated theme integrity test suite (`__tests__/backend/theme-integrity.test.ts`) runs during `npm test`.
+  - The test suite parses `app/globals.css` and verifies that every semantic token defined in `:root` has a matching definition in all other 9 theme states.
+  - If a developer or AI agent adds a variable to one theme but forgets the others, `npm test` will immediately fail with 0% tolerance.
+- **Zero-Flicker SSR Script Guard**:
+  - The synchronous theme initialization script in `<head>` (`app/layout.tsx`) must always execute synchronously before the first paint to read `dg_theme_palette` and `dg_theme_mode` and set `data-theme` and `.dark` on `<html>`. It must NEVER be made asynchronous, deferred, or shifted to client-side `useEffect`.
 - **Cross-Device Responsive Design**:
   - Any layout or component changes MUST render cleanly across all device form factors — including mobile browsers (smartphones, small viewports), tablets, and desktop screens.
   - Avoid fixed widths that cause horizontal scroll overflow on mobile screens; use responsive utilities (`sm:`, `md:`, `lg:`, `overflow-x-auto`, flex-wrap, grid layouts).
