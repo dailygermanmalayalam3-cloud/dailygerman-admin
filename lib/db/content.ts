@@ -1208,6 +1208,8 @@ export async function mutateMedicalWord(
     example_english: item.example_english || "",
     example_malayalam: item.example_malayalam || "",
     order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    audio_url: item.audio_url || undefined,
+    sentence_audio_url: item.sentence_audio_url || undefined,
     created_at: item.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

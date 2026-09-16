@@ -6,7 +6,7 @@ import { Mic, Square, Play, Pause, RotateCcw, Trash2, UploadCloud, CheckCircle2,
 interface AudioRecorderProps {
   label: string;
   audioUrl?: string;
-  prefix?: "vocab" | "sentence" | "medical";
+  prefix?: "vocab" | "sentence" | "medical" | "medical_word" | "medical_sentence" | string;
   onAudioUploaded: (url: string) => void;
   onAudioRemoved?: () => void;
 }

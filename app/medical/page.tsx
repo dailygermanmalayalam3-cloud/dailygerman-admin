@@ -20,6 +20,7 @@ import {
   FolderPlus,
   RefreshCw,
 } from "lucide-react";
+import AudioRecorder from "@/components/AudioRecorder";
 
 export default function AdminMedicalPage() {
   const [activeTab, setActiveTab] = useState<"words" | "conversations">("words");
@@ -58,6 +59,8 @@ export default function AdminMedicalPage() {
   const [wordExGerman, setWordExGerman] = useState("");
   const [wordExEnglish, setWordExEnglish] = useState("");
   const [wordExMalayalam, setWordExMalayalam] = useState("");
+  const [wordAudioUrl, setWordAudioUrl] = useState("");
+  const [wordSentenceAudioUrl, setWordSentenceAudioUrl] = useState("");
   const [wordOrder, setWordOrder] = useState(1);
 
   // Topic Form state
@@ -191,6 +194,8 @@ export default function AdminMedicalPage() {
       setWordExGerman(word.example_german || "");
       setWordExEnglish(word.example_english || "");
       setWordExMalayalam(word.example_malayalam || "");
+      setWordAudioUrl(word.audio_url || "");
+      setWordSentenceAudioUrl(word.sentence_audio_url || "");
       setWordOrder(word.order_index ?? 1);
     } else {
       setEditingWord(null);
@@ -203,6 +208,8 @@ export default function AdminMedicalPage() {
       setWordExGerman("");
       setWordExEnglish("");
       setWordExMalayalam("");
+      setWordAudioUrl("");
+      setWordSentenceAudioUrl("");
       const currentCatWords = words.filter((w) => w.category_id === (selectedCategoryId || categories[0]?.id));
       setWordOrder(currentCatWords.length + 1);
     }
@@ -233,6 +240,8 @@ export default function AdminMedicalPage() {
           example_english: wordExEnglish,
           example_malayalam: wordExMalayalam,
           order_index: wordOrder,
+          audio_url: wordAudioUrl || undefined,
+          sentence_audio_url: wordSentenceAudioUrl || undefined,
         }),
       });
       const data = await res.json();
@@ -590,7 +599,7 @@ export default function AdminMedicalPage() {
                           #{w.order_index ?? idx + 1}
                         </td>
                         <td className="p-3">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             {w.article && (
                               <span className="px-1.5 py-0.2 bg-black text-white text-[10px] font-black uppercase">
                                 {w.article}
@@ -599,6 +608,16 @@ export default function AdminMedicalPage() {
                             <span className="font-black text-sm text-black dark:text-white">
                               {w.german}
                             </span>
+                            {w.audio_url && (
+                              <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-400 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
+                                🔊 Word Audio
+                              </span>
+                            )}
+                            {w.sentence_audio_url && (
+                              <span className="px-1.5 py-0.5 bg-sky-100 dark:bg-sky-950/60 border border-sky-400 text-sky-800 dark:text-sky-300 text-[10px] font-bold">
+                                🔊 Sentence Audio
+                              </span>
+                            )}
                           </div>
                           {w.example_german && (
                             <p className="text-[11px] text-neutral-500 italic mt-0.5 line-clamp-1">
@@ -917,6 +936,24 @@ export default function AdminMedicalPage() {
                   onChange={(e) => setWordExEnglish(e.target.value)}
                   placeholder="English: The doctor listens to the lungs with the stethoscope."
                   className="w-full p-2 text-xs border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-[#121212] text-black dark:text-white"
+                />
+              </div>
+
+              {/* Audio Pronunciation Voice Recording (Medical Word & Clinical Sentence) */}
+              <div className="pt-2 border-t border-dashed border-neutral-300 dark:border-neutral-700 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <AudioRecorder
+                  label="🎤 Medical Word Audio"
+                  audioUrl={wordAudioUrl}
+                  prefix="medical_word"
+                  onAudioUploaded={(url) => setWordAudioUrl(url)}
+                  onAudioRemoved={() => setWordAudioUrl("")}
+                />
+                <AudioRecorder
+                  label="🎤 Clinical Sentence Audio"
+                  audioUrl={wordSentenceAudioUrl}
+                  prefix="medical_sentence"
+                  onAudioUploaded={(url) => setWordSentenceAudioUrl(url)}
+                  onAudioRemoved={() => setWordSentenceAudioUrl("")}
                 />
               </div>
 

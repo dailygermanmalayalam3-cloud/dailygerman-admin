@@ -234,6 +234,8 @@ export interface MedicalWord {
   example_english?: string;
   example_malayalam?: string;
   order_index?: number;
+  audio_url?: string;
+  sentence_audio_url?: string;
   created_at?: string;
   updated_at?: string;
 }

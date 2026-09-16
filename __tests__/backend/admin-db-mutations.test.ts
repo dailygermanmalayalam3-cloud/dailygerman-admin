@@ -9,6 +9,8 @@ import {
   deleteGoetheMaterialItem,
   mutateVocabularyCategory,
   deleteVocabularyCategory,
+  mutateMedicalWord,
+  deleteMedicalWord,
   getVocabulary,
   getGrammarTopics,
 } from "@/lib/db/content";
@@ -205,6 +207,43 @@ describe("Admin Backend - Database Mutations & Strict UUID Standard", () => {
       const allWords = await getVocabulary("A1");
       const updatedWord = allWords.find((w) => w.id === word.id);
       expect(updatedWord?.category).toBe("New Renamed Category");
+    });
+  });
+
+  describe("Medical Words Mutations & Audio Support", () => {
+    it("should mutate medical word with audio_url and sentence_audio_url and assign UUID", async () => {
+      const categoryId = crypto.randomUUID();
+      const item = await mutateMedicalWord({
+        category_id: categoryId,
+        german: "das Stethoskop",
+        english: "stethoscope",
+        malayalam: "സ്റ്റെതസ്കോപ്പ്",
+        article: "das",
+        plural: "die Stethoskope",
+        example_german: "Der Arzt benutzt das Stethoskop.",
+        example_english: "The doctor uses the stethoscope.",
+        example_malayalam: "ഡോക്ടർ സ്റ്റെതസ്കോപ്പ് ഉപയോഗിക്കുന്നു.",
+        audio_url: "https://example.com/audio/stethoskop.mp3",
+        sentence_audio_url: "https://example.com/audio/stethoskop-satz.mp3",
+      });
+
+      expect(item.id).toBeDefined();
+      expect(item.id).toMatch(UUID_REGEX);
+      expect(item.german).toBe("das Stethoskop");
+      expect(item.audio_url).toBe("https://example.com/audio/stethoskop.mp3");
+      expect(item.sentence_audio_url).toBe("https://example.com/audio/stethoskop-satz.mp3");
+    });
+
+    it("should delete medical word successfully", async () => {
+      const categoryId = crypto.randomUUID();
+      const item = await mutateMedicalWord({
+        category_id: categoryId,
+        german: "die Spritze",
+        english: "syringe",
+      });
+
+      const deleted = await deleteMedicalWord(item.id);
+      expect(deleted).toBe(true);
     });
   });
 });
