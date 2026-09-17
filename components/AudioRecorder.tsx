@@ -36,6 +36,14 @@ export default function AudioRecorder({
 
   useEffect(() => {
     setLocalUrl(audioUrl || null);
+    if (audioUrl && typeof window !== "undefined") {
+      if (!audioPlayerRef.current) {
+        audioPlayerRef.current = new Audio(audioUrl);
+      } else if (audioPlayerRef.current.src !== audioUrl) {
+        audioPlayerRef.current.src = audioUrl;
+      }
+      audioPlayerRef.current.preload = "auto";
+    }
   }, [audioUrl]);
 
   useEffect(() => {
