@@ -22,6 +22,19 @@ export interface SynthesizeSpeechResult {
 const DEFAULT_VOICE = "de-DE-Neural2-F";
 const DEFAULT_SPEAKING_RATE = 0.95;
 
+/**
+ * Strips leading list numbers (e.g. "27. die Verspätung", "4) das Auto")
+ * and surrounding quotes/asterisks so only the German text is spoken.
+ */
+export function cleanGermanTextForSpeech(text: string): string {
+  if (!text) return "";
+  return text
+    .trim()
+    .replace(/^\s*\d+\s*[\.\)\-–—:]\s*/, "")
+    .replace(/^["'“”„*]+|["'“”„*]+$/g, "")
+    .trim();
+}
+
 export async function synthesizeGermanSpeech(
   options: SynthesizeSpeechOptions
 ): Promise<SynthesizeSpeechResult> {
@@ -36,7 +49,7 @@ export async function synthesizeGermanSpeech(
     );
   }
 
-  const cleanText = options.text?.trim();
+  const cleanText = cleanGermanTextForSpeech(options.text);
   if (!cleanText) {
     throw new Error("Text is required for speech synthesis.");
   }

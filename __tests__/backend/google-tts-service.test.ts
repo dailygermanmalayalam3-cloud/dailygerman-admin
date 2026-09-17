@@ -1,5 +1,34 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { synthesizeGermanSpeech } from "@/lib/services/google-tts";
+import { synthesizeGermanSpeech, cleanGermanTextForSpeech } from "@/lib/services/google-tts";
+
+describe("Google Cloud Text-to-Speech Service (cleanGermanTextForSpeech)", () => {
+  it("should strip leading numbers with dot from German words", () => {
+    expect(cleanGermanTextForSpeech("27. die Verspätung")).toBe("die Verspätung");
+    expect(cleanGermanTextForSpeech("4. das Flugzeug")).toBe("das Flugzeug");
+    expect(cleanGermanTextForSpeech("93. sich fürchten")).toBe("sich fürchten");
+  });
+
+  it("should strip leading numbers with parenthesis, dash, or colon", () => {
+    expect(cleanGermanTextForSpeech("1) der Tisch")).toBe("der Tisch");
+    expect(cleanGermanTextForSpeech("10 - das Auto")).toBe("das Auto");
+    expect(cleanGermanTextForSpeech("2: das Buch")).toBe("das Buch");
+  });
+
+  it("should preserve genuine German words without numbering", () => {
+    expect(cleanGermanTextForSpeech("die Verspätung")).toBe("die Verspätung");
+    expect(cleanGermanTextForSpeech("Guten Morgen!")).toBe("Guten Morgen!");
+  });
+
+  it("should strip accidental surrounding quotes or asterisks", () => {
+    expect(cleanGermanTextForSpeech('"das Flugzeug"')).toBe("das Flugzeug");
+    expect(cleanGermanTextForSpeech("**die Familie**")).toBe("die Familie");
+  });
+
+  it("should handle empty or whitespace-only input", () => {
+    expect(cleanGermanTextForSpeech("")).toBe("");
+    expect(cleanGermanTextForSpeech("   ")).toBe("");
+  });
+});
 
 describe("Google Cloud Text-to-Speech Service (synthesizeGermanSpeech)", () => {
   const originalEnv = process.env;
@@ -27,6 +56,33 @@ describe("Google Cloud Text-to-Speech Service (synthesizeGermanSpeech)", () => {
     await expect(
       synthesizeGermanSpeech({ text: "   " })
     ).rejects.toThrow("Text is required for speech synthesis");
+  });
+
+  it("should automatically strip leading numbering when synthesizing", async () => {
+    const mockAudioBase64 = Buffer.from("fake-mp3-audio-bytes").toString("base64");
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ audioContent: mockAudioBase64 }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    const result = await synthesizeGermanSpeech({
+      text: "27. die Verspätung",
+    });
+
+    expect(result.characterCount).toBe("die Verspätung".length);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://texttospeech.googleapis.com/v1/text:synthesize?key=mock-tts-key",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: expect.stringContaining('"text":"die Verspätung"'),
+      })
+    );
+
+    vi.unstubAllGlobals();
   });
 
   it("should make a request to Google Cloud TTS REST API using API key and return audio buffer", async () => {
