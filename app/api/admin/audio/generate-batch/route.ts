@@ -226,6 +226,7 @@ export async function POST(req: Request) {
         .select("id, examples")
         .or("sentence_audio_url.is.null,sentence_audio_url.eq.")
         .not("examples", "is", null)
+        .neq("examples", "[]")
         .limit(safeLimit);
 
       if (fetchErr) throw fetchErr;
@@ -233,7 +234,10 @@ export async function POST(req: Request) {
       for (const row of rows || []) {
         const exs = Array.isArray(row.examples) ? row.examples : [];
         const text = exs[0]?.german?.trim();
-        if (!text) continue;
+        if (!text) {
+          errors.push(`Row ${row.id}: Empty or invalid German sentence in examples.`);
+          continue;
+        }
 
         try {
           const { audioBuffer, ext } = await synthesizeGermanSpeech({
@@ -394,9 +398,46 @@ export async function POST(req: Request) {
       }
     }
 
+    // Query remaining missing count
+    let remaining = 0;
+    try {
+      if (target === "vocab_words") {
+        const { count } = await supabase
+          .from("vocabulary")
+          .select("*", { count: "exact", head: true })
+          .or("audio_url.is.null,audio_url.eq.");
+        remaining = count ?? 0;
+      } else if (target === "vocab_sentences") {
+        const { count } = await supabase
+          .from("vocabulary")
+          .select("*", { count: "exact", head: true })
+          .or("sentence_audio_url.is.null,sentence_audio_url.eq.")
+          .not("examples", "is", null)
+          .neq("examples", "[]");
+        remaining = count ?? 0;
+      } else if (target === "medical_words") {
+        const { count } = await supabase
+          .from("medical_words")
+          .select("*", { count: "exact", head: true })
+          .or("audio_url.is.null,audio_url.eq.");
+        remaining = count ?? 0;
+      } else if (target === "medical_sentences") {
+        const { count } = await supabase
+          .from("medical_words")
+          .select("*", { count: "exact", head: true })
+          .or("sentence_audio_url.is.null,sentence_audio_url.eq.")
+          .not("example_german", "is", null)
+          .neq("example_german", "");
+        remaining = count ?? 0;
+      }
+    } catch {
+      // Non-critical if count fails
+    }
+
     return NextResponse.json({
       success: true,
       processed: processedItems.length,
+      remaining,
       items: processedItems,
       errors: errors.length > 0 ? errors : undefined,
     });

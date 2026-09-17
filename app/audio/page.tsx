@@ -165,12 +165,23 @@ export default function AudioGeneratorPage() {
         }
 
         if (data.processed === 0) {
-          setBatchLogs((prev) => [`✅ Finished! All items in ${batchTarget} now have audio.`, ...prev]);
+          if (data.remaining !== undefined && data.remaining > 0) {
+            setBatchLogs((prev) => [
+              `⚠️ Stopped: ${data.remaining} items remain ungenerated. Some items may have missing or invalid text. Check logs above.`,
+              ...prev,
+            ]);
+            setBatchError(`${data.remaining} items could not be generated.`);
+          } else {
+            setBatchLogs((prev) => [`✅ Finished! All items in ${batchTarget} now have audio.`, ...prev]);
+          }
           break;
         }
 
         totalDone += data.processed;
         setProcessedCount(totalDone);
+        if (data.remaining !== undefined) {
+          setTotalToProcess(totalDone + data.remaining);
+        }
 
         const newLogs = (data.items || []).map(
           (item: { text: string }) => `✓ Generated: "${item.text}"`
@@ -182,6 +193,11 @@ export default function AudioGeneratorPage() {
             ...data.errors.map((e: string) => `⚠️ Error: ${e}`),
             ...prev,
           ]);
+        }
+
+        if (data.remaining === 0) {
+          setBatchLogs((prev) => [`✅ Finished! All items in ${batchTarget} now have audio.`, ...prev]);
+          break;
         }
 
         // Brief delay between batches to respect server limits

@@ -260,4 +260,74 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
     expect(mockUpdate).toHaveBeenCalledTimes(2);
     expect(mockRevalidateLearnerPaths).toHaveBeenCalledWith(["/", "/a1", "/a2", "/b1", "/b2"]);
   });
+
+  it("POST: should batch process vocab_sentences, skipping empty examples without halting", async () => {
+    const mockUpdate = vi.fn(() => ({
+      eq: vi.fn(() => Promise.resolve({ error: null })),
+    }));
+
+    const mockNeq = vi.fn(() => ({
+      limit: vi.fn(() =>
+        Promise.resolve({
+          data: [
+            {
+              id: "e1234567-e89b-12d3-a456-426614174002",
+              examples: [{ german: "Das ist ein Apfel." }],
+            },
+            {
+              id: "e1234567-e89b-12d3-a456-426614174003",
+              examples: [], // Empty examples
+            },
+          ],
+          error: null,
+        })
+      ),
+    }));
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "vocabulary") {
+        return {
+          select: vi.fn((_cols, opts) => {
+            if (opts?.head) {
+              return {
+                or: vi.fn(() => ({
+                  not: vi.fn(() => ({
+                    neq: vi.fn(() => Promise.resolve({ count: 5, error: null })),
+                  })),
+                })),
+              };
+            }
+            return {
+              or: vi.fn(() => ({
+                not: vi.fn(() => ({
+                  neq: mockNeq,
+                })),
+              })),
+            };
+          }),
+          update: mockUpdate,
+        };
+      }
+      return {};
+    });
+
+    const { POST } = await import("@/app/api/admin/audio/generate-batch/route");
+    const req = new Request("http://localhost:3001/api/admin/audio/generate-batch", {
+      method: "POST",
+      body: JSON.stringify({ target: "vocab_sentences", limit: 2 }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    expect(json.success).toBe(true);
+    expect(json.processed).toBe(1); // 1 valid sentence processed, 1 empty skipped
+    expect(json.errors).toBeDefined();
+    expect(json.errors[0]).toContain("Empty or invalid German sentence");
+    expect(mockNeq).toHaveBeenCalledWith("examples", "[]");
+    expect(mockUpdate).toHaveBeenCalledTimes(1);
+    expect(mockRevalidateLearnerPaths).toHaveBeenCalledWith(["/", "/a1", "/a2", "/b1", "/b2"]);
+  });
 });
+
