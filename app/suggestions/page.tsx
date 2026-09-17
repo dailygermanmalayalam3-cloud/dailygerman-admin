@@ -45,6 +45,7 @@ export default function AdminSuggestionsPage() {
   const [updatingStatus, setUpdatingStatus] = useState<SuggestionStatus>("unread");
   const [savingDetail, setSavingDetail] = useState(false);
   const [copiedFingerprint, setCopiedFingerprint] = useState<string | null>(null);
+  const [copiedPoliceDossier, setCopiedPoliceDossier] = useState(false);
 
   // Blacklist Modal
   const [blacklistModalTarget, setBlacklistModalTarget] = useState<{
@@ -211,6 +212,9 @@ export default function AdminSuggestionsPage() {
         email: string;
         ip_address: string;
         device_fingerprint: string;
+        isp_name?: string;
+        ip_city?: string;
+        ip_country?: string;
         suggestions: Suggestion[];
         totalCount: number;
         unreadCount: number;
@@ -238,6 +242,9 @@ export default function AdminSuggestionsPage() {
           email: s.email,
           ip_address: s.ip_address || "unknown",
           device_fingerprint: s.device_fingerprint || "",
+          isp_name: s.isp_name || s.forensic_data?.network?.isp_name || "",
+          ip_city: s.ip_city || "",
+          ip_country: s.ip_country || "",
           suggestions: [s],
           totalCount: 1,
           unreadCount: s.status === "unread" ? 1 : 0,
@@ -248,6 +255,13 @@ export default function AdminSuggestionsPage() {
       } else {
         existing.suggestions.push(s);
         existing.totalCount += 1;
+        if (!existing.isp_name && (s.isp_name || s.forensic_data?.network?.isp_name)) {
+          existing.isp_name = s.isp_name || s.forensic_data?.network?.isp_name;
+        }
+        if (!existing.ip_city && s.ip_city) {
+          existing.ip_city = s.ip_city;
+          existing.ip_country = s.ip_country || "";
+        }
         if (s.status === "unread") existing.unreadCount += 1;
         if (s.created_at && (!existing.latestDate || new Date(s.created_at) > new Date(existing.latestDate))) {
           existing.latestDate = s.created_at;
@@ -409,6 +423,73 @@ export default function AdminSuggestionsPage() {
       setCopiedFingerprint(id);
       setTimeout(() => setCopiedFingerprint(null), 2000);
     } catch {}
+  };
+
+  const generatePoliceEvidenceDossier = (s: Suggestion): string => {
+    const f = s.forensic_data || {};
+    const net = f.network || {};
+    const hints = f.client_hints || {};
+    const tele = f.device_telemetry || {};
+    const screen = tele.screen || {};
+    const hardware = tele.hardware || {};
+    const locale = tele.locale || {};
+
+    const proxyChain = Array.isArray(net.proxy_chain)
+      ? net.proxy_chain.join(" -> ")
+      : s.ip_address || "N/A";
+
+    const geoStr = [s.ip_city, s.ip_region, s.ip_country].filter(Boolean).join(", ") || "N/A";
+
+    return `=====================================================
+CYBER CRIME EVIDENCE DOSSIER: ABUSIVE / DEFAMATORY SUBMISSION
+Platform: Daily German Malayalam (dailygerman.vercel.app)
+Database Record UUID: ${s.id}
+=====================================================
+
+1. SUBMISSION DETAILS:
+- Reported Name: ${s.name || "N/A"}
+- Reported Email: ${s.email || "N/A"}
+- Category / Subject: ${s.subject || "General Suggestion"}
+- Submission Timestamp (UTC): ${s.created_at || "N/A"}
+- Offending Message Content:
+"${s.suggestion}"
+
+2. NETWORK & ISP IDENTIFICATION (For ISP Section 91 CrPC Notice):
+- Public Client IP: ${s.ip_address || "N/A"}
+- Full Proxy / Hop Chain: ${proxyChain}
+- Autonomous System Number (ASN): ${s.isp_asn || net.asn || "N/A"}
+- Internet Service Provider (ISP): ${s.isp_name || net.isp_name || "N/A"}
+- Geolocation (Edge Origin): ${geoStr}
+- Coordinates: ${net.coordinates || "N/A"}
+- Edge Timezone: ${net.edge_timezone || "N/A"}
+
+3. DEVICE & HARDWARE TELEMETRY (Client Machine Fingerprint):
+- Deterministic Machine ID: ${s.device_fingerprint || "N/A"}
+- Hardware Device Model: ${hints.model || "N/A"}
+- OS / Platform: ${hints.platform || "N/A"} (Version: ${hints.platform_version || "N/A"})
+- Screen Resolution: ${screen.width && screen.height ? `${screen.width}x${screen.height} (Pixel Ratio: ${screen.pixel_ratio || 1})` : "N/A"}
+- CPU Cores / Threads: ${hardware.concurrency || "N/A"}
+- Device Memory: ${hardware.device_memory_gb ? `${hardware.device_memory_gb} GB` : "N/A"}
+- Touch Screen Points: ${hardware.max_touch_points ?? "N/A"}
+- Client Local Timezone: ${locale.timezone_name || "N/A"} (Offset: ${locale.timezone_offset_minutes ?? "N/A"} mins)
+- Form Typing Duration: ${tele.interaction_duration_ms ? `${Math.round(tele.interaction_duration_ms / 1000)} seconds` : "N/A"}
+- Full User-Agent: ${s.user_agent || "N/A"}
+
+4. INVESTIGATIVE SUMMARY:
+This evidence was captured upon submission. To identify the physical subscriber, the ISP (${s.isp_name || s.isp_asn || "Telecom Provider"}) must cross-reference Public IP ${s.ip_address} at exact timestamp ${s.created_at} UTC with their NAT/Radius allocation logs.
+=====================================================`;
+  };
+
+  const handleCopyPoliceDossier = async (s: Suggestion) => {
+    try {
+      const dossier = generatePoliceEvidenceDossier(s);
+      await navigator.clipboard.writeText(dossier);
+      setCopiedPoliceDossier(true);
+      setTimeout(() => setCopiedPoliceDossier(false), 3000);
+      notifySuccess("Forensic Evidence Dossier copied! Ready to attach to Cyber Cell complaint.");
+    } catch {
+      notifySuccess("Failed to copy automatically. Please copy the text manually.");
+    }
   };
 
   const statusBadge = (status: SuggestionStatus) => {
@@ -711,6 +792,15 @@ export default function AdminSuggestionsPage() {
 
                           <span>•</span>
                           <span className="font-mono text-[11px]">IP: {user.ip_address}</span>
+
+                          {(user.ip_city || user.isp_name) && (
+                            <>
+                              <span>•</span>
+                              <span className="font-bold text-[11px] text-neutral-700 dark:text-neutral-300">
+                                📍 {[user.ip_city, user.ip_country].filter(Boolean).join(", ")} {user.isp_name ? `(${user.isp_name})` : ""}
+                              </span>
+                            </>
+                          )}
 
                           {user.device_fingerprint && (
                             <>
@@ -1142,35 +1232,132 @@ export default function AdminSuggestionsPage() {
                 </div>
               </div>
 
-              {/* Machine ID / Anti-Abuse Security Metadata */}
-              <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div>
-                  <span className="text-[10px] font-black uppercase text-neutral-500 block mb-0.5">
-                    Client IP Address
-                  </span>
-                  <p className="font-mono font-bold text-[11px]">
-                    {selectedSuggestion.ip_address || "unknown"}
-                  </p>
+              {/* Cyber Crime & Network Forensic Dossier */}
+              <div className="pt-3 border-t-2 border-red-300 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 p-3.5 border border-red-200 dark:border-red-900/50 space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2 border-b border-red-200 dark:border-red-900 pb-2">
+                  <div className="flex items-center gap-1.5 text-red-700 dark:text-red-400 font-black text-xs uppercase tracking-wider">
+                    <ShieldAlert className="w-4 h-4" />
+                    <span>Cyber Crime &amp; Network Forensic Dossier</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyPoliceDossier(selectedSuggestion)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-600 text-white font-black text-[11px] uppercase border border-black shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)] hover:bg-red-700 cursor-pointer"
+                  >
+                    {copiedPoliceDossier ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-white" />
+                        <span>Copied for Cyber Cell!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Police / Cyber Cell Dossier</span>
+                      </>
+                    )}
+                  </button>
                 </div>
 
-                <div>
-                  <span className="text-[10px] font-black uppercase text-neutral-500 block mb-0.5">
-                    Deterministic Machine ID
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <p className="font-mono font-bold text-[11px] truncate">
-                      {selectedSuggestion.device_fingerprint || "unknown"}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  {/* 1. IP Address & Proxy Chain */}
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-neutral-500 block mb-0.5">
+                      Client IP (IPv4 / IPv6)
+                    </span>
+                    <p className="font-mono font-bold text-xs text-black dark:text-white">
+                      {selectedSuggestion.ip_address || "unknown"}
                     </p>
-                    {selectedSuggestion.device_fingerprint && (
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(selectedSuggestion.device_fingerprint || "", "modal-fp")}
-                        className="p-1 border border-neutral-300 hover:bg-neutral-200 text-neutral-700 shrink-0"
-                        title="Copy Machine ID"
-                      >
-                        {copiedFingerprint === "modal-fp" ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
-                      </button>
+                    {selectedSuggestion.forensic_data?.network?.proxy_chain && selectedSuggestion.forensic_data.network.proxy_chain.length > 1 && (
+                      <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 block mt-0.5">
+                        ⚠️ Proxy/VPN Hops: {selectedSuggestion.forensic_data.network.proxy_chain.length}
+                      </span>
                     )}
+                  </div>
+
+                  {/* 2. ISP & Autonomous System */}
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-neutral-500 block mb-0.5">
+                      Internet Service Provider (ISP)
+                    </span>
+                    <p className="font-bold text-xs text-neutral-800 dark:text-neutral-200 truncate">
+                      {selectedSuggestion.isp_name || selectedSuggestion.forensic_data?.network?.isp_name || "Unknown / Local"}
+                    </p>
+                    {(selectedSuggestion.isp_asn || selectedSuggestion.forensic_data?.network?.asn) && (
+                      <span className="font-mono text-[10px] text-neutral-500 font-bold block">
+                        ASN: {selectedSuggestion.isp_asn || selectedSuggestion.forensic_data?.network?.asn}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 3. Edge Geolocation */}
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-neutral-500 block mb-0.5">
+                      Edge Geolocation
+                    </span>
+                    <p className="font-bold text-xs text-neutral-800 dark:text-neutral-200">
+                      {[selectedSuggestion.ip_city, selectedSuggestion.ip_region, selectedSuggestion.ip_country]
+                        .filter(Boolean)
+                        .join(", ") || "Unavailable"}
+                    </p>
+                    {selectedSuggestion.forensic_data?.network?.edge_timezone && (
+                      <span className="text-[10px] text-neutral-500 font-bold block">
+                        TZ: {selectedSuggestion.forensic_data.network.edge_timezone}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 4. Hardware / Device Model */}
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-neutral-500 block mb-0.5">
+                      Device Model &amp; OS
+                    </span>
+                    <p className="font-bold text-xs text-neutral-800 dark:text-neutral-200 truncate">
+                      {selectedSuggestion.forensic_data?.client_hints?.model || selectedSuggestion.forensic_data?.client_hints?.platform || selectedSuggestion.user_agent?.split(" ")[0] || "Unknown"}
+                      {selectedSuggestion.forensic_data?.client_hints?.platform && (
+                        <span className="text-[10px] text-neutral-500 font-normal ml-1">
+                          ({selectedSuggestion.forensic_data.client_hints.platform})
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* 5. Screen & Hardware Specs */}
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-neutral-500 block mb-0.5">
+                      Hardware &amp; Screen
+                    </span>
+                    <p className="font-mono text-xs text-neutral-700 dark:text-neutral-300">
+                      {selectedSuggestion.forensic_data?.device_telemetry?.screen?.width
+                        ? `${selectedSuggestion.forensic_data.device_telemetry.screen.width}x${selectedSuggestion.forensic_data.device_telemetry.screen.height}`
+                        : "N/A"}
+                      {selectedSuggestion.forensic_data?.device_telemetry?.hardware?.concurrency && (
+                        <span className="text-neutral-500 font-sans ml-1 text-[10px]">
+                          ({selectedSuggestion.forensic_data.device_telemetry.hardware.concurrency} cores)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* 6. Machine Fingerprint */}
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-neutral-500 block mb-0.5">
+                      Machine Hash ID
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-mono font-bold text-[11px] truncate">
+                        {selectedSuggestion.device_fingerprint || "unknown"}
+                      </p>
+                      {selectedSuggestion.device_fingerprint && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(selectedSuggestion.device_fingerprint || "", "modal-fp")}
+                          className="p-1 border border-neutral-300 hover:bg-neutral-200 text-neutral-700 shrink-0"
+                          title="Copy Machine ID"
+                        >
+                          {copiedFingerprint === "modal-fp" ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

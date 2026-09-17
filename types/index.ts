@@ -275,6 +275,12 @@ export interface Suggestion {
   ip_address?: string;
   device_fingerprint?: string;
   user_agent?: string;
+  ip_country?: string;
+  ip_region?: string;
+  ip_city?: string;
+  isp_asn?: string;
+  isp_name?: string;
+  forensic_data?: Record<string, any>;
   status: SuggestionStatus;
   admin_notes?: string;
   created_at?: string;

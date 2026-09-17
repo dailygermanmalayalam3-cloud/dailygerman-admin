@@ -1396,7 +1396,9 @@ export async function getSuggestions(status?: string, search?: string): Promise<
 
     if (search && search.trim()) {
       const s = search.trim();
-      query = query.or(`name.ilike.%${s}%,email.ilike.%${s}%,suggestion.ilike.%${s}%,subject.ilike.%${s}%`);
+      query = query.or(
+        `name.ilike.%${s}%,email.ilike.%${s}%,suggestion.ilike.%${s}%,subject.ilike.%${s}%,ip_address.ilike.%${s}%,isp_name.ilike.%${s}%,ip_city.ilike.%${s}%`
+      );
     }
 
     const { data, error } = await query;
