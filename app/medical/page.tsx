@@ -945,6 +945,7 @@ export default function AdminMedicalPage() {
                   label="🎤 Medical Word Audio"
                   audioUrl={wordAudioUrl}
                   prefix="medical_word"
+                  textToSynthesize={wordGerman}
                   onAudioUploaded={(url) => setWordAudioUrl(url)}
                   onAudioRemoved={() => setWordAudioUrl("")}
                 />
@@ -952,6 +953,7 @@ export default function AdminMedicalPage() {
                   label="🎤 Clinical Sentence Audio"
                   audioUrl={wordSentenceAudioUrl}
                   prefix="medical_sentence"
+                  textToSynthesize={wordExGerman}
                   onAudioUploaded={(url) => setWordSentenceAudioUrl(url)}
                   onAudioRemoved={() => setWordSentenceAudioUrl("")}
                 />

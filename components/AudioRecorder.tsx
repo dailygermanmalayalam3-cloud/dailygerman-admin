@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Play, Pause, RotateCcw, Trash2, UploadCloud, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Mic, Square, Play, Pause, RotateCcw, Trash2, UploadCloud, CheckCircle2, AlertCircle, Loader2, Sparkles } from "lucide-react";
 
 interface AudioRecorderProps {
   label: string;
   audioUrl?: string;
   prefix?: "vocab" | "sentence" | "medical" | "medical_word" | "medical_sentence" | string;
+  textToSynthesize?: string;
   onAudioUploaded: (url: string) => void;
   onAudioRemoved?: () => void;
 }
@@ -15,12 +16,14 @@ export default function AudioRecorder({
   label,
   audioUrl,
   prefix = "vocab",
+  textToSynthesize,
   onAudioUploaded,
   onAudioRemoved,
 }: AudioRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [localUrl, setLocalUrl] = useState<string | null>(audioUrl || null);
@@ -158,6 +161,40 @@ export default function AudioRecorder({
     await handleUploadBlob(file);
   };
 
+  const handleGenerateAiAudio = async () => {
+    const cleanText = textToSynthesize?.trim();
+    if (!cleanText) {
+      setErrorMsg("Please enter the German text before auto-generating pronunciation.");
+      return;
+    }
+
+    setIsGenerating(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch("/api/admin/audio/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: cleanText,
+          prefix,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to generate AI audio.");
+      }
+
+      setLocalUrl(data.url);
+      onAudioUploaded(data.url);
+    } catch (err: unknown) {
+      console.error("AI audio generation failed:", err);
+      setErrorMsg((err as Error).message || "AI audio generation failed.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const togglePlay = () => {
     if (!localUrl) return;
     if (!audioPlayerRef.current) {
@@ -233,6 +270,11 @@ export default function AudioRecorder({
             <Square className="w-3.5 h-3.5 fill-current" /> Stop & Save
           </button>
         </div>
+      ) : isGenerating ? (
+        <div className="flex items-center justify-center gap-2 py-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+          <Loader2 className="w-4 h-4 animate-spin text-emerald-600 dark:text-emerald-400" />
+          <span>Synthesizing German audio with Google AI...</span>
+        </div>
       ) : isUploading ? (
         <div className="flex items-center justify-center gap-2 py-3 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-300">
           <Loader2 className="w-4 h-4 animate-spin text-black dark:text-white" />
@@ -256,6 +298,16 @@ export default function AudioRecorder({
           </div>
 
           <div className="flex items-center gap-1.5">
+            {textToSynthesize !== undefined && (
+              <button
+                type="button"
+                onClick={handleGenerateAiAudio}
+                title="Regenerate pronunciation with Google AI"
+                className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 font-bold text-xs uppercase hover:border-black dark:hover:border-white cursor-pointer"
+              >
+                <Sparkles className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Re-generate AI
+              </button>
+            )}
             <button
               type="button"
               onClick={startRecording}
@@ -277,6 +329,17 @@ export default function AudioRecorder({
       ) : (
         /* State 3: Empty / Not Recorded */
         <div className="flex flex-wrap items-center gap-2">
+          {textToSynthesize !== undefined && (
+            <button
+              type="button"
+              onClick={handleGenerateAiAudio}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border border-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+              title="Auto-generate natural German pronunciation using Google Cloud Neural2 AI"
+            >
+              <Sparkles className="w-3.5 h-3.5" /> Auto-Generate AI Audio
+            </button>
+          )}
+
           <button
             type="button"
             onClick={startRecording}

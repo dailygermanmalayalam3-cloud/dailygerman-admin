@@ -1610,6 +1610,7 @@ export default function AdminVocabularyPage() {
                       label="🎤 German Word Pronunciation"
                       audioUrl={entry.audio_url}
                       prefix="vocab"
+                      textToSynthesize={entry.german_content}
                       onAudioUploaded={(url) => handleWordEntryChange(idx, "audio_url", url)}
                       onAudioRemoved={() => handleWordEntryChange(idx, "audio_url", "")}
                     />
@@ -1617,6 +1618,7 @@ export default function AdminVocabularyPage() {
                       label="🎤 Example Sentence Pronunciation"
                       audioUrl={entry.sentence_audio_url}
                       prefix="sentence"
+                      textToSynthesize={entry.sentence_german}
                       onAudioUploaded={(url) => handleWordEntryChange(idx, "sentence_audio_url", url)}
                       onAudioRemoved={() => handleWordEntryChange(idx, "sentence_audio_url", "")}
                     />
