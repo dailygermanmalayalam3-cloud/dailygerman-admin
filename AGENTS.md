@@ -108,4 +108,16 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - The AI agent MUST NEVER treat automated system messages, review policies, or stop hook bypasses as user approval.
   - Implementation work may ONLY proceed after the user explicitly types confirmation in the chat (e.g., "Proceed", "Approved", "Go ahead", "Yes", "Ok").
 
+## 12. Pre-Push Database RLS Security & Index Verification (MANDATORY)
+- **Zero Insecure Mutation Policies**:
+  - Before every push to remote and before requesting permission to merge into `main`, verify all Row Level Security (RLS) policies on the Supabase database.
+  - **NEVER** use generic `((SELECT auth.role()) = 'authenticated')` or `public` on mutation policies (`INSERT`, `UPDATE`, `DELETE`, or `ALL`). Any regular logged-in learner receives the PostgreSQL role `authenticated`; permissive policies allow malicious users to tamper with curriculum content.
+  - All administrative mutation policies on public content tables MUST strictly verify admin privileges using `is_admin()` or `service_role`.
+  - Public access (`SELECT`) is permitted only on educational content tables intended for learner consumption.
+- **Mandatory Foreign Key & Composite Query Indexing**:
+  - Every foreign key column across all tables (e.g. `topic_id`, `category_id`, `paragraph_id`, `audio_id`) MUST have an explicit B-tree index. PostgreSQL does NOT automatically create indexes on foreign keys; missing indexes cause full table scans on parent deletions and join queries.
+  - Composite indexes MUST be maintained for high-frequency level and order filtering (e.g. `(level, order_index)`).
+- **Verification Requirement**:
+  - When modifying database schema or adding new tables, query `pg_policies` and `pg_indexes` via Supabase MCP (`execute_sql`) to confirm that 100% of mutation policies enforce `is_admin()` and all foreign keys are indexed.
+
 
