@@ -732,8 +732,8 @@ export async function POST(req: Request) {
                     ));
 
                 const turnVoice = isFemale
-                  ? "de-DE-Neural2-F"
-                  : (voiceName || "de-DE-Neural2-B");
+                  ? "de-DE-Studio-C"
+                  : (voiceName || "de-DE-Studio-B");
 
                 const { audioBuffer, ext } = await synthesizeGermanSpeech({
                   text,
