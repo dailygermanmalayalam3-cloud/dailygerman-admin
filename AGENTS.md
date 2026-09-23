@@ -92,4 +92,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Build Verification Requirement**:
   - After adding any new route or endpoint, run `npm run build` to verify that the route table confirms `○ (Static)` or `● (SSG)`, with 0 unintended `ƒ (Dynamic)` routes.
 
+## 10. Pre-Push Dependency Freshness & Security Verification (MANDATORY)
+- **Mandatory Package Freshness Check Before Every Push**:
+  - Before every push to remote and before requesting permission to merge into `main`, verify all dependencies and devDependencies in `package.json` against the latest versions available on the internet (via `npm outdated` and npm registry queries).
+  - Update all packages to their latest compatible releases.
+- **Zero Known Vulnerabilities Standard**:
+  - Run `npm audit` to ensure 0 critical or high security vulnerabilities exist in the dependency tree.
+  - Patch or upgrade any affected packages immediately upon security disclosure.
+- **Mandatory Test & Build Pass Post-Upgrade**:
+  - After updating any dependency, run `npm test` (100% passing tests) and `npm run build` (0 TypeScript / compilation errors) to verify complete runtime and build compatibility.
+
 
