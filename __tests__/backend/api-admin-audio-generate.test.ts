@@ -189,6 +189,19 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
           }),
         };
       }
+      if (table === "verbs") {
+        return {
+          select: vi.fn((_cols, opts) => {
+            if (opts?.head) {
+              return {
+                or: vi.fn(() => Promise.resolve({ count: 5, error: null })),
+                then: (cb: any) => cb({ count: 20, error: null }),
+              };
+            }
+            return {};
+          }),
+        };
+      }
       return {};
     });
 
@@ -202,6 +215,8 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
     expect(json.stats.vocabSentences).toBeDefined();
     expect(json.stats.medicalWords).toBeDefined();
     expect(json.stats.medicalSentences).toBeDefined();
+    expect(json.stats.verbInfinitives).toBeDefined();
+    expect(json.stats.verbsAll).toBeDefined();
   });
 
   it("POST: should return 400 for invalid target", async () => {

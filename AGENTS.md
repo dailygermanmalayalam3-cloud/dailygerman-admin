@@ -102,4 +102,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Mandatory Test & Build Pass Post-Upgrade**:
   - After updating any dependency, run `npm test` (100% passing tests) and `npm run build` (0 TypeScript / compilation errors) to verify complete runtime and build compatibility.
 
+## 11. Mandatory User Confirmation on Implementation Plans (MANDATORY)
+- **Zero-Auto-Execution on Implementation Plans**:
+  - Whenever an `implementation_plan.md` artifact is created or modified, the AI agent MUST explicitly STOP and wait for direct, interactive user confirmation in the chat before executing any code changes, database migrations, or modifying commands.
+  - The AI agent MUST NEVER treat automated system messages, review policies, or stop hook bypasses as user approval.
+  - Implementation work may ONLY proceed after the user explicitly types confirmation in the chat (e.g., "Proceed", "Approved", "Go ahead", "Yes", "Ok").
+
 

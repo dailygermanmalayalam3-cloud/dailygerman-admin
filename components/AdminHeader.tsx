@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Shield, BookOpen, FileText, Award, MessageSquare, LogOut, Menu, X, ExternalLink, Stethoscope, Lightbulb, Volume2 } from 'lucide-react';
+import { Shield, BookOpen, FileText, Award, MessageSquare, LogOut, Menu, X, ExternalLink, Stethoscope, Lightbulb, Volume2, Zap } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
 
@@ -42,6 +42,7 @@ export default function AdminHeader() {
   const navItems = [
     { label: 'Overview', href: '/', icon: Shield },
     { label: 'Vocabulary', href: '/vocabulary', icon: BookOpen },
+    { label: 'Verbs', href: '/verbs', icon: Zap },
     { label: 'Grammar', href: '/grammar', icon: FileText },
     { label: 'Speaking', href: '/speaking', icon: MessageSquare },
     { label: 'Reading', href: '/reading', icon: BookOpen },

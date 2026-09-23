@@ -9,7 +9,11 @@ export type BatchTarget =
   | "vocab_words"
   | "vocab_sentences"
   | "medical_words"
-  | "medical_sentences";
+  | "medical_sentences"
+  | "verb_infinitives"
+  | "verb_praeteritums"
+  | "verb_perfekts"
+  | "verbs_all";
 
 export async function GET() {
   try {
@@ -82,6 +86,31 @@ export async function GET() {
       .neq("example_german", "")
       .or("sentence_audio_url.is.null,sentence_audio_url.eq.");
 
+    // 3. Verbs stats (Infinitiv, Präteritum, Perfekt)
+    const { count: totalVerbs } = await supabase
+      .from("verbs")
+      .select("*", { count: "exact", head: true });
+
+    const { count: verbInfinitivesMissing } = await supabase
+      .from("verbs")
+      .select("*", { count: "exact", head: true })
+      .or("infinitive_audio_url.is.null,infinitive_audio_url.eq.");
+
+    const { count: verbPraeteritumsMissing } = await supabase
+      .from("verbs")
+      .select("*", { count: "exact", head: true })
+      .or("praeteritum_audio_url.is.null,praeteritum_audio_url.eq.");
+
+    const { count: verbPerfektsMissing } = await supabase
+      .from("verbs")
+      .select("*", { count: "exact", head: true })
+      .or("perfekt_audio_url.is.null,perfekt_audio_url.eq.");
+
+    const verbsTotalCount = totalVerbs || 0;
+    const vInfMissing = verbInfinitivesMissing || 0;
+    const vPraetMissing = verbPraeteritumsMissing || 0;
+    const vPerfMissing = verbPerfektsMissing || 0;
+
     return NextResponse.json({
       success: true,
       stats: {
@@ -104,6 +133,26 @@ export async function GET() {
           total: medicalSentencesTotal || 0,
           missing: medicalSentencesMissing || 0,
           generated: (medicalSentencesTotal || 0) - (medicalSentencesMissing || 0),
+        },
+        verbInfinitives: {
+          total: verbsTotalCount,
+          missing: vInfMissing,
+          generated: verbsTotalCount - vInfMissing,
+        },
+        verbPraeteritums: {
+          total: verbsTotalCount,
+          missing: vPraetMissing,
+          generated: verbsTotalCount - vPraetMissing,
+        },
+        verbPerfekts: {
+          total: verbsTotalCount,
+          missing: vPerfMissing,
+          generated: verbsTotalCount - vPerfMissing,
+        },
+        verbsAll: {
+          total: verbsTotalCount * 3,
+          missing: vInfMissing + vPraetMissing + vPerfMissing,
+          generated: (verbsTotalCount * 3) - (vInfMissing + vPraetMissing + vPerfMissing),
         },
       },
     });
@@ -152,12 +201,16 @@ export async function POST(req: Request) {
         "vocab_sentences",
         "medical_words",
         "medical_sentences",
+        "verb_infinitives",
+        "verb_praeteritums",
+        "verb_perfekts",
+        "verbs_all",
       ].includes(target)
     ) {
       return NextResponse.json(
         {
           error:
-            "Invalid target. Must be one of: vocab_words, vocab_sentences, medical_words, medical_sentences",
+            "Invalid target. Must be one of: vocab_words, vocab_sentences, medical_words, medical_sentences, verb_infinitives, verb_praeteritums, verb_perfekts, verbs_all",
         },
         { status: 400 }
       );
@@ -387,11 +440,242 @@ export async function POST(req: Request) {
           errors.push(`${text}: ${(itemErr as Error).message}`);
         }
       }
+    } else if (target === "verb_infinitives") {
+      const { data: rows, error: fetchErr } = await supabase
+        .from("verbs")
+        .select("id, infinitive_de")
+        .or("infinitive_audio_url.is.null,infinitive_audio_url.eq.")
+        .limit(safeLimit);
+
+      if (fetchErr) throw fetchErr;
+
+      for (const row of rows || []) {
+        const text = row.infinitive_de?.trim();
+        if (!text) continue;
+
+        try {
+          const { audioBuffer, ext } = await synthesizeGermanSpeech({
+            text,
+            voiceName,
+            speakingRate,
+          });
+
+          const uniqueId = crypto.randomUUID();
+          const filePath = `verbs/infinitives/${uniqueId}.${ext}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("pronunciations")
+            .upload(filePath, audioBuffer, {
+              contentType: "audio/mpeg",
+              upsert: true,
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data: publicData } = supabase.storage
+            .from("pronunciations")
+            .getPublicUrl(filePath);
+
+          const { error: updateErr } = await supabase
+            .from("verbs")
+            .update({ infinitive_audio_url: publicData.publicUrl })
+            .eq("id", row.id);
+
+          if (updateErr) throw updateErr;
+
+          processedItems.push({
+            id: row.id,
+            text,
+            url: publicData.publicUrl,
+          });
+        } catch (itemErr: unknown) {
+          console.error(`Error processing verb infinitive ${row.id} (${text}):`, itemErr);
+          errors.push(`${text}: ${(itemErr as Error).message}`);
+        }
+      }
+    } else if (target === "verb_praeteritums") {
+      const { data: rows, error: fetchErr } = await supabase
+        .from("verbs")
+        .select("id, praeteritum_de")
+        .or("praeteritum_audio_url.is.null,praeteritum_audio_url.eq.")
+        .limit(safeLimit);
+
+      if (fetchErr) throw fetchErr;
+
+      for (const row of rows || []) {
+        const text = row.praeteritum_de?.trim();
+        if (!text) continue;
+
+        try {
+          const { audioBuffer, ext } = await synthesizeGermanSpeech({
+            text,
+            voiceName,
+            speakingRate,
+          });
+
+          const uniqueId = crypto.randomUUID();
+          const filePath = `verbs/praeteritums/${uniqueId}.${ext}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("pronunciations")
+            .upload(filePath, audioBuffer, {
+              contentType: "audio/mpeg",
+              upsert: true,
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data: publicData } = supabase.storage
+            .from("pronunciations")
+            .getPublicUrl(filePath);
+
+          const { error: updateErr } = await supabase
+            .from("verbs")
+            .update({ praeteritum_audio_url: publicData.publicUrl })
+            .eq("id", row.id);
+
+          if (updateErr) throw updateErr;
+
+          processedItems.push({
+            id: row.id,
+            text,
+            url: publicData.publicUrl,
+          });
+        } catch (itemErr: unknown) {
+          console.error(`Error processing verb praeteritum ${row.id} (${text}):`, itemErr);
+          errors.push(`${text}: ${(itemErr as Error).message}`);
+        }
+      }
+    } else if (target === "verb_perfekts") {
+      const { data: rows, error: fetchErr } = await supabase
+        .from("verbs")
+        .select("id, perfekt_de")
+        .or("perfekt_audio_url.is.null,perfekt_audio_url.eq.")
+        .limit(safeLimit);
+
+      if (fetchErr) throw fetchErr;
+
+      for (const row of rows || []) {
+        const text = row.perfekt_de?.trim();
+        if (!text) continue;
+
+        try {
+          const { audioBuffer, ext } = await synthesizeGermanSpeech({
+            text,
+            voiceName,
+            speakingRate,
+          });
+
+          const uniqueId = crypto.randomUUID();
+          const filePath = `verbs/perfekts/${uniqueId}.${ext}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("pronunciations")
+            .upload(filePath, audioBuffer, {
+              contentType: "audio/mpeg",
+              upsert: true,
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data: publicData } = supabase.storage
+            .from("pronunciations")
+            .getPublicUrl(filePath);
+
+          const { error: updateErr } = await supabase
+            .from("verbs")
+            .update({ perfekt_audio_url: publicData.publicUrl })
+            .eq("id", row.id);
+
+          if (updateErr) throw updateErr;
+
+          processedItems.push({
+            id: row.id,
+            text,
+            url: publicData.publicUrl,
+          });
+        } catch (itemErr: unknown) {
+          console.error(`Error processing verb perfekt ${row.id} (${text}):`, itemErr);
+          errors.push(`${text}: ${(itemErr as Error).message}`);
+        }
+      }
+    } else if (target === "verbs_all") {
+      const { data: rows, error: fetchErr } = await supabase
+        .from("verbs")
+        .select("id, infinitive_de, infinitive_audio_url, praeteritum_de, praeteritum_audio_url, perfekt_de, perfekt_audio_url")
+        .or(
+          "infinitive_audio_url.is.null,infinitive_audio_url.eq.,praeteritum_audio_url.is.null,praeteritum_audio_url.eq.,perfekt_audio_url.is.null,perfekt_audio_url.eq."
+        )
+        .limit(safeLimit);
+
+      if (fetchErr) throw fetchErr;
+
+      for (const row of rows || []) {
+        const updates: Record<string, string> = {};
+
+        // 1. Check infinitive
+        if (!row.infinitive_audio_url && row.infinitive_de?.trim()) {
+          const text = row.infinitive_de.trim();
+          try {
+            const { audioBuffer, ext } = await synthesizeGermanSpeech({ text, voiceName, speakingRate });
+            const uniqueId = crypto.randomUUID();
+            const filePath = `verbs/infinitives/${uniqueId}.${ext}`;
+            const { error: upErr } = await supabase.storage.from("pronunciations").upload(filePath, audioBuffer, { contentType: "audio/mpeg", upsert: true });
+            if (!upErr) {
+              const { data: pData } = supabase.storage.from("pronunciations").getPublicUrl(filePath);
+              updates.infinitive_audio_url = pData.publicUrl;
+              processedItems.push({ id: row.id, text, url: pData.publicUrl });
+            }
+          } catch (e: unknown) {
+            errors.push(`${text}: ${(e as Error).message}`);
+          }
+        }
+
+        // 2. Check praeteritum
+        if (!row.praeteritum_audio_url && row.praeteritum_de?.trim()) {
+          const text = row.praeteritum_de.trim();
+          try {
+            const { audioBuffer, ext } = await synthesizeGermanSpeech({ text, voiceName, speakingRate });
+            const uniqueId = crypto.randomUUID();
+            const filePath = `verbs/praeteritums/${uniqueId}.${ext}`;
+            const { error: upErr } = await supabase.storage.from("pronunciations").upload(filePath, audioBuffer, { contentType: "audio/mpeg", upsert: true });
+            if (!upErr) {
+              const { data: pData } = supabase.storage.from("pronunciations").getPublicUrl(filePath);
+              updates.praeteritum_audio_url = pData.publicUrl;
+              processedItems.push({ id: row.id, text, url: pData.publicUrl });
+            }
+          } catch (e: unknown) {
+            errors.push(`${text}: ${(e as Error).message}`);
+          }
+        }
+
+        // 3. Check perfekt
+        if (!row.perfekt_audio_url && row.perfekt_de?.trim()) {
+          const text = row.perfekt_de.trim();
+          try {
+            const { audioBuffer, ext } = await synthesizeGermanSpeech({ text, voiceName, speakingRate });
+            const uniqueId = crypto.randomUUID();
+            const filePath = `verbs/perfekts/${uniqueId}.${ext}`;
+            const { error: upErr } = await supabase.storage.from("pronunciations").upload(filePath, audioBuffer, { contentType: "audio/mpeg", upsert: true });
+            if (!upErr) {
+              const { data: pData } = supabase.storage.from("pronunciations").getPublicUrl(filePath);
+              updates.perfekt_audio_url = pData.publicUrl;
+              processedItems.push({ id: row.id, text, url: pData.publicUrl });
+            }
+          } catch (e: unknown) {
+            errors.push(`${text}: ${(e as Error).message}`);
+          }
+        }
+
+        if (Object.keys(updates).length > 0) {
+          await supabase.from("verbs").update(updates).eq("id", row.id);
+        }
+      }
     }
 
     // Revalidate learner pages if any audio was updated
     if (processedItems.length > 0) {
-      if (target.startsWith("vocab")) {
+      if (target.startsWith("vocab") || target.startsWith("verb")) {
         await revalidateLearnerPaths(["/", "/a1", "/a2", "/b1", "/b2"]);
       } else if (target.startsWith("medical")) {
         await revalidateLearnerPaths(["/medical"]);
@@ -429,6 +713,38 @@ export async function POST(req: Request) {
           .not("example_german", "is", null)
           .neq("example_german", "");
         remaining = count ?? 0;
+      } else if (target === "verb_infinitives") {
+        const { count } = await supabase
+          .from("verbs")
+          .select("*", { count: "exact", head: true })
+          .or("infinitive_audio_url.is.null,infinitive_audio_url.eq.");
+        remaining = count ?? 0;
+      } else if (target === "verb_praeteritums") {
+        const { count } = await supabase
+          .from("verbs")
+          .select("*", { count: "exact", head: true })
+          .or("praeteritum_audio_url.is.null,praeteritum_audio_url.eq.");
+        remaining = count ?? 0;
+      } else if (target === "verb_perfekts") {
+        const { count } = await supabase
+          .from("verbs")
+          .select("*", { count: "exact", head: true })
+          .or("perfekt_audio_url.is.null,perfekt_audio_url.eq.");
+        remaining = count ?? 0;
+      } else if (target === "verbs_all") {
+        const { count: cInf } = await supabase
+          .from("verbs")
+          .select("*", { count: "exact", head: true })
+          .or("infinitive_audio_url.is.null,infinitive_audio_url.eq.");
+        const { count: cPraet } = await supabase
+          .from("verbs")
+          .select("*", { count: "exact", head: true })
+          .or("praeteritum_audio_url.is.null,praeteritum_audio_url.eq.");
+        const { count: cPerf } = await supabase
+          .from("verbs")
+          .select("*", { count: "exact", head: true })
+          .or("perfekt_audio_url.is.null,perfekt_audio_url.eq.");
+        remaining = (cInf || 0) + (cPraet || 0) + (cPerf || 0);
       }
     } catch {
       // Non-critical if count fails

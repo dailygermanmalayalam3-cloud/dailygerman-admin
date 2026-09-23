@@ -16,6 +16,7 @@ import {
   FileAudio,
   Activity,
   Layers,
+  Zap,
 } from "lucide-react";
 
 interface AudioStats {
@@ -23,6 +24,10 @@ interface AudioStats {
   vocabSentences: { total: number; missing: number; generated: number };
   medicalWords: { total: number; missing: number; generated: number };
   medicalSentences: { total: number; missing: number; generated: number };
+  verbInfinitives?: { total: number; missing: number; generated: number };
+  verbPraeteritums?: { total: number; missing: number; generated: number };
+  verbPerfekts?: { total: number; missing: number; generated: number };
+  verbsAll?: { total: number; missing: number; generated: number };
 }
 
 export default function AudioGeneratorPage() {
@@ -42,7 +47,14 @@ export default function AudioGeneratorPage() {
 
   // Batch Generation State
   const [batchTarget, setBatchTarget] = useState<
-    "vocab_words" | "vocab_sentences" | "medical_words" | "medical_sentences"
+    | "vocab_words"
+    | "vocab_sentences"
+    | "medical_words"
+    | "medical_sentences"
+    | "verb_infinitives"
+    | "verb_praeteritums"
+    | "verb_perfekts"
+    | "verbs_all"
   >("vocab_words");
   const [isBatchRunning, setIsBatchRunning] = useState(false);
   const isBatchRunningRef = useRef(false);
@@ -130,6 +142,10 @@ export default function AudioGeneratorPage() {
       else if (batchTarget === "vocab_sentences") targetTotal = stats.vocabSentences.missing;
       else if (batchTarget === "medical_words") targetTotal = stats.medicalWords.missing;
       else if (batchTarget === "medical_sentences") targetTotal = stats.medicalSentences.missing;
+      else if (batchTarget === "verb_infinitives") targetTotal = stats.verbInfinitives?.missing || 0;
+      else if (batchTarget === "verb_praeteritums") targetTotal = stats.verbPraeteritums?.missing || 0;
+      else if (batchTarget === "verb_perfekts") targetTotal = stats.verbPerfekts?.missing || 0;
+      else if (batchTarget === "verbs_all") targetTotal = stats.verbsAll?.missing || 0;
     }
 
     if (targetTotal === 0) {
@@ -413,6 +429,105 @@ export default function AudioGeneratorPage() {
             {stats ? stats.medicalSentences.missing : 0} missing audio
           </p>
         </div>
+
+        {/* 5. Verb Infinitives */}
+        <div className="p-4 bg-white dark:bg-[#141414] border-2 border-black dark:border-neutral-700 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-neutral-500">
+              Verb Infinitiv
+            </span>
+            <Zap className="w-4 h-4 text-neutral-500" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black">
+              {stats?.verbInfinitives ? stats.verbInfinitives.generated : 0}
+            </span>
+            <span className="text-xs font-bold text-neutral-500">
+              / {stats?.verbInfinitives ? stats.verbInfinitives.total : 0}
+            </span>
+          </div>
+          <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 mt-3 overflow-hidden border border-black/20">
+            <div
+              className="bg-emerald-500 h-full transition-all duration-500"
+              style={{
+                width: `${
+                  stats?.verbInfinitives
+                    ? calcPercentage(stats.verbInfinitives.generated, stats.verbInfinitives.total)
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-2">
+            {stats?.verbInfinitives ? stats.verbInfinitives.missing : 0} missing audio
+          </p>
+        </div>
+
+        {/* 6. Verb Präteritum */}
+        <div className="p-4 bg-white dark:bg-[#141414] border-2 border-black dark:border-neutral-700 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-neutral-500">
+              Verb Präteritum
+            </span>
+            <Zap className="w-4 h-4 text-neutral-500" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black">
+              {stats?.verbPraeteritums ? stats.verbPraeteritums.generated : 0}
+            </span>
+            <span className="text-xs font-bold text-neutral-500">
+              / {stats?.verbPraeteritums ? stats.verbPraeteritums.total : 0}
+            </span>
+          </div>
+          <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 mt-3 overflow-hidden border border-black/20">
+            <div
+              className="bg-emerald-500 h-full transition-all duration-500"
+              style={{
+                width: `${
+                  stats?.verbPraeteritums
+                    ? calcPercentage(stats.verbPraeteritums.generated, stats.verbPraeteritums.total)
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-2">
+            {stats?.verbPraeteritums ? stats.verbPraeteritums.missing : 0} missing audio
+          </p>
+        </div>
+
+        {/* 7. Verb Perfekt */}
+        <div className="p-4 bg-white dark:bg-[#141414] border-2 border-black dark:border-neutral-700 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-neutral-500">
+              Verb Perfekt
+            </span>
+            <Zap className="w-4 h-4 text-neutral-500" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black">
+              {stats?.verbPerfekts ? stats.verbPerfekts.generated : 0}
+            </span>
+            <span className="text-xs font-bold text-neutral-500">
+              / {stats?.verbPerfekts ? stats.verbPerfekts.total : 0}
+            </span>
+          </div>
+          <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 mt-3 overflow-hidden border border-black/20">
+            <div
+              className="bg-emerald-500 h-full transition-all duration-500"
+              style={{
+                width: `${
+                  stats?.verbPerfekts
+                    ? calcPercentage(stats.verbPerfekts.generated, stats.verbPerfekts.total)
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-2">
+            {stats?.verbPerfekts ? stats.verbPerfekts.missing : 0} missing audio
+          </p>
+        </div>
       </div>
 
       {/* Voice Configuration & Real-Time Tester */}
@@ -535,6 +650,10 @@ export default function AudioGeneratorPage() {
             { id: "vocab_sentences", title: "Vocab Sentences", count: stats?.vocabSentences.missing || 0 },
             { id: "medical_words", title: "Medical Words", count: stats?.medicalWords.missing || 0 },
             { id: "medical_sentences", title: "Medical Sentences", count: stats?.medicalSentences.missing || 0 },
+            { id: "verb_infinitives", title: "Verb Infinitiv", count: stats?.verbInfinitives?.missing || 0 },
+            { id: "verb_praeteritums", title: "Verb Präteritum", count: stats?.verbPraeteritums?.missing || 0 },
+            { id: "verb_perfekts", title: "Verb Perfekt", count: stats?.verbPerfekts?.missing || 0 },
+            { id: "verbs_all", title: "All Verbs (Combined)", count: stats?.verbsAll?.missing || 0 },
           ].map((item) => (
             <button
               key={item.id}

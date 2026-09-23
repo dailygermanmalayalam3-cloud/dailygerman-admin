@@ -298,3 +298,36 @@ export interface BlacklistedUser {
   updated_at?: string;
 }
 
+// Verbs Module (Infinitiv, Präteritum, Perfekt)
+export interface VerbCategory {
+  id: string;
+  name: string;
+  order_index: number;
+  created_at?: string;
+}
+
+export interface VerbItem {
+  id: string;
+  level: Level;
+  category_id: string;
+  category_name?: string;
+  // Infinitiv
+  infinitive_de: string;
+  infinitive_en: string;
+  infinitive_ml: string;
+  infinitive_audio_url?: string;
+  // Präteritum
+  praeteritum_de: string;
+  praeteritum_en: string;
+  praeteritum_ml: string;
+  praeteritum_audio_url?: string;
+  // Perfekt
+  perfekt_de: string;
+  perfekt_en: string;
+  perfekt_ml: string;
+  perfekt_audio_url?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
