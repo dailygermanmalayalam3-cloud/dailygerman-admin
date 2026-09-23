@@ -13,7 +13,8 @@ export type BatchTarget =
   | "verb_infinitives"
   | "verb_praeteritums"
   | "verb_perfekts"
-  | "verbs_all";
+  | "verbs_all"
+  | "conversation_turns";
 
 export async function GET() {
   try {
@@ -111,6 +112,27 @@ export async function GET() {
     const vPraetMissing = verbPraeteritumsMissing || 0;
     const vPerfMissing = verbPerfektsMissing || 0;
 
+    // 4. Conversation Dialogue Turns stats
+    const { data: convData } = await supabase
+      .from("conversations")
+      .select("id, turns");
+
+    let convTurnsTotal = 0;
+    let convTurnsMissing = 0;
+    if (convData) {
+      for (const conv of convData) {
+        const turns = Array.isArray(conv.turns) ? conv.turns : [];
+        for (const t of turns) {
+          if (t && t.german && t.german.trim()) {
+            convTurnsTotal++;
+            if (!t.audio_url || !t.audio_url.trim()) {
+              convTurnsMissing++;
+            }
+          }
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       stats: {
@@ -153,6 +175,11 @@ export async function GET() {
           total: verbsTotalCount * 3,
           missing: vInfMissing + vPraetMissing + vPerfMissing,
           generated: (verbsTotalCount * 3) - (vInfMissing + vPraetMissing + vPerfMissing),
+        },
+        conversationTurns: {
+          total: convTurnsTotal,
+          missing: convTurnsMissing,
+          generated: convTurnsTotal - convTurnsMissing,
         },
       },
     });
@@ -205,12 +232,13 @@ export async function POST(req: Request) {
         "verb_praeteritums",
         "verb_perfekts",
         "verbs_all",
+        "conversation_turns",
       ].includes(target)
     ) {
       return NextResponse.json(
         {
           error:
-            "Invalid target. Must be one of: vocab_words, vocab_sentences, medical_words, medical_sentences, verb_infinitives, verb_praeteritums, verb_perfekts, verbs_all",
+            "Invalid target. Must be one of: vocab_words, vocab_sentences, medical_words, medical_sentences, verb_infinitives, verb_praeteritums, verb_perfekts, verbs_all, conversation_turns",
         },
         { status: 400 }
       );
@@ -673,12 +701,89 @@ export async function POST(req: Request) {
       }
     }
 
+    if (target === "conversation_turns") {
+      const { data: allConvs } = await supabase
+        .from("conversations")
+        .select("id, turns, topic_id")
+        .order("order_index", { ascending: true });
+
+      if (allConvs) {
+        let processedCount = 0;
+
+        for (const conv of allConvs) {
+          if (processedCount >= safeLimit) break;
+          const turns = Array.isArray(conv.turns) ? [...conv.turns] : [];
+          let convModified = false;
+
+          for (let i = 0; i < turns.length; i++) {
+            if (processedCount >= safeLimit) break;
+            const turn = turns[i];
+            if (turn && turn.german && (!turn.audio_url || !turn.audio_url.trim())) {
+              const text = turn.german.trim();
+              try {
+                // Gender-aware voice selection: female turns use de-DE-Neural2-F, male/default use de-DE-Neural2-B
+                const turnVoice =
+                  turn.gender === "female"
+                    ? "de-DE-Neural2-F"
+                    : (voiceName || "de-DE-Neural2-B");
+
+                const { audioBuffer, ext } = await synthesizeGermanSpeech({
+                  text,
+                  voiceName: turnVoice,
+                  speakingRate,
+                });
+
+                const turnId = turn.id || crypto.randomUUID();
+                const filePath = `conversations/${turnId}.${ext}`;
+
+                const { error: upErr } = await supabase.storage
+                  .from("pronunciations")
+                  .upload(filePath, audioBuffer, {
+                    contentType: "audio/mpeg",
+                    upsert: true,
+                  });
+
+                if (!upErr) {
+                  const { data: pData } = supabase.storage
+                    .from("pronunciations")
+                    .getPublicUrl(filePath);
+
+                  turn.id = turnId;
+                  turn.audio_url = pData.publicUrl;
+                  convModified = true;
+                  processedItems.push({
+                    id: turnId,
+                    text: `${turn.speaker ? turn.speaker + ": " : ""}${text}`,
+                    url: pData.publicUrl,
+                  });
+                  processedCount++;
+                } else {
+                  errors.push(`${text}: ${upErr.message}`);
+                }
+              } catch (e: unknown) {
+                errors.push(`${text}: ${(e as Error).message}`);
+              }
+            }
+          }
+
+          if (convModified) {
+            await supabase
+              .from("conversations")
+              .update({ turns, updated_at: new Date().toISOString() })
+              .eq("id", conv.id);
+          }
+        }
+      }
+    }
+
     // Revalidate learner pages if any audio was updated
     if (processedItems.length > 0) {
       if (target.startsWith("vocab") || target.startsWith("verb")) {
         await revalidateLearnerPaths(["/", "/a1", "/a2", "/b1", "/b2"]);
       } else if (target.startsWith("medical")) {
         await revalidateLearnerPaths(["/medical"]);
+      } else if (target === "conversation_turns") {
+        await revalidateLearnerPaths(["/", "/speaking", "/medical", "/a1", "/a2", "/b1", "/b2"]);
       }
     }
 
@@ -745,6 +850,22 @@ export async function POST(req: Request) {
           .select("*", { count: "exact", head: true })
           .or("perfekt_audio_url.is.null,perfekt_audio_url.eq.");
         remaining = (cInf || 0) + (cPraet || 0) + (cPerf || 0);
+      } else if (target === "conversation_turns") {
+        const { data: convData } = await supabase
+          .from("conversations")
+          .select("turns");
+        let missing = 0;
+        if (convData) {
+          for (const conv of convData) {
+            const turns = Array.isArray(conv.turns) ? conv.turns : [];
+            for (const t of turns) {
+              if (t && t.german && (!t.audio_url || !t.audio_url.trim())) {
+                missing++;
+              }
+            }
+          }
+        }
+        remaining = missing;
       }
     } catch {
       // Non-critical if count fails

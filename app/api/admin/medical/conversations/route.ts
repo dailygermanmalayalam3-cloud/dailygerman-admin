@@ -11,7 +11,7 @@ export const revalidate = 0;
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const topicId = searchParams.get("topicId") || undefined;
+    const topicId = searchParams.get("topicId") || searchParams.get("topic_id") || undefined;
     const items = await getMedicalConversations(topicId);
     return NextResponse.json({ success: true, items });
   } catch (err: unknown) {
@@ -22,9 +22,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    if (!body.topic_id || !body.conversation_text) {
+    if (!body.topic_id) {
       return NextResponse.json(
-        { error: "Missing required fields (topic_id, conversation_text)" },
+        { error: "Missing required field: topic_id" },
         { status: 400 }
       );
     }

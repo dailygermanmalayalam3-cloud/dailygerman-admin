@@ -18,8 +18,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    if (!body.topic_id || !body.conversation_text) {
-      return NextResponse.json({ error: "Missing required fields (topic_id, conversation_text)" }, { status: 400 });
+    if (!body.topic_id) {
+      return NextResponse.json({ error: "Missing required field: topic_id" }, { status: 400 });
     }
     const item = await mutateSpeakingConversation(body);
     await revalidateLearnerPaths(["/", "/speaking", "/a1", "/a2", "/b1", "/b2"]);

@@ -15,6 +15,9 @@ import {
   GoetheSection,
   CategoryParagraph,
   CategoryQuestion,
+  Conversation,
+  ConversationTopic,
+  DialogueTurn,
   SpeakingTopic,
   SpeakingConversation,
   ReadingTopic,
@@ -743,16 +746,23 @@ export async function deleteCategoryQuestion(id: string): Promise<boolean> {
   return true;
 }
 
-// ----------------- SPEAKING MODULE -----------------
-export async function getSpeakingTopics(level?: Level): Promise<SpeakingTopic[]> {
+// ----------------- UNIFIED CONVERSATION MODULE -----------------
+export async function getConversationTopics(module: string, level?: Level): Promise<ConversationTopic[]> {
   try {
     const supabase = await createServerSupabaseClient();
     if (supabase) {
-      let query = supabase.from("speaking_topics").select("*, conversations:speaking_conversations(*)").order("order_index", { ascending: true });
+      let query = supabase.from("conversation_topics").select("*, conversations(*)").eq("module", module).order("order_index", { ascending: true });
       if (level) query = query.eq("level", level);
       const { data, error } = await query;
-      if (!error && data) return data as SpeakingTopic[];
-      if (error) console.error("Supabase error fetching speaking topics:", error.message);
+      if (!error && data) {
+        data.forEach((topic: ConversationTopic) => {
+          if (topic.conversations) {
+            topic.conversations.sort((a: Conversation, b: Conversation) => (a.order_index ?? 1) - (b.order_index ?? 1));
+          }
+        });
+        return data as ConversationTopic[];
+      }
+      if (error) console.error(`Supabase error fetching ${module} conversation topics:`, error.message);
     }
   } catch (err) {
     console.warn("Supabase connection unavailable:", err);
@@ -760,12 +770,16 @@ export async function getSpeakingTopics(level?: Level): Promise<SpeakingTopic[]>
   return [];
 }
 
-export async function mutateSpeakingTopic(item: Partial<SpeakingTopic> & { level: Level; title: string; slug: string }): Promise<SpeakingTopic> {
-  const payload: SpeakingTopic = {
+export async function mutateConversationTopic(
+  item: Partial<ConversationTopic> & { module: string; title: string; slug: string }
+): Promise<ConversationTopic> {
+  const payload: ConversationTopic = {
     id: item.id || crypto.randomUUID(),
-    level: item.level,
+    module: item.module,
+    level: item.level || null,
     title: item.title.trim(),
-    slug: item.slug.trim(),
+    slug: item.slug.trim().toLowerCase(),
+    icon: item.icon || "MessageSquare",
     description: item.description || "",
     order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
     created_at: item.created_at || new Date().toISOString(),
@@ -774,37 +788,37 @@ export async function mutateSpeakingTopic(item: Partial<SpeakingTopic> & { level
 
   const supabase = await createServerSupabaseClient();
   if (supabase) {
-    const { data, error } = await supabase.from("speaking_topics").upsert(payload).select().single();
+    const { data, error } = await supabase.from("conversation_topics").upsert(payload).select().single();
     if (error) {
-      console.error("Supabase upsert speaking topic error:", error.message);
+      console.error("Supabase upsert conversation topic error:", error.message);
       throw new Error(`Supabase error: ${error.message}`);
     }
-    if (data) return data as SpeakingTopic;
+    if (data) return data as ConversationTopic;
   }
   return payload;
 }
 
-export async function deleteSpeakingTopic(id: string): Promise<boolean> {
+export async function deleteConversationTopic(id: string): Promise<boolean> {
   const supabase = await createServerSupabaseClient();
   if (supabase) {
-    const { error } = await supabase.from("speaking_topics").delete().eq("id", id);
+    const { error } = await supabase.from("conversation_topics").delete().eq("id", id);
     if (error) {
-      console.error("Supabase delete speaking topic error:", error.message);
+      console.error("Supabase delete conversation topic error:", error.message);
       throw new Error(`Supabase delete error: ${error.message}`);
     }
   }
   return true;
 }
 
-export async function getSpeakingConversations(topicId?: string): Promise<SpeakingConversation[]> {
+export async function getConversations(topicId?: string): Promise<Conversation[]> {
   try {
     const supabase = await createServerSupabaseClient();
     if (supabase) {
-      let query = supabase.from("speaking_conversations").select("*").order("order_index", { ascending: true });
+      let query = supabase.from("conversations").select("*").order("order_index", { ascending: true });
       if (topicId) query = query.eq("topic_id", topicId);
       const { data, error } = await query;
-      if (!error && data) return data as SpeakingConversation[];
-      if (error) console.error("Supabase error fetching speaking conversations:", error.message);
+      if (!error && data) return data as Conversation[];
+      if (error) console.error("Supabase error fetching conversations:", error.message);
     }
   } catch (err) {
     console.warn("Supabase connection unavailable:", err);
@@ -812,40 +826,79 @@ export async function getSpeakingConversations(topicId?: string): Promise<Speaki
   return [];
 }
 
-export async function mutateSpeakingConversation(item: Partial<SpeakingConversation> & { topic_id: string; conversation_text: string }): Promise<SpeakingConversation> {
-  const payload: SpeakingConversation = {
+export async function mutateConversation(
+  item: Partial<Conversation> & { topic_id: string; title?: string }
+): Promise<Conversation> {
+  const turns: DialogueTurn[] = Array.isArray(item.turns)
+    ? item.turns.map((t) => ({
+        id: t.id || crypto.randomUUID(),
+        speaker: (t.speaker || "").trim(),
+        speaker_role: t.speaker_role || undefined,
+        gender: t.gender || undefined,
+        german: (t.german || "").trim(),
+        english: t.english?.trim() || undefined,
+        malayalam: t.malayalam?.trim() || undefined,
+        audio_url: t.audio_url || undefined,
+      }))
+    : [];
+
+  const payload: Conversation = {
     id: item.id || crypto.randomUUID(),
     topic_id: item.topic_id,
-    title: item.title || "",
-    conversation_text: item.conversation_text.trim(),
-    explanation_malayalam: item.explanation_malayalam || "",
+    title: (item.title || "Dialogue").trim(),
     order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    turns,
     created_at: item.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
 
   const supabase = await createServerSupabaseClient();
   if (supabase) {
-    const { data, error } = await supabase.from("speaking_conversations").upsert(payload).select().single();
+    const { data, error } = await supabase.from("conversations").upsert(payload).select().single();
     if (error) {
-      console.error("Supabase upsert speaking conversation error:", error.message);
+      console.error("Supabase upsert conversation error:", error.message);
       throw new Error(`Supabase error: ${error.message}`);
     }
-    if (data) return data as SpeakingConversation;
+    if (data) return data as Conversation;
   }
   return payload;
 }
 
-export async function deleteSpeakingConversation(id: string): Promise<boolean> {
+export async function deleteConversation(id: string): Promise<boolean> {
   const supabase = await createServerSupabaseClient();
   if (supabase) {
-    const { error } = await supabase.from("speaking_conversations").delete().eq("id", id);
+    const { error } = await supabase.from("conversations").delete().eq("id", id);
     if (error) {
-      console.error("Supabase delete speaking conversation error:", error.message);
+      console.error("Supabase delete conversation error:", error.message);
       throw new Error(`Supabase delete error: ${error.message}`);
     }
   }
   return true;
+}
+
+// Speaking Module Convenience Wrappers
+export async function getSpeakingTopics(level?: Level): Promise<SpeakingTopic[]> {
+  return getConversationTopics("speaking", level);
+}
+
+export async function mutateSpeakingTopic(item: Partial<SpeakingTopic> & { level: Level; title: string; slug: string }): Promise<SpeakingTopic> {
+  return mutateConversationTopic({ ...item, module: "speaking" });
+}
+
+export async function deleteSpeakingTopic(id: string): Promise<boolean> {
+  return deleteConversationTopic(id);
+}
+
+export async function getSpeakingConversations(topicId?: string): Promise<SpeakingConversation[]> {
+  return getConversations(topicId);
+}
+
+export async function mutateSpeakingConversation(item: Partial<SpeakingConversation> & { topic_id: string }): Promise<SpeakingConversation> {
+  return mutateConversation(item);
+}
+
+export async function deleteSpeakingConversation(id: string): Promise<boolean> {
+  return deleteConversation(id);
 }
 
 // ----------------- READING MODULE -----------------
@@ -1241,142 +1294,38 @@ export async function deleteMedicalWord(id: string): Promise<boolean> {
   return true;
 }
 
-// Conversation Topics
+// Conversation Topics (Medical Module)
 export async function getMedicalConversationTopics(): Promise<MedicalConversationTopic[]> {
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (supabase) {
-      const { data, error } = await supabase
-        .from("medical_conversation_topics")
-        .select("*, conversations:medical_conversations(*)")
-        .order("order_index", { ascending: true });
-      if (!error && data) {
-        data.forEach((topic: MedicalConversationTopic) => {
-          if (topic.conversations) {
-            topic.conversations.sort(
-              (a: MedicalConversation, b: MedicalConversation) =>
-                (a.order_index ?? 1) - (b.order_index ?? 1)
-            );
-          }
-        });
-        return data as MedicalConversationTopic[];
-      }
-      if (error) console.error("Supabase error fetching medical conversation topics:", error.message);
-    }
-  } catch (err) {
-    console.warn("Supabase connection unavailable:", err);
-  }
-  return [];
+  return getConversationTopics("medical");
 }
 
 export async function mutateMedicalConversationTopic(
   item: Partial<MedicalConversationTopic> & { title: string; slug: string }
 ): Promise<MedicalConversationTopic> {
-  const payload: MedicalConversationTopic = {
-    id: item.id || crypto.randomUUID(),
-    title: item.title.trim(),
-    slug: item.slug.trim().toLowerCase(),
+  return mutateConversationTopic({
+    ...item,
+    module: "medical",
     icon: item.icon || "🏥",
-    description: item.description || "",
-    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
-    created_at: item.created_at || new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-
-  const supabase = await createServerSupabaseClient();
-  if (supabase) {
-    const { data, error } = await supabase
-      .from("medical_conversation_topics")
-      .upsert(payload)
-      .select()
-      .single();
-    if (error) {
-      console.error("Supabase upsert medical conversation topic error:", error.message);
-      throw new Error(`Supabase error: ${error.message}`);
-    }
-    if (data) return data as MedicalConversationTopic;
-  }
-  return payload;
+  });
 }
 
 export async function deleteMedicalConversationTopic(id: string): Promise<boolean> {
-  const supabase = await createServerSupabaseClient();
-  if (supabase) {
-    const { error } = await supabase
-      .from("medical_conversation_topics")
-      .delete()
-      .eq("id", id);
-    if (error) {
-      console.error("Supabase delete medical conversation topic error:", error.message);
-      throw new Error(`Supabase delete error: ${error.message}`);
-    }
-  }
-  return true;
+  return deleteConversationTopic(id);
 }
 
-// Conversations
+// Conversations (Medical Module)
 export async function getMedicalConversations(topicId?: string): Promise<MedicalConversation[]> {
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (supabase) {
-      let query = supabase
-        .from("medical_conversations")
-        .select("*")
-        .order("order_index", { ascending: true });
-      if (topicId) query = query.eq("topic_id", topicId);
-      const { data, error } = await query;
-      if (!error && data) return data as MedicalConversation[];
-      if (error) console.error("Supabase error fetching medical conversations:", error.message);
-    }
-  } catch (err) {
-    console.warn("Supabase connection unavailable:", err);
-  }
-  return [];
+  return getConversations(topicId);
 }
 
 export async function mutateMedicalConversation(
-  item: Partial<MedicalConversation> & { topic_id: string; conversation_text: string }
+  item: Partial<MedicalConversation> & { topic_id: string }
 ): Promise<MedicalConversation> {
-  const payload: MedicalConversation = {
-    id: item.id || crypto.randomUUID(),
-    topic_id: item.topic_id,
-    title: item.title || "Hospital Dialogue",
-    conversation_text: item.conversation_text.trim(),
-    explanation_malayalam: item.explanation_malayalam || "",
-    order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
-    created_at: item.created_at || new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-
-  const supabase = await createServerSupabaseClient();
-  if (supabase) {
-    const { data, error } = await supabase
-      .from("medical_conversations")
-      .upsert(payload)
-      .select()
-      .single();
-    if (error) {
-      console.error("Supabase upsert medical conversation error:", error.message);
-      throw new Error(`Supabase error: ${error.message}`);
-    }
-    if (data) return data as MedicalConversation;
-  }
-  return payload;
+  return mutateConversation(item);
 }
 
 export async function deleteMedicalConversation(id: string): Promise<boolean> {
-  const supabase = await createServerSupabaseClient();
-  if (supabase) {
-    const { error } = await supabase
-      .from("medical_conversations")
-      .delete()
-      .eq("id", id);
-    if (error) {
-      console.error("Supabase delete medical conversation error:", error.message);
-      throw new Error(`Supabase delete error: ${error.message}`);
-    }
-  }
-  return true;
+  return deleteConversation(id);
 }
 
 // ==========================================================================

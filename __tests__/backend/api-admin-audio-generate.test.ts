@@ -202,6 +202,24 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
           }),
         };
       }
+      if (table === "conversations") {
+        return {
+          select: vi.fn(() =>
+            Promise.resolve({
+              data: [
+                {
+                  id: "conv-1",
+                  turns: [
+                    { id: "t1", speaker: "Anna", german: "Hallo", audio_url: null },
+                    { id: "t2", speaker: "Ben", german: "Guten Tag", audio_url: "https://audio.mp3" },
+                  ],
+                },
+              ],
+              error: null,
+            })
+          ),
+        };
+      }
       return {};
     });
 
@@ -216,7 +234,7 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
     expect(json.stats.medicalWords).toBeDefined();
     expect(json.stats.medicalSentences).toBeDefined();
     expect(json.stats.verbInfinitives).toBeDefined();
-    expect(json.stats.verbsAll).toBeDefined();
+    expect(json.stats.conversationTurns).toEqual({ total: 2, missing: 1, generated: 1 });
   });
 
   it("POST: should return 400 for invalid target", async () => {
@@ -343,6 +361,78 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
     expect(mockNeq).toHaveBeenCalledWith("examples", "[]");
     expect(mockUpdate).toHaveBeenCalledTimes(1);
     expect(mockRevalidateLearnerPaths).toHaveBeenCalledWith(["/", "/a1", "/a2", "/b1", "/b2"]);
+  });
+
+  it("POST: should batch process missing conversation_turns with gender-aware voice matching", async () => {
+    mockUpload.mockResolvedValue({ error: null });
+    mockGetPublicUrl.mockReturnValue({
+      data: { publicUrl: "https://mock-storage.supabase.co/audio/conversations/conv-1_turn-1.mp3" },
+    });
+
+    const mockConvUpdate = vi.fn(() => ({
+      eq: vi.fn(() => Promise.resolve({ error: null })),
+    }));
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "conversations") {
+        return {
+          select: vi.fn(() => ({
+            order: vi.fn(() =>
+              Promise.resolve({
+                data: [
+                  {
+                    id: "conv-1",
+                    topic_id: "topic-1",
+                    turns: [
+                      {
+                        id: "turn-1",
+                        speaker: "Frau Schmidt",
+                        gender: "female",
+                        german: "Guten Tag, Herr Weber.",
+                        audio_url: null,
+                      },
+                      {
+                        id: "turn-2",
+                        speaker: "Herr Weber",
+                        gender: "male",
+                        german: "Guten Tag, Frau Schmidt.",
+                        audio_url: "https://existing.mp3",
+                      },
+                    ],
+                  },
+                ],
+                error: null,
+              })
+            ),
+          })),
+          update: mockConvUpdate,
+        };
+      }
+      return {};
+    });
+
+    const { POST } = await import("@/app/api/admin/audio/generate-batch/route");
+    const req = new Request("http://localhost:3001/api/admin/audio/generate-batch", {
+      method: "POST",
+      body: JSON.stringify({ target: "conversation_turns", limit: 5 }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    expect(json.success).toBe(true);
+    expect(json.processed).toBe(1); // turn-1 synthesized, turn-2 already had audio
+    expect(mockConvUpdate).toHaveBeenCalledTimes(1);
+    expect(mockRevalidateLearnerPaths).toHaveBeenCalledWith([
+      "/",
+      "/speaking",
+      "/medical",
+      "/a1",
+      "/a2",
+      "/b1",
+      "/b2",
+    ]);
   });
 });
 

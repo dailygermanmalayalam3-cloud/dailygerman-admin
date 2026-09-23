@@ -17,6 +17,7 @@ import {
   Activity,
   Layers,
   Zap,
+  MessageSquare,
 } from "lucide-react";
 
 interface AudioStats {
@@ -28,6 +29,7 @@ interface AudioStats {
   verbPraeteritums?: { total: number; missing: number; generated: number };
   verbPerfekts?: { total: number; missing: number; generated: number };
   verbsAll?: { total: number; missing: number; generated: number };
+  conversationTurns?: { total: number; missing: number; generated: number };
 }
 
 export default function AudioGeneratorPage() {
@@ -55,6 +57,7 @@ export default function AudioGeneratorPage() {
     | "verb_praeteritums"
     | "verb_perfekts"
     | "verbs_all"
+    | "conversation_turns"
   >("vocab_words");
   const [isBatchRunning, setIsBatchRunning] = useState(false);
   const isBatchRunningRef = useRef(false);
@@ -528,6 +531,39 @@ export default function AudioGeneratorPage() {
             {stats?.verbPerfekts ? stats.verbPerfekts.missing : 0} missing audio
           </p>
         </div>
+
+        {/* 8. Conversation Dialogues */}
+        <div className="p-4 bg-white dark:bg-[#141414] border-2 border-black dark:border-neutral-700 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-neutral-500">
+              Conversation Dialogues
+            </span>
+            <MessageSquare className="w-4 h-4 text-neutral-500" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black">
+              {stats?.conversationTurns ? stats.conversationTurns.generated : 0}
+            </span>
+            <span className="text-xs font-bold text-neutral-500">
+              / {stats?.conversationTurns ? stats.conversationTurns.total : 0}
+            </span>
+          </div>
+          <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 mt-3 overflow-hidden border border-black/20">
+            <div
+              className="bg-emerald-500 h-full transition-all duration-500"
+              style={{
+                width: `${
+                  stats?.conversationTurns
+                    ? calcPercentage(stats.conversationTurns.generated, stats.conversationTurns.total)
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-2">
+            {stats?.conversationTurns ? stats.conversationTurns.missing : 0} missing audio
+          </p>
+        </div>
       </div>
 
       {/* Voice Configuration & Real-Time Tester */}
@@ -654,6 +690,7 @@ export default function AudioGeneratorPage() {
             { id: "verb_praeteritums", title: "Verb Präteritum", count: stats?.verbPraeteritums?.missing || 0 },
             { id: "verb_perfekts", title: "Verb Perfekt", count: stats?.verbPerfekts?.missing || 0 },
             { id: "verbs_all", title: "All Verbs (Combined)", count: stats?.verbsAll?.missing || 0 },
+            { id: "conversation_turns", title: "Conversation Dialogues", count: stats?.conversationTurns?.missing || 0 },
           ].map((item) => (
             <button
               key={item.id}

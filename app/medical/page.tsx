@@ -6,6 +6,7 @@ import {
   MedicalWord,
   MedicalConversationTopic,
   MedicalConversation,
+  DialogueTurn,
 } from "@/types";
 import {
   Stethoscope,
@@ -19,8 +20,10 @@ import {
   BookOpen,
   FolderPlus,
   RefreshCw,
+  Volume2,
 } from "lucide-react";
 import AudioRecorder from "@/components/AudioRecorder";
+import ConversationTurnEditor from "@/components/ConversationTurnEditor";
 
 export default function AdminMedicalPage() {
   const [activeTab, setActiveTab] = useState<"words" | "conversations">("words");
@@ -77,8 +80,7 @@ export default function AdminMedicalPage() {
   const [editingConv, setEditingConv] = useState<MedicalConversation | null>(null);
   const [convTopicId, setConvTopicId] = useState("");
   const [convTitle, setConvTitle] = useState("Hospital Dialogue");
-  const [convText, setConvText] = useState("");
-  const [convMalayalam, setConvMalayalam] = useState("");
+  const [convTurns, setConvTurns] = useState<DialogueTurn[]>([]);
   const [convOrder, setConvOrder] = useState(1);
 
   // Fetch all initial data
@@ -348,15 +350,13 @@ export default function AdminMedicalPage() {
       setEditingConv(conv);
       setConvTopicId(conv.topic_id);
       setConvTitle(conv.title || "Hospital Dialogue");
-      setConvText(conv.conversation_text);
-      setConvMalayalam(conv.explanation_malayalam || "");
+      setConvTurns(Array.isArray(conv.turns) ? conv.turns : []);
       setConvOrder(conv.order_index ?? 1);
     } else {
       setEditingConv(null);
       setConvTopicId(selectedTopicId || topics[0]?.id || "");
       setConvTitle("Hospital Dialogue");
-      setConvText("");
-      setConvMalayalam("");
+      setConvTurns([]);
       const currentTopicConvs = conversations.filter((c) => c.topic_id === (selectedTopicId || topics[0]?.id));
       setConvOrder(currentTopicConvs.length + 1);
     }
@@ -365,8 +365,12 @@ export default function AdminMedicalPage() {
 
   const handleSaveConv = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!convTopicId || !convText.trim()) {
-      alert("Please select Situation and paste continuous dialogue.");
+    if (!convTopicId) {
+      alert("Please select a Hospital Situation.");
+      return;
+    }
+    if (convTurns.length === 0) {
+      alert("Please add at least one dialogue turn or quick-paste a script.");
       return;
     }
     setSaving(true);
@@ -379,8 +383,7 @@ export default function AdminMedicalPage() {
           id: editingConv?.id,
           topic_id: convTopicId,
           title: convTitle,
-          conversation_text: convText,
-          explanation_malayalam: convMalayalam,
+          turns: convTurns,
           order_index: convOrder,
         }),
       });
@@ -746,12 +749,15 @@ export default function AdminMedicalPage() {
                   No dialogue added for this situation yet.
                 </p>
                 <p className="text-xs text-neutral-500">
-                  Click &quot;Add Dialogue&quot; above to paste continuous German conversation with English and Malayalam translations.
+                  Click &quot;Add Dialogue&quot; above to add structured turns or paste continuous German conversation with English and Malayalam translations.
                 </p>
               </div>
             ) : (
               filteredConvs.map((c, cIdx) => {
                 const top = topics.find((t) => t.id === c.topic_id);
+                const turnsList = Array.isArray(c.turns) ? c.turns : [];
+                const audioCount = turnsList.filter((t) => t.audio_url).length;
+
                 return (
                   <div
                     key={c.id}
@@ -768,35 +774,73 @@ export default function AdminMedicalPage() {
                         <span className="text-[11px] font-bold px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300">
                           {top?.icon} {top?.title}
                         </span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-mono">
+                          {turnsList.length} {turnsList.length === 1 ? "turn" : "turns"}
+                        </span>
+                        {audioCount > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono flex items-center gap-1 border border-emerald-300 dark:border-emerald-800">
+                            <Volume2 className="w-2.5 h-2.5" /> {audioCount}/{turnsList.length} audios
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => openConvModal(c)}
-                          className="px-2 py-1 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:bg-[#ffe600] hover:text-black transition-colors"
+                          className="px-2.5 py-1 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:bg-[#ffe600] hover:text-black transition-colors"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteConv(c.id)}
-                          className="px-2 py-1 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:bg-red-600 hover:text-white transition-colors"
+                          className="px-2.5 py-1 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:bg-red-600 hover:text-white transition-colors"
                         >
                           Delete
                         </button>
                       </div>
                     </div>
 
-                    <div className="bg-neutral-50 dark:bg-neutral-900 p-3 font-mono text-xs whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed border border-neutral-200 dark:border-neutral-800 text-neutral-800 dark:text-neutral-200">
-                      {c.conversation_text}
+                    {/* Dialogue Turns Preview */}
+                    <div className="bg-neutral-50 dark:bg-neutral-900 p-3 border border-neutral-200 dark:border-neutral-800 text-xs space-y-2 max-h-56 overflow-y-auto">
+                      {turnsList.length === 0 ? (
+                        <p className="text-neutral-400 italic">No turns defined.</p>
+                      ) : (
+                        turnsList.map((t, tIdx) => (
+                          <div key={t.id || tIdx} className="flex items-start gap-2 border-b border-neutral-200/60 dark:border-neutral-800/60 pb-2 last:border-0 last:pb-0">
+                            <div className="w-28 shrink-0">
+                              <span className="font-black text-[11px] uppercase text-neutral-800 dark:text-neutral-200 block truncate">
+                                {t.speaker}:
+                              </span>
+                              {t.gender && (
+                                <span className="text-[9px] uppercase px-1 py-0.2 bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                                  {t.gender}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-1 space-y-0.5">
+                              <p className="font-bold text-neutral-900 dark:text-neutral-100">
+                                {t.german}
+                              </p>
+                              {t.english && (
+                                <p className="text-[11px] text-neutral-500 font-medium">
+                                  EN: {t.english}
+                                </p>
+                              )}
+                              {t.malayalam && (
+                                <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-malayalam">
+                                  ML: {t.malayalam}
+                                </p>
+                              )}
+                            </div>
+                            {t.audio_url && (
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1" title="Has Studio Audio" />
+                            )}
+                          </div>
+                        ))
+                      )}
                     </div>
-
-                    {c.explanation_malayalam && (
-                      <div className="text-xs font-malayalam text-neutral-600 dark:text-neutral-400 bg-[#fffbeb] dark:bg-neutral-900/60 p-2 border-l-2 border-[#ffe600]">
-                        {c.explanation_malayalam}
-                      </div>
-                    )}
                   </div>
                 );
               })
@@ -1259,7 +1303,7 @@ export default function AdminMedicalPage() {
       {/* ============================================================== */}
       {showConvModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="border-2 border-black dark:border-white bg-white dark:bg-[#151515] p-6 max-w-xl w-full space-y-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-h-[92vh] overflow-y-auto">
+          <div className="border-2 border-black dark:border-white bg-white dark:bg-[#151515] p-6 max-w-3xl w-full space-y-4 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-2">
               <h3 className="text-base font-black uppercase text-black dark:text-white">
                 {editingConv ? "Edit Hospital Dialogue" : "Add Hospital Dialogue"}
@@ -1269,7 +1313,7 @@ export default function AdminMedicalPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveConv} className="space-y-3.5">
+            <form onSubmit={handleSaveConv} className="space-y-4">
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="text-[11px] font-bold uppercase text-neutral-600 dark:text-neutral-400 block mb-1">
@@ -1315,34 +1359,9 @@ export default function AdminMedicalPage() {
                 />
               </div>
 
-              <div>
-                <label className="text-[11px] font-bold uppercase text-neutral-600 dark:text-neutral-400 block mb-1">
-                  Continuous Trilingual Conversation *
-                </label>
-                <textarea
-                  required
-                  rows={8}
-                  value={convText}
-                  onChange={(e) => setConvText(e.target.value)}
-                  placeholder={`Rezeptionistin: Guten Morgen! Wie kann ich Ihnen helfen?\nGood Morning! How can I help you?\nസുപ്രഭാതം! ഞാൻ നിങ്ങളെ എങ്ങനെയാണ് സഹായിക്കേണ്ടത്?\nPatient: Guten Morgen. Ich habe einen Termin bei Dr. Weber.\nGood Morning. I have an appointment with Dr. Weber.\nസുപ്രഭാതം. എനിക്ക് ഡോക്ടർ വെബറുമായി ഒരു അപ്പോയിന്റ്മെന്റ് ഉണ്ട്.`}
-                  className="w-full p-2.5 text-xs font-mono leading-relaxed border border-black dark:border-neutral-700 bg-white dark:bg-[#121212] text-black dark:text-white"
-                />
-                <p className="text-[10px] text-neutral-500 mt-1">
-                  Tip: Format each exchange as <strong>Speaker: German line</strong>, followed by the English line and Malayalam line.
-                </p>
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold uppercase text-neutral-600 dark:text-neutral-400 block mb-1">
-                  Malayalam Context (Optional)
-                </label>
-                <textarea
-                  rows={2}
-                  value={convMalayalam}
-                  onChange={(e) => setConvMalayalam(e.target.value)}
-                  placeholder="ആശുപത്രി റിസപ്ഷനിലെ അപ്പോയിന്റ്മെന്റ് സംഭാഷണം..."
-                  className="w-full p-2 text-xs font-malayalam border border-black dark:border-neutral-700 bg-white dark:bg-[#121212] text-black dark:text-white"
-                />
+              {/* Turn Editor (Script paste parser & individual turn controls) */}
+              <div className="pt-2">
+                <ConversationTurnEditor turns={convTurns} onChange={setConvTurns} />
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t border-neutral-200 dark:border-neutral-800">
@@ -1355,8 +1374,8 @@ export default function AdminMedicalPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 bg-[#ffe600] border-2 border-black text-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#ffea33]"
+                  disabled={saving || convTurns.length === 0}
+                  className="px-5 py-2 bg-[#ffe600] border-2 border-black text-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-[#ffea33] disabled:opacity-50"
                 >
                   {saving ? "Saving..." : editingConv ? "Update Dialogue" : "Add Dialogue"}
                 </button>

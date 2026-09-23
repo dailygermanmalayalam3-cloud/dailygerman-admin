@@ -122,29 +122,45 @@ export interface CategoryQuestion {
   updated_at?: string;
 }
 
-// Speaking
-export interface SpeakingConversation {
+// Unified Structured Conversations
+export interface DialogueTurn {
+  id: string;
+  speaker: string;
+  speaker_role?: string;
+  gender?: "male" | "female";
+  german: string;
+  english?: string;
+  malayalam?: string;
+  audio_url?: string;
+}
+
+export interface Conversation {
   id: string;
   topic_id: string;
-  title?: string;
-  conversation_text: string;
-  explanation_malayalam?: string;
+  title: string;
   order_index?: number;
+  turns: DialogueTurn[];
   created_at?: string;
   updated_at?: string;
 }
 
-export interface SpeakingTopic {
+export interface ConversationTopic {
   id: string;
-  level: Level;
+  module: "speaking" | "medical" | string;
+  level?: Level | null;
   title: string;
   slug: string;
+  icon?: string;
   description?: string;
   order_index?: number;
-  conversations?: SpeakingConversation[];
+  conversations?: Conversation[];
   created_at?: string;
   updated_at?: string;
 }
+
+// Speaking Module Aliases (mapped to unified structured conversation models)
+export type SpeakingTopic = ConversationTopic;
+export type SpeakingConversation = Conversation;
 
 // Reading
 export interface ReadingText {
@@ -240,28 +256,9 @@ export interface MedicalWord {
   updated_at?: string;
 }
 
-export interface MedicalConversation {
-  id: string;
-  topic_id: string;
-  title?: string;
-  conversation_text: string;
-  explanation_malayalam?: string;
-  order_index?: number;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface MedicalConversationTopic {
-  id: string;
-  title: string;
-  slug: string;
-  icon?: string;
-  description?: string;
-  order_index?: number;
-  conversations?: MedicalConversation[];
-  created_at?: string;
-  updated_at?: string;
-}
+// Medical Conversations Aliases (mapped to unified structured conversation models)
+export type MedicalConversation = Conversation;
+export type MedicalConversationTopic = ConversationTopic;
 
 // User Suggestions & Feedback
 export type SuggestionStatus = "unread" | "read" | "in_progress" | "resolved" | "archived";

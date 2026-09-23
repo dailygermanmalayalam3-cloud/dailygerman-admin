@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { SpeakingTopic, SpeakingConversation, Level } from "@/types";
+import { SpeakingTopic, SpeakingConversation, Level, DialogueTurn } from "@/types";
+import ConversationTurnEditor from "@/components/ConversationTurnEditor";
 import {
   Plus,
   Trash2,
@@ -15,6 +16,7 @@ import {
   ChevronDown,
   Layers,
   X,
+  Volume2,
 } from "lucide-react";
 
 const LEVELS: Level[] = ["A1", "A2", "B1", "B2"];
@@ -38,8 +40,7 @@ export default function AdminSpeakingPage() {
   const [conversationsLoading, setConversationsLoading] = useState(false);
   const [editingConvId, setEditingConvId] = useState<string | null>(null);
   const [convTitle, setConvTitle] = useState("");
-  const [convText, setConvText] = useState("");
-  const [convMalayalam, setConvMalayalam] = useState("");
+  const [convTurns, setConvTurns] = useState<DialogueTurn[]>([]);
   const [convOrder, setConvOrder] = useState<number>(1);
 
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -81,8 +82,7 @@ export default function AdminSpeakingPage() {
     setActiveTopic(topic);
     setEditingConvId(null);
     setConvTitle("");
-    setConvText("");
-    setConvMalayalam("");
+    setConvTurns([]);
     loadConversations(topic.id);
   };
 
@@ -96,7 +96,9 @@ export default function AdminSpeakingPage() {
   };
 
   const handleEditTopic = (topic: SpeakingTopic) => {
-    setSelectedLevel(topic.level);
+    if (topic.level) {
+      setSelectedLevel(topic.level as Level);
+    }
     setTopicTitle(topic.title);
     setTopicSlug(topic.slug);
     setTopicDesc(topic.description || "");
@@ -205,10 +207,9 @@ export default function AdminSpeakingPage() {
     const payload = {
       id: editingConvId || undefined,
       topic_id: activeTopic.id,
-      title: convTitle.trim(),
-      conversation_text: convText.trim(),
-      explanation_malayalam: convMalayalam.trim(),
+      title: convTitle.trim() || `Dialogue #${convOrder}`,
       order_index: Number(convOrder),
+      turns: convTurns,
     };
 
     try {
@@ -223,8 +224,7 @@ export default function AdminSpeakingPage() {
       setStatusMsg({ type: "success", text: "Conversation saved successfully!" });
       setEditingConvId(null);
       setConvTitle("");
-      setConvText("");
-      setConvMalayalam("");
+      setConvTurns([]);
       setConvOrder(conversations.length + 2);
       loadConversations(activeTopic.id);
     } catch (err: unknown) {
@@ -235,9 +235,8 @@ export default function AdminSpeakingPage() {
   const handleEditConversation = (c: SpeakingConversation) => {
     setEditingConvId(c.id);
     setConvTitle(c.title || "");
-    setConvText(c.conversation_text);
-    setConvMalayalam(c.explanation_malayalam || "");
     setConvOrder(c.order_index ?? 1);
+    setConvTurns(Array.isArray(c.turns) ? c.turns : []);
   };
 
   const handleDeleteConversation = async (id: string) => {
@@ -609,27 +608,27 @@ export default function AdminSpeakingPage() {
                         onClick={() => {
                           setEditingConvId(null);
                           setConvTitle("");
-                          setConvText("");
-                          setConvMalayalam("");
+                          setConvTurns([]);
                         }}
-                        className="text-[11px] font-bold text-neutral-500 hover:text-black underline"
+                        className="text-[11px] font-bold text-neutral-500 hover:text-black underline cursor-pointer"
                       >
                         Cancel Edit
                       </button>
                     )}
                   </div>
 
-                  <form onSubmit={handleSaveConversation} className="space-y-3">
+                  <form onSubmit={handleSaveConversation} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div className="sm:col-span-3 space-y-1">
                         <label className="text-[11px] font-bold uppercase text-neutral-600 dark:text-neutral-400">
-                          Dialogue Title (Optional)
+                          Dialogue Title *
                         </label>
                         <input
                           type="text"
+                          required
                           value={convTitle}
                           onChange={(e) => setConvTitle(e.target.value)}
-                          placeholder="e.g. Dialogue: Making an Appointment"
+                          placeholder="e.g. Teil 1: Die 7 Punkte der Vorstellung"
                           className="w-full p-2 text-xs border border-black dark:border-neutral-700 bg-white dark:bg-[#121212] text-black dark:text-white focus:outline-none"
                         />
                       </div>
@@ -647,40 +646,16 @@ export default function AdminSpeakingPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-bold uppercase text-neutral-600 dark:text-neutral-400">
-                        Complete Continuous Conversation (Paste dialogue lines) *
-                      </label>
-                      <textarea
-                        required
-                        rows={8}
-                        value={convText}
-                        onChange={(e) => setConvText(e.target.value)}
-                        placeholder={`Patient: Guten Morgen. Ich habe einen Termin.\nGood Morning. I have an appointment.\nസുപ്രഭാതം. എനിക്ക് ഒരു അപ്പോയിന്റ്മെന്റ് ഉണ്ട്.\nRezeptionistin: Guten Morgen. Wie heißen Sie?\nGood Morning. What is your name?\nസുപ്രഭാതം. എന്താണ് താങ്കളുടെ പേര്?`}
-                        className="w-full p-3 text-xs sm:text-sm font-mono leading-relaxed border border-black dark:border-neutral-700 bg-white dark:bg-[#121212] text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-[#ffe600]"
-                      />
-                      <p className="text-[10px] text-neutral-500 font-medium">
-                        Tip: Format each dialogue turn as <strong>Speaker: German line</strong>, followed by the English translation line, and the Malayalam translation line. The Learner app will automatically group them into speech bubbles with trilingual toggles.
-                      </p>
+                    {/* Smart Turn Editor */}
+                    <div className="pt-2">
+                      <ConversationTurnEditor turns={convTurns} onChange={setConvTurns} />
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-bold uppercase text-neutral-600 dark:text-neutral-400">
-                        Malayalam Explanation / Trilingual Context (Optional)
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={convMalayalam}
-                        onChange={(e) => setConvMalayalam(e.target.value)}
-                        placeholder="ആശുപത്രിയിലെ അപ്പോയിന്റ്മെന്റ് സംഭാഷണം..."
-                        className="w-full p-2 text-xs font-malayalam border border-black dark:border-neutral-700 bg-white dark:bg-[#121212] text-black dark:text-white focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="flex justify-end pt-1">
+                    <div className="flex justify-end pt-2 border-t border-neutral-200 dark:border-neutral-800">
                       <button
                         type="submit"
-                        className="px-4 py-2 text-xs font-black uppercase bg-[#ffe600] text-black border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5"
+                        disabled={convTurns.length === 0}
+                        className="px-5 py-2 text-xs font-black uppercase bg-[#ffe600] text-black border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 disabled:opacity-50 cursor-pointer"
                       >
                         {editingConvId ? "Update Dialogue" : "+ Save Conversation"}
                       </button>
@@ -705,54 +680,89 @@ export default function AdminSpeakingPage() {
                     </div>
                   ) : conversations.length === 0 ? (
                     <div className="p-6 text-center border border-dashed border-neutral-300 dark:border-neutral-700 text-xs text-neutral-500 font-bold">
-                      No conversations added to this topic yet. Paste a complete conversation above!
+                      No conversations added to this topic yet. Add turns or paste a script above!
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {conversations.map((c, i) => (
-                        <div
-                          key={c.id}
-                          className="border border-neutral-300 dark:border-neutral-700 bg-neutral-50/70 dark:bg-[#181816] p-4 space-y-2 relative group hover:border-black"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <span className="px-1.5 py-0.2 bg-black text-white text-[10px] font-mono">
-                                #{c.order_index ?? i + 1}
-                              </span>
-                              <h4 className="text-xs font-black text-black dark:text-white uppercase">
-                                {c.title || `Dialogue #${i + 1}`}
-                              </h4>
+                      {conversations.map((c, i) => {
+                        const turnsList = Array.isArray(c.turns) ? c.turns : [];
+                        const audioCount = turnsList.filter((t) => t.audio_url).length;
+
+                        return (
+                          <div
+                            key={c.id}
+                            className="border border-neutral-300 dark:border-neutral-700 bg-neutral-50/70 dark:bg-[#181816] p-4 space-y-3 relative group hover:border-black"
+                          >
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <div className="flex items-center gap-2">
+                                <span className="px-1.5 py-0.2 bg-black text-white text-[10px] font-mono">
+                                  #{c.order_index ?? i + 1}
+                                </span>
+                                <h4 className="text-xs font-black text-black dark:text-white uppercase">
+                                  {c.title || `Dialogue #${i + 1}`}
+                                </h4>
+                                <span className="text-[10px] px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-mono">
+                                  {turnsList.length} {turnsList.length === 1 ? "turn" : "turns"}
+                                </span>
+                                {audioCount > 0 && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 font-mono flex items-center gap-1">
+                                    <Volume2 className="w-2.5 h-2.5" /> {audioCount}/{turnsList.length} audios
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditConversation(c)}
+                                  className="p-1 border border-neutral-300 dark:border-neutral-700 hover:border-black text-blue-600 text-[11px] font-bold px-2 flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Edit3 className="w-3 h-3" /> Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteConversation(c.id)}
+                                  className="p-1 border border-neutral-300 dark:border-neutral-700 hover:border-red-600 text-red-600 text-[11px] font-bold px-2 flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3 h-3" /> Delete
+                                </button>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => handleEditConversation(c)}
-                                className="p-1 border border-neutral-300 dark:border-neutral-700 hover:border-black text-blue-600 text-[11px] font-bold px-2 flex items-center gap-1"
-                              >
-                                <Edit3 className="w-3 h-3" /> Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteConversation(c.id)}
-                                className="p-1 border border-neutral-300 dark:border-neutral-700 hover:border-red-600 text-red-600 text-[11px] font-bold px-2 flex items-center gap-1"
-                              >
-                                <Trash2 className="w-3 h-3" /> Delete
-                              </button>
+
+                            {/* Dialogue Turns Preview */}
+                            <div className="bg-white dark:bg-[#121212] p-3 border border-neutral-200 dark:border-neutral-800 text-xs space-y-2 max-h-48 overflow-y-auto">
+                              {turnsList.length === 0 ? (
+                                <p className="text-neutral-400 italic">No turns defined.</p>
+                              ) : (
+                                turnsList.map((t, tIdx) => (
+                                  <div key={t.id || tIdx} className="flex items-start gap-2 border-b border-neutral-100 dark:border-neutral-900 pb-1.5 last:border-0 last:pb-0">
+                                    <span className="font-black text-[11px] uppercase text-neutral-700 dark:text-neutral-300 w-24 shrink-0">
+                                      {t.speaker}:
+                                    </span>
+                                    <div className="flex-1 space-y-0.5">
+                                      <p className="font-bold text-neutral-900 dark:text-neutral-100">
+                                        {t.german}
+                                      </p>
+                                      {t.english && (
+                                        <p className="text-[10px] text-neutral-500 font-medium">
+                                          EN: {t.english}
+                                        </p>
+                                      )}
+                                      {t.malayalam && (
+                                        <p className="text-[10px] text-neutral-600 dark:text-neutral-400 font-malayalam">
+                                          ML: {t.malayalam}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {t.audio_url && (
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1" title="Has Studio Audio" />
+                                    )}
+                                  </div>
+                                ))
+                              )}
                             </div>
                           </div>
-
-                          {/* Dialogue Text Preview */}
-                          <div className="bg-white dark:bg-[#121212] p-3 border border-neutral-200 dark:border-neutral-800 text-xs font-mono whitespace-pre-wrap text-neutral-800 dark:text-neutral-200 leading-relaxed max-h-40 overflow-y-auto">
-                            {c.conversation_text}
-                          </div>
-
-                          {c.explanation_malayalam && (
-                            <p className="text-[11px] text-amber-900 dark:text-amber-300 font-malayalam border-l-2 border-[#facc15] pl-2">
-                              {c.explanation_malayalam}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
