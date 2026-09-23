@@ -16,6 +16,7 @@ export type BatchTarget =
   | "verbs_all"
   | "conversation_turns"
   | "reading_texts"
+  | "listening_audios"
   | "goethe_materials";
 
 export async function GET() {
@@ -145,7 +146,17 @@ export async function GET() {
       .select("*", { count: "exact", head: true })
       .or("audio_url.is.null,audio_url.eq.");
 
-    // 6. Goethe Exam Prep / Listening stats
+    // 6. Listening Audios stats
+    const { count: totalListeningAudios } = await supabase
+      .from("listening_audios")
+      .select("*", { count: "exact", head: true });
+
+    const { count: listeningAudiosMissing } = await supabase
+      .from("listening_audios")
+      .select("*", { count: "exact", head: true })
+      .or("audio_url.is.null,audio_url.eq.");
+
+    // 7. Goethe Exam Prep / Listening stats
     const { count: totalGoethe } = await supabase
       .from("goethe_materials")
       .select("*", { count: "exact", head: true });
@@ -219,6 +230,11 @@ export async function GET() {
           missing: readingTextsMissing || 0,
           generated: (totalReadingTexts || 0) - (readingTextsMissing || 0),
         },
+        listeningAudios: {
+          total: totalListeningAudios || 0,
+          missing: listeningAudiosMissing || 0,
+          generated: (totalListeningAudios || 0) - (listeningAudiosMissing || 0),
+        },
         goetheMaterials: {
           total: totalGoethe || 0,
           missing: goetheMissing || 0,
@@ -279,6 +295,7 @@ export async function POST(req: Request) {
         "verbs_all",
         "conversation_turns",
         "reading_texts",
+        "listening_audios",
         "goethe_materials",
       ].includes(target)
     ) {
@@ -882,6 +899,59 @@ export async function POST(req: Request) {
           errors.push(`Reading text ${row.id}: ${(itemErr as Error).message}`);
         }
       }
+    } else if (target === "listening_audios") {
+      const { data: rows, error: fetchErr } = await supabase
+        .from("listening_audios")
+        .select("id, title, content_german")
+        .or("audio_url.is.null,audio_url.eq.")
+        .limit(safeLimit);
+
+      if (fetchErr) throw fetchErr;
+
+      for (const row of rows || []) {
+        const text = row.content_german?.trim();
+        if (!text) continue;
+
+        try {
+          const { audioBuffer, ext } = await synthesizeGermanSpeech({
+            text,
+            voiceName,
+            speakingRate,
+          });
+
+          const uniqueId = crypto.randomUUID();
+          const filePath = `listening/${uniqueId}.${ext}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("pronunciations")
+            .upload(filePath, audioBuffer, {
+              contentType: "audio/mpeg",
+              upsert: true,
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data: publicData } = supabase.storage
+            .from("pronunciations")
+            .getPublicUrl(filePath);
+
+          const { error: updateErr } = await supabase
+            .from("listening_audios")
+            .update({ audio_url: publicData.publicUrl })
+            .eq("id", row.id);
+
+          if (updateErr) throw updateErr;
+
+          processedItems.push({
+            id: row.id,
+            text: row.title ? `${row.title}: ${text.slice(0, 60)}...` : `${text.slice(0, 60)}...`,
+            url: publicData.publicUrl,
+          });
+        } catch (itemErr: unknown) {
+          console.error(`Error processing listening audio ${row.id}:`, itemErr);
+          errors.push(`Listening audio ${row.id}: ${(itemErr as Error).message}`);
+        }
+      }
     } else if (target === "goethe_materials") {
       const { data: rows, error: fetchErr } = await supabase
         .from("goethe_materials")
@@ -960,6 +1030,8 @@ export async function POST(req: Request) {
         await revalidateLearnerPaths(["/", "/speaking", "/medical", "/a1", "/a2", "/b1", "/b2"]);
       } else if (target === "reading_texts") {
         await revalidateLearnerPaths(["/", "/reading", "/a1", "/a2", "/b1", "/b2"]);
+      } else if (target === "listening_audios") {
+        await revalidateLearnerPaths(["/", "/listening", "/a1", "/a2", "/b1", "/b2"]);
       } else if (target === "goethe_materials") {
         await revalidateLearnerPaths(["/", "/goethe"]);
       }
@@ -1047,6 +1119,12 @@ export async function POST(req: Request) {
       } else if (target === "reading_texts") {
         const { count } = await supabase
           .from("reading_texts")
+          .select("*", { count: "exact", head: true })
+          .or("audio_url.is.null,audio_url.eq.");
+        remaining = count ?? 0;
+      } else if (target === "listening_audios") {
+        const { count } = await supabase
+          .from("listening_audios")
           .select("*", { count: "exact", head: true })
           .or("audio_url.is.null,audio_url.eq.");
         remaining = count ?? 0;

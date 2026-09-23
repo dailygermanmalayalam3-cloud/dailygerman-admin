@@ -229,6 +229,48 @@ export interface WritingTopic {
   updated_at?: string;
 }
 
+// Listening (Hören)
+export interface ListeningAudio {
+  id: string;
+  topic_id: string;
+  title?: string;
+  audio_url?: string | null;
+  content_german: string;
+  content_english?: string;
+  content_malayalam?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ListeningQuestion {
+  id: string;
+  topic_id: string;
+  listening_audio_id?: string | null;
+  question: string;
+  question_english?: string;
+  question_malayalam?: string;
+  options: string[];
+  correct_option_index: number;
+  explanation?: string;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ListeningTopic {
+  id: string;
+  level: Level;
+  title: string;
+  slug: string;
+  description?: string;
+  order_index?: number;
+  audios?: ListeningAudio[];
+  questions?: ListeningQuestion[];
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Medical German
 export interface MedicalCategory {
   id: string;

@@ -33,6 +33,7 @@ interface AudioStats {
   verbsAll?: { total: number; missing: number; generated: number };
   conversationTurns?: { total: number; missing: number; generated: number };
   readingTexts?: { total: number; missing: number; generated: number };
+  listeningAudios?: { total: number; missing: number; generated: number };
   goetheMaterials?: {
     total: number;
     missing: number;
@@ -69,6 +70,7 @@ export default function AudioGeneratorPage() {
     | "verbs_all"
     | "conversation_turns"
     | "reading_texts"
+    | "listening_audios"
     | "goethe_materials"
   >("vocab_words");
   const [isBatchRunning, setIsBatchRunning] = useState(false);
@@ -613,13 +615,46 @@ export default function AudioGeneratorPage() {
           </p>
         </div>
 
-        {/* 10. Goethe / Listening Materials */}
+        {/* 10. Listening Passages (Hören) */}
         <div className="p-4 bg-white dark:bg-[#141414] border-2 border-black dark:border-neutral-700 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-black uppercase tracking-wider text-neutral-500">
-              Goethe & Listening
+              Listening Audios (Hören)
             </span>
             <Headphones className="w-4 h-4 text-neutral-500" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black">
+              {stats?.listeningAudios ? stats.listeningAudios.generated : 0}
+            </span>
+            <span className="text-xs font-bold text-neutral-500">
+              / {stats?.listeningAudios ? stats.listeningAudios.total : 0}
+            </span>
+          </div>
+          <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 mt-3 overflow-hidden border border-black/20">
+            <div
+              className="bg-emerald-500 h-full transition-all duration-500"
+              style={{
+                width: `${
+                  stats?.listeningAudios
+                    ? calcPercentage(stats.listeningAudios.generated, stats.listeningAudios.total)
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-2">
+            {stats?.listeningAudios ? stats.listeningAudios.missing : 0} missing audio
+          </p>
+        </div>
+
+        {/* 11. Goethe Exam Prep */}
+        <div className="p-4 bg-white dark:bg-[#141414] border-2 border-black dark:border-neutral-700 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-neutral-500">
+              Goethe Exam Prep
+            </span>
+            <Sparkles className="w-4 h-4 text-neutral-500" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black">
@@ -773,7 +808,8 @@ export default function AudioGeneratorPage() {
             { id: "verbs_all", title: "All Verbs (Combined)", count: stats?.verbsAll?.missing || 0 },
             { id: "conversation_turns", title: "Conversation Dialogues", count: stats?.conversationTurns?.missing || 0 },
             { id: "reading_texts", title: "Reading Passages", count: stats?.readingTexts?.missing || 0 },
-            { id: "goethe_materials", title: "Exam Prep & Listening", count: stats?.goetheMaterials?.missing || 0 },
+            { id: "listening_audios", title: "Listening Audios (Hören)", count: stats?.listeningAudios?.missing || 0 },
+            { id: "goethe_materials", title: "Goethe Exam Prep", count: stats?.goetheMaterials?.missing || 0 },
           ].map((item) => (
             <button
               key={item.id}

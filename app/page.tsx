@@ -7,11 +7,12 @@ import {
   getSpeakingTopics,
   getReadingTopics,
   getWritingTopics,
+  getListeningTopics,
   getMedicalCategories,
   getMedicalWords,
   getMedicalConversationTopics,
 } from "@/lib/db/content";
-import { BookOpen, FileText, Award, MessageSquare, FileEdit, PlusCircle, ArrowRight, Stethoscope } from "lucide-react";
+import { BookOpen, FileText, Award, MessageSquare, FileEdit, PlusCircle, ArrowRight, Stethoscope, Headphones } from "lucide-react";
 
 import { isCurrentUserAdmin } from "@/lib/supabase/auth";
 import { redirect } from "next/navigation";
@@ -24,12 +25,13 @@ export default async function AdminDashboardPage() {
     redirect("/login");
   }
 
-  const [vocab, grammar, speaking, reading, writing, goethe, categories, medCats, medWords, medTopics] = await Promise.all([
+  const [vocab, grammar, speaking, reading, writing, listening, goethe, categories, medCats, medWords, medTopics] = await Promise.all([
     getVocabulary(),
     getGrammarTopics(),
     getSpeakingTopics(),
     getReadingTopics(),
     getWritingTopics(),
+    getListeningTopics(),
     getGoetheMaterials(),
     getVocabularyCategories(),
     getMedicalCategories(),
@@ -82,6 +84,15 @@ export default async function AdminDashboardPage() {
       href: "/writing",
       icon: FileEdit,
       color: "#fef08a",
+    },
+    {
+      title: "Listening Practice",
+      count: listening.length,
+      unit: "listening topics",
+      description: "Manage audio comprehension passages, speech dialogues, and quiz questions.",
+      href: "/listening",
+      icon: Headphones,
+      color: "#ffe600",
     },
     {
       title: "Medical German",

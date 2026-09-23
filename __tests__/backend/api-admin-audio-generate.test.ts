@@ -233,6 +233,19 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
           }),
         };
       }
+      if (table === "listening_audios") {
+        return {
+          select: vi.fn((_cols, opts) => {
+            if (opts?.head) {
+              return {
+                or: vi.fn(() => Promise.resolve({ count: 1, error: null })),
+                then: (cb: any) => cb({ count: 5, error: null }),
+              };
+            }
+            return {};
+          }),
+        };
+      }
       if (table === "goethe_materials") {
         return {
           select: vi.fn((_cols, opts) => {
@@ -266,6 +279,7 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
     expect(json.stats.verbInfinitives).toBeDefined();
     expect(json.stats.conversationTurns).toEqual({ total: 2, missing: 1, generated: 1 });
     expect(json.stats.readingTexts).toEqual({ total: 10, missing: 2, generated: 8 });
+    expect(json.stats.listeningAudios).toEqual({ total: 5, missing: 1, generated: 4 });
     expect(json.stats.goetheMaterials).toBeDefined();
   });
 
@@ -583,6 +597,68 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
       expect.objectContaining({ audio_url: expect.stringContaining("https://") })
     );
     expect(mockRevalidateLearnerPaths).toHaveBeenCalledWith(["/", "/goethe"]);
+  });
+
+  it("POST: should batch generate audio for listening_audios and revalidate learner paths", async () => {
+    const mockListeningUpdate = vi.fn(() => ({
+      eq: vi.fn(() => Promise.resolve({ error: null })),
+    }));
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "listening_audios") {
+        return {
+          select: vi.fn((_cols, opts) => {
+            if (opts?.head) {
+              return {
+                or: vi.fn(() => Promise.resolve({ count: 0, error: null })),
+              };
+            }
+            return {
+              or: vi.fn(() => ({
+                limit: vi.fn(() =>
+                  Promise.resolve({
+                    data: [
+                      {
+                        id: "la-1",
+                        title: "Durchsage",
+                        content_german: "Achtung an Gleis 7: Der Zug nach Frankfurt fährt ab.",
+                      },
+                    ],
+                    error: null,
+                  })
+                ),
+              })),
+            };
+          }),
+          update: mockListeningUpdate,
+        };
+      }
+      return {};
+    });
+
+    const { POST } = await import("@/app/api/admin/audio/generate-batch/route");
+    const req = new Request("http://localhost:3001/api/admin/audio/generate-batch", {
+      method: "POST",
+      body: JSON.stringify({ target: "listening_audios", limit: 5 }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    expect(json.success).toBe(true);
+    expect(json.processed).toBe(1);
+    expect(mockListeningUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ audio_url: expect.stringContaining("https://") })
+    );
+    expect(mockRevalidateLearnerPaths).toHaveBeenCalledWith([
+      "/",
+      "/listening",
+      "/a1",
+      "/a2",
+      "/b1",
+      "/b2",
+    ]);
   });
 });
 
