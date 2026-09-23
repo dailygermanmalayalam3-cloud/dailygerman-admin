@@ -135,7 +135,13 @@ export default function ConversationTurnEditor({
 
     setSynthesizingTurnId(turn.id);
     try {
-      const voiceName = turn.gender === "female" ? "de-DE-Neural2-F" : "de-DE-Neural2-B";
+      const isFemale =
+        turn.gender === "female" ||
+        (!turn.gender &&
+          /frau|kandidatin|anna|maria|nurse|schwester|pflegekraft|ärztin|rezeptionistin|patientin|mutter|tochter|kellnerin|verkäuferin/i.test(
+            `${turn.speaker || ""} ${turn.speaker_role || ""}`
+          ));
+      const voiceName = isFemale ? "de-DE-Neural2-F" : "de-DE-Neural2-B";
       const res = await fetch("/api/admin/audio/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

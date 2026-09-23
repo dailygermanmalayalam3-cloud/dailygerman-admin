@@ -721,11 +721,19 @@ export async function POST(req: Request) {
             if (turn && turn.german && (!turn.audio_url || !turn.audio_url.trim())) {
               const text = turn.german.trim();
               try {
-                // Gender-aware voice selection: female turns use de-DE-Neural2-F, male/default use de-DE-Neural2-B
-                const turnVoice =
-                  turn.gender === "female"
-                    ? "de-DE-Neural2-F"
-                    : (voiceName || "de-DE-Neural2-B");
+                // Gender-aware voice selection:
+                // If gender is explicitly 'female', or speaker title/role indicates a woman, use de-DE-Neural2-F
+                // Otherwise use male/default voice de-DE-Neural2-B
+                const isFemale =
+                  turn.gender === "female" ||
+                  (!turn.gender &&
+                    /frau|kandidatin|anna|maria|nurse|schwester|pflegekraft|ärztin|rezeptionistin|patientin|mutter|tochter|kellnerin|verkäuferin/i.test(
+                      `${turn.speaker || ""} ${turn.speaker_role || ""}`
+                    ));
+
+                const turnVoice = isFemale
+                  ? "de-DE-Neural2-F"
+                  : (voiceName || "de-DE-Neural2-B");
 
                 const { audioBuffer, ext } = await synthesizeGermanSpeech({
                   text,
