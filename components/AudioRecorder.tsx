@@ -185,6 +185,8 @@ export default function AudioRecorder({
         body: JSON.stringify({
           text: cleanText,
           prefix,
+          voiceName: "de-DE-Neural2-F",
+          speakingRate: 0.95,
         }),
       });
 

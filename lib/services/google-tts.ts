@@ -19,7 +19,7 @@ export interface SynthesizeSpeechResult {
   characterCount: number;
 }
 
-const DEFAULT_VOICE = "de-DE-Studio-C";
+const DEFAULT_VOICE = "de-DE-Neural2-F";
 const DEFAULT_SPEAKING_RATE = 0.95;
 
 /**

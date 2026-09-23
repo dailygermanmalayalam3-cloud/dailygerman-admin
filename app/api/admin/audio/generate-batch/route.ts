@@ -898,7 +898,14 @@ export async function POST(req: Request) {
       });
 
       for (const row of sortedRows) {
-        const text = row.content?.replace(/[*#_`]/g, "").trim();
+        let text = row.content || "";
+        if (row.section === "Hören") {
+          const quoteMatch = text.match(/["*„“]([^"*„“]{20,})["*„“]/);
+          if (quoteMatch && quoteMatch[1]) {
+            text = quoteMatch[1];
+          }
+        }
+        text = text.replace(/[*#_`]/g, "").trim();
         if (!text) continue;
 
         try {
