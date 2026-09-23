@@ -18,6 +18,8 @@ import {
   Layers,
   Zap,
   MessageSquare,
+  BookOpen,
+  Headphones,
 } from "lucide-react";
 
 interface AudioStats {
@@ -30,6 +32,14 @@ interface AudioStats {
   verbPerfekts?: { total: number; missing: number; generated: number };
   verbsAll?: { total: number; missing: number; generated: number };
   conversationTurns?: { total: number; missing: number; generated: number };
+  readingTexts?: { total: number; missing: number; generated: number };
+  goetheMaterials?: {
+    total: number;
+    missing: number;
+    generated: number;
+    hoerenTotal?: number;
+    hoerenMissing?: number;
+  };
 }
 
 export default function AudioGeneratorPage() {
@@ -58,6 +68,8 @@ export default function AudioGeneratorPage() {
     | "verb_perfekts"
     | "verbs_all"
     | "conversation_turns"
+    | "reading_texts"
+    | "goethe_materials"
   >("vocab_words");
   const [isBatchRunning, setIsBatchRunning] = useState(false);
   const isBatchRunningRef = useRef(false);
@@ -149,6 +161,9 @@ export default function AudioGeneratorPage() {
       else if (batchTarget === "verb_praeteritums") targetTotal = stats.verbPraeteritums?.missing || 0;
       else if (batchTarget === "verb_perfekts") targetTotal = stats.verbPerfekts?.missing || 0;
       else if (batchTarget === "verbs_all") targetTotal = stats.verbsAll?.missing || 0;
+      else if (batchTarget === "conversation_turns") targetTotal = stats.conversationTurns?.missing || 0;
+      else if (batchTarget === "reading_texts") targetTotal = stats.readingTexts?.missing || 0;
+      else if (batchTarget === "goethe_materials") targetTotal = stats.goetheMaterials?.missing || 0;
     }
 
     if (targetTotal === 0) {
@@ -564,6 +579,72 @@ export default function AudioGeneratorPage() {
             {stats?.conversationTurns ? stats.conversationTurns.missing : 0} missing audio
           </p>
         </div>
+
+        {/* 9. Reading Passages */}
+        <div className="p-4 bg-white dark:bg-[#141414] border-2 border-black dark:border-neutral-700 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-neutral-500">
+              Reading Passages
+            </span>
+            <BookOpen className="w-4 h-4 text-neutral-500" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black">
+              {stats?.readingTexts ? stats.readingTexts.generated : 0}
+            </span>
+            <span className="text-xs font-bold text-neutral-500">
+              / {stats?.readingTexts ? stats.readingTexts.total : 0}
+            </span>
+          </div>
+          <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 mt-3 overflow-hidden border border-black/20">
+            <div
+              className="bg-emerald-500 h-full transition-all duration-500"
+              style={{
+                width: `${
+                  stats?.readingTexts
+                    ? calcPercentage(stats.readingTexts.generated, stats.readingTexts.total)
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-2">
+            {stats?.readingTexts ? stats.readingTexts.missing : 0} missing audio
+          </p>
+        </div>
+
+        {/* 10. Goethe / Listening Materials */}
+        <div className="p-4 bg-white dark:bg-[#141414] border-2 border-black dark:border-neutral-700 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-neutral-500">
+              Goethe & Listening
+            </span>
+            <Headphones className="w-4 h-4 text-neutral-500" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black">
+              {stats?.goetheMaterials ? stats.goetheMaterials.generated : 0}
+            </span>
+            <span className="text-xs font-bold text-neutral-500">
+              / {stats?.goetheMaterials ? stats.goetheMaterials.total : 0}
+            </span>
+          </div>
+          <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 mt-3 overflow-hidden border border-black/20">
+            <div
+              className="bg-emerald-500 h-full transition-all duration-500"
+              style={{
+                width: `${
+                  stats?.goetheMaterials
+                    ? calcPercentage(stats.goetheMaterials.generated, stats.goetheMaterials.total)
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-2">
+            {stats?.goetheMaterials ? stats.goetheMaterials.missing : 0} missing ({stats?.goetheMaterials?.hoerenMissing ?? 0} Hören)
+          </p>
+        </div>
       </div>
 
       {/* Voice Configuration & Real-Time Tester */}
@@ -691,6 +772,8 @@ export default function AudioGeneratorPage() {
             { id: "verb_perfekts", title: "Verb Perfekt", count: stats?.verbPerfekts?.missing || 0 },
             { id: "verbs_all", title: "All Verbs (Combined)", count: stats?.verbsAll?.missing || 0 },
             { id: "conversation_turns", title: "Conversation Dialogues", count: stats?.conversationTurns?.missing || 0 },
+            { id: "reading_texts", title: "Reading Passages", count: stats?.readingTexts?.missing || 0 },
+            { id: "goethe_materials", title: "Exam Prep & Listening", count: stats?.goetheMaterials?.missing || 0 },
           ].map((item) => (
             <button
               key={item.id}

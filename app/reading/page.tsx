@@ -16,7 +16,9 @@ import {
   ChevronDown,
   Layers,
   X,
+  Volume2,
 } from "lucide-react";
+import AudioRecorder from "@/components/AudioRecorder";
 
 const LEVELS: Level[] = ["A1", "A2", "B1", "B2"];
 
@@ -45,6 +47,7 @@ export default function AdminReadingPage() {
   const [textGerman, setTextGerman] = useState("");
   const [textEnglish, setTextEnglish] = useState("");
   const [textMalayalam, setTextMalayalam] = useState("");
+  const [textAudioUrl, setTextAudioUrl] = useState<string>("");
   const [textOrder, setTextOrder] = useState<number>(1);
 
   // Questions state
@@ -237,6 +240,7 @@ export default function AdminReadingPage() {
       content_german: textGerman.trim(),
       content_english: textEnglish.trim(),
       content_malayalam: textMalayalam.trim(),
+      audio_url: textAudioUrl || null,
       order_index: Number(textOrder),
     };
 
@@ -255,6 +259,7 @@ export default function AdminReadingPage() {
       setTextGerman("");
       setTextEnglish("");
       setTextMalayalam("");
+      setTextAudioUrl("");
       setTextOrder(texts.length + 2);
       loadTopicContent(activeTopic.id);
     } catch (err: unknown) {
@@ -268,6 +273,7 @@ export default function AdminReadingPage() {
     setTextGerman(t.content_german);
     setTextEnglish(t.content_english || "");
     setTextMalayalam(t.content_malayalam || "");
+    setTextAudioUrl(t.audio_url || "");
     setTextOrder(t.order_index ?? 1);
   };
 
@@ -751,6 +757,7 @@ export default function AdminReadingPage() {
                             setTextGerman("");
                             setTextEnglish("");
                             setTextMalayalam("");
+                            setTextAudioUrl("");
                           }}
                           className="text-[11px] font-bold text-neutral-500 hover:text-black underline"
                         >
@@ -829,6 +836,17 @@ export default function AdminReadingPage() {
                         </div>
                       </div>
 
+                      <div className="pt-2 border-t border-dashed border-neutral-300 dark:border-neutral-700">
+                        <AudioRecorder
+                          label="🎤 Reading Passage German Audio"
+                          audioUrl={textAudioUrl}
+                          prefix="reading"
+                          textToSynthesize={textGerman}
+                          onAudioUploaded={setTextAudioUrl}
+                          onAudioRemoved={() => setTextAudioUrl("")}
+                        />
+                      </div>
+
                       <div className="flex justify-end pt-1">
                         <button
                           type="submit"
@@ -904,6 +922,19 @@ export default function AdminReadingPage() {
                                     <strong className="uppercase font-bold text-amber-700 dark:text-amber-400">മലയാളം:</strong> {t.content_malayalam}
                                   </p>
                                 )}
+                              </div>
+                            )}
+
+                            {t.audio_url ? (
+                              <div className="flex items-center gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-300 border border-green-300 dark:border-green-800">
+                                  <Volume2 className="w-3 h-3" /> Audio Attached
+                                </span>
+                                <audio controls src={t.audio_url} className="h-6 w-52 text-xs" preload="none" />
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 pt-1 text-[10px] font-semibold text-neutral-400">
+                                <Volume2 className="w-3 h-3 text-neutral-400" /> No audio attached
                               </div>
                             )}
                           </div>

@@ -102,6 +102,7 @@ export interface CategoryParagraph {
   paragraph_german: string;
   paragraph_english?: string;
   paragraph_malayalam?: string;
+  audio_url?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -171,6 +172,7 @@ export interface ReadingText {
   content_english?: string;
   content_malayalam?: string;
   order_index?: number;
+  audio_url?: string | null;
   created_at?: string;
   updated_at?: string;
 }

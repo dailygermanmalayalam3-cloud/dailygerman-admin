@@ -220,6 +220,36 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
           ),
         };
       }
+      if (table === "reading_texts") {
+        return {
+          select: vi.fn((_cols, opts) => {
+            if (opts?.head) {
+              return {
+                or: vi.fn(() => Promise.resolve({ count: 2, error: null })),
+                then: (cb: any) => cb({ count: 10, error: null }),
+              };
+            }
+            return {};
+          }),
+        };
+      }
+      if (table === "goethe_materials") {
+        return {
+          select: vi.fn((_cols, opts) => {
+            if (opts?.head) {
+              return {
+                or: vi.fn(() => Promise.resolve({ count: 3, error: null })),
+                eq: vi.fn(() => ({
+                  or: vi.fn(() => Promise.resolve({ count: 1, error: null })),
+                  then: (cb: any) => cb({ count: 5, error: null }),
+                })),
+                then: (cb: any) => cb({ count: 12, error: null }),
+              };
+            }
+            return {};
+          }),
+        };
+      }
       return {};
     });
 
@@ -235,6 +265,8 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
     expect(json.stats.medicalSentences).toBeDefined();
     expect(json.stats.verbInfinitives).toBeDefined();
     expect(json.stats.conversationTurns).toEqual({ total: 2, missing: 1, generated: 1 });
+    expect(json.stats.readingTexts).toEqual({ total: 10, missing: 2, generated: 8 });
+    expect(json.stats.goetheMaterials).toBeDefined();
   });
 
   it("POST: should return 400 for invalid target", async () => {
@@ -433,6 +465,124 @@ describe("Admin Backend API: /api/admin/audio/generate-batch (Batch Generation)"
       "/b1",
       "/b2",
     ]);
+  });
+
+  it("POST: should batch generate audio for reading_texts and revalidate learner paths", async () => {
+    const mockReadingUpdate = vi.fn(() => ({
+      eq: vi.fn(() => Promise.resolve({ error: null })),
+    }));
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "reading_texts") {
+        return {
+          select: vi.fn((_cols, opts) => {
+            if (opts?.head) {
+              return {
+                or: vi.fn(() => Promise.resolve({ count: 0, error: null })),
+              };
+            }
+            return {
+              or: vi.fn(() => ({
+                limit: vi.fn(() =>
+                  Promise.resolve({
+                    data: [
+                      {
+                        id: "rt-1",
+                        title: "Meine Familie",
+                        content_german: "Das ist meine Familie in Berlin.",
+                      },
+                    ],
+                    error: null,
+                  })
+                ),
+              })),
+            };
+          }),
+          update: mockReadingUpdate,
+        };
+      }
+      return {};
+    });
+
+    const { POST } = await import("@/app/api/admin/audio/generate-batch/route");
+    const req = new Request("http://localhost:3001/api/admin/audio/generate-batch", {
+      method: "POST",
+      body: JSON.stringify({ target: "reading_texts", limit: 5 }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    expect(json.success).toBe(true);
+    expect(json.processed).toBe(1);
+    expect(mockReadingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ audio_url: expect.stringContaining("https://") })
+    );
+    expect(mockRevalidateLearnerPaths).toHaveBeenCalledWith([
+      "/",
+      "/reading",
+      "/a1",
+      "/a2",
+      "/b1",
+      "/b2",
+    ]);
+  });
+
+  it("POST: should batch generate audio for goethe_materials, prioritizing Hören, and revalidate /goethe", async () => {
+    const mockGoetheUpdate = vi.fn(() => ({
+      eq: vi.fn(() => Promise.resolve({ error: null })),
+    }));
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "goethe_materials") {
+        return {
+          select: vi.fn((_cols, opts) => {
+            if (opts?.head) {
+              return {
+                or: vi.fn(() => Promise.resolve({ count: 0, error: null })),
+              };
+            }
+            return {
+              or: vi.fn(() => ({
+                limit: vi.fn(() =>
+                  Promise.resolve({
+                    data: [
+                      {
+                        id: "gm-1",
+                        title: "Teil 1: Durchsage am Bahnhof",
+                        section: "Hören",
+                        content: "Achtung an Gleis 3: Der ICE nach München fährt ein.",
+                      },
+                    ],
+                    error: null,
+                  })
+                ),
+              })),
+            };
+          }),
+          update: mockGoetheUpdate,
+        };
+      }
+      return {};
+    });
+
+    const { POST } = await import("@/app/api/admin/audio/generate-batch/route");
+    const req = new Request("http://localhost:3001/api/admin/audio/generate-batch", {
+      method: "POST",
+      body: JSON.stringify({ target: "goethe_materials", limit: 5 }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+
+    expect(json.success).toBe(true);
+    expect(json.processed).toBe(1);
+    expect(mockGoetheUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ audio_url: expect.stringContaining("https://") })
+    );
+    expect(mockRevalidateLearnerPaths).toHaveBeenCalledWith(["/", "/goethe"]);
   });
 });
 

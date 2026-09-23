@@ -14,7 +14,9 @@ export type BatchTarget =
   | "verb_praeteritums"
   | "verb_perfekts"
   | "verbs_all"
-  | "conversation_turns";
+  | "conversation_turns"
+  | "reading_texts"
+  | "goethe_materials";
 
 export async function GET() {
   try {
@@ -133,6 +135,37 @@ export async function GET() {
       }
     }
 
+    // 5. Reading Texts stats
+    const { count: totalReadingTexts } = await supabase
+      .from("reading_texts")
+      .select("*", { count: "exact", head: true });
+
+    const { count: readingTextsMissing } = await supabase
+      .from("reading_texts")
+      .select("*", { count: "exact", head: true })
+      .or("audio_url.is.null,audio_url.eq.");
+
+    // 6. Goethe Exam Prep / Listening stats
+    const { count: totalGoethe } = await supabase
+      .from("goethe_materials")
+      .select("*", { count: "exact", head: true });
+
+    const { count: goetheMissing } = await supabase
+      .from("goethe_materials")
+      .select("*", { count: "exact", head: true })
+      .or("audio_url.is.null,audio_url.eq.");
+
+    const { count: totalGoetheHoeren } = await supabase
+      .from("goethe_materials")
+      .select("*", { count: "exact", head: true })
+      .eq("section", "Hören");
+
+    const { count: goetheHoerenMissing } = await supabase
+      .from("goethe_materials")
+      .select("*", { count: "exact", head: true })
+      .eq("section", "Hören")
+      .or("audio_url.is.null,audio_url.eq.");
+
     return NextResponse.json({
       success: true,
       stats: {
@@ -180,6 +213,18 @@ export async function GET() {
           total: convTurnsTotal,
           missing: convTurnsMissing,
           generated: convTurnsTotal - convTurnsMissing,
+        },
+        readingTexts: {
+          total: totalReadingTexts || 0,
+          missing: readingTextsMissing || 0,
+          generated: (totalReadingTexts || 0) - (readingTextsMissing || 0),
+        },
+        goetheMaterials: {
+          total: totalGoethe || 0,
+          missing: goetheMissing || 0,
+          generated: (totalGoethe || 0) - (goetheMissing || 0),
+          hoerenTotal: totalGoetheHoeren || 0,
+          hoerenMissing: goetheHoerenMissing || 0,
         },
       },
     });
@@ -233,12 +278,14 @@ export async function POST(req: Request) {
         "verb_perfekts",
         "verbs_all",
         "conversation_turns",
+        "reading_texts",
+        "goethe_materials",
       ].includes(target)
     ) {
       return NextResponse.json(
         {
           error:
-            "Invalid target. Must be one of: vocab_words, vocab_sentences, medical_words, medical_sentences, verb_infinitives, verb_praeteritums, verb_perfekts, verbs_all, conversation_turns",
+            "Invalid target. Must be one of: vocab_words, vocab_sentences, medical_words, medical_sentences, verb_infinitives, verb_praeteritums, verb_perfekts, verbs_all, conversation_turns, reading_texts, goethe_materials",
         },
         { status: 400 }
       );
@@ -782,6 +829,118 @@ export async function POST(req: Request) {
           }
         }
       }
+    } else if (target === "reading_texts") {
+      const { data: rows, error: fetchErr } = await supabase
+        .from("reading_texts")
+        .select("id, title, content_german")
+        .or("audio_url.is.null,audio_url.eq.")
+        .limit(safeLimit);
+
+      if (fetchErr) throw fetchErr;
+
+      for (const row of rows || []) {
+        const text = row.content_german?.trim();
+        if (!text) continue;
+
+        try {
+          const { audioBuffer, ext } = await synthesizeGermanSpeech({
+            text,
+            voiceName,
+            speakingRate,
+          });
+
+          const uniqueId = crypto.randomUUID();
+          const filePath = `reading/${uniqueId}.${ext}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("pronunciations")
+            .upload(filePath, audioBuffer, {
+              contentType: "audio/mpeg",
+              upsert: true,
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data: publicData } = supabase.storage
+            .from("pronunciations")
+            .getPublicUrl(filePath);
+
+          const { error: updateErr } = await supabase
+            .from("reading_texts")
+            .update({ audio_url: publicData.publicUrl })
+            .eq("id", row.id);
+
+          if (updateErr) throw updateErr;
+
+          processedItems.push({
+            id: row.id,
+            text: row.title ? `${row.title}: ${text.slice(0, 60)}...` : `${text.slice(0, 60)}...`,
+            url: publicData.publicUrl,
+          });
+        } catch (itemErr: unknown) {
+          console.error(`Error processing reading text ${row.id}:`, itemErr);
+          errors.push(`Reading text ${row.id}: ${(itemErr as Error).message}`);
+        }
+      }
+    } else if (target === "goethe_materials") {
+      const { data: rows, error: fetchErr } = await supabase
+        .from("goethe_materials")
+        .select("id, title, section, content")
+        .or("audio_url.is.null,audio_url.eq.")
+        .limit(safeLimit);
+
+      if (fetchErr) throw fetchErr;
+
+      const sortedRows = (rows || []).sort((a, b) => {
+        if (a.section === "Hören" && b.section !== "Hören") return -1;
+        if (b.section === "Hören" && a.section !== "Hören") return 1;
+        return 0;
+      });
+
+      for (const row of sortedRows) {
+        const text = row.content?.replace(/[*#_`]/g, "").trim();
+        if (!text) continue;
+
+        try {
+          const { audioBuffer, ext } = await synthesizeGermanSpeech({
+            text,
+            voiceName,
+            speakingRate,
+          });
+
+          const uniqueId = crypto.randomUUID();
+          const filePath = `goethe/${uniqueId}.${ext}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("pronunciations")
+            .upload(filePath, audioBuffer, {
+              contentType: "audio/mpeg",
+              upsert: true,
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data: publicData } = supabase.storage
+            .from("pronunciations")
+            .getPublicUrl(filePath);
+
+          const { error: updateErr } = await supabase
+            .from("goethe_materials")
+            .update({ audio_url: publicData.publicUrl })
+            .eq("id", row.id);
+
+          if (updateErr) throw updateErr;
+
+          processedItems.push({
+            id: row.id,
+            text: `[${row.section}] ${row.title}: ${text.slice(0, 50)}...`,
+            url: publicData.publicUrl,
+          });
+        } catch (itemErr: unknown) {
+          console.error(`Error processing goethe material ${row.id}:`, itemErr);
+          errors.push(`Goethe material ${row.id}: ${(itemErr as Error).message}`);
+        }
+      }
     }
 
     // Revalidate learner pages if any audio was updated
@@ -792,6 +951,10 @@ export async function POST(req: Request) {
         await revalidateLearnerPaths(["/medical"]);
       } else if (target === "conversation_turns") {
         await revalidateLearnerPaths(["/", "/speaking", "/medical", "/a1", "/a2", "/b1", "/b2"]);
+      } else if (target === "reading_texts") {
+        await revalidateLearnerPaths(["/", "/reading", "/a1", "/a2", "/b1", "/b2"]);
+      } else if (target === "goethe_materials") {
+        await revalidateLearnerPaths(["/", "/goethe"]);
       }
     }
 
@@ -874,6 +1037,18 @@ export async function POST(req: Request) {
           }
         }
         remaining = missing;
+      } else if (target === "reading_texts") {
+        const { count } = await supabase
+          .from("reading_texts")
+          .select("*", { count: "exact", head: true })
+          .or("audio_url.is.null,audio_url.eq.");
+        remaining = count ?? 0;
+      } else if (target === "goethe_materials") {
+        const { count } = await supabase
+          .from("goethe_materials")
+          .select("*", { count: "exact", head: true })
+          .or("audio_url.is.null,audio_url.eq.");
+        remaining = count ?? 0;
       }
     } catch {
       // Non-critical if count fails

@@ -632,6 +632,7 @@ export async function mutateCategoryParagraph(
     paragraph_german: item.paragraph_german,
     paragraph_english: item.paragraph_english || "",
     paragraph_malayalam: item.paragraph_malayalam || "",
+    audio_url: item.audio_url || null,
     created_at: item.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -982,6 +983,7 @@ export async function mutateReadingText(item: Partial<ReadingText> & { topic_id:
     content_english: item.content_english || "",
     content_malayalam: item.content_malayalam || "",
     order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
+    audio_url: item.audio_url || null,
     created_at: item.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

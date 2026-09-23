@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { GoetheMaterial, Level, GoetheSection } from "@/types";
-import { Plus, Trash2, Edit3, ArrowLeft, Check, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Edit3, ArrowLeft, Check, AlertCircle, Volume2 } from "lucide-react";
+import AudioRecorder from "@/components/AudioRecorder";
 
 const LEVELS: Level[] = ["A1", "A2", "B1", "B2"];
 const SECTIONS: GoetheSection[] = ["Sprechen", "Lesen", "Schreiben", "Hören"];
@@ -21,6 +22,7 @@ export default function AdminGoethePage() {
     description: "",
     content: "",
     tips: "",
+    audio_url: "",
   });
 
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -43,6 +45,7 @@ export default function AdminGoethePage() {
       description: "",
       content: "",
       tips: "",
+      audio_url: "",
     });
     setEditingId(null);
     setShowForm(false);
@@ -56,6 +59,7 @@ export default function AdminGoethePage() {
       description: mat.description,
       content: mat.content,
       tips: mat.tips || "",
+      audio_url: mat.audio_url || "",
     });
     setEditingId(mat.id);
     setShowForm(true);
@@ -233,6 +237,17 @@ export default function AdminGoethePage() {
             />
           </div>
 
+          <div className="pt-2 border-t border-dashed border-neutral-300">
+            <AudioRecorder
+              label="🎤 Exam / Listening Audio (German Speech / Recording)"
+              audioUrl={formData.audio_url}
+              prefix="goethe"
+              textToSynthesize={formData.content}
+              onAudioUploaded={(url) => setFormData((prev) => ({ ...prev, audio_url: url }))}
+              onAudioRemoved={() => setFormData((prev) => ({ ...prev, audio_url: "" }))}
+            />
+          </div>
+
           <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
@@ -277,6 +292,18 @@ export default function AdminGoethePage() {
                     <h3 className="text-base font-black text-black">{mat.title}</h3>
                   </div>
                   <p className="text-xs text-neutral-600 mb-2">{mat.description}</p>
+                  {mat.audio_url ? (
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-200">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 bg-green-100 text-green-700 border border-green-300">
+                        <Volume2 className="w-3 h-3" /> Audio Attached
+                      </span>
+                      <audio controls src={mat.audio_url} className="h-6 w-52 text-xs" preload="none" />
+                    </div>
+                  ) : mat.section === "Hören" ? (
+                    <div className="flex items-center gap-1 mt-2 text-[10px] font-semibold text-amber-600">
+                      <Volume2 className="w-3 h-3 text-amber-600" /> Audio recommended for Hören
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="flex items-center gap-2">
