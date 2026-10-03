@@ -223,55 +223,5 @@ export const initialGrammarTopics: GrammarTopic[] = [
   }
 ];
 
-export const initialGoetheMaterials: GoetheMaterial[] = [
-  {
-    id: "c3333333-3333-4333-8333-333333333301",
-    level: "A1",
-    section: "Sprechen",
-    title: "Teil 1: Sich vorstellen & Buchstabieren",
-    slug: "a1-goethe-sprechen-teil-1",
-    description: "Introducing yourself, spelling your name, and saying telephone numbers.",
-    content: "In Teil 1 of the A1 speaking exam, you present yourself using 7 key points: Name, Alter, Land, Wohnort, Sprachen, Beruf, Hobby. The examiner will then ask you to spell a word and say a number.",
-    tips: "Always practice spelling difficult Malayalam names using the German alphabet (e.g., J = Jot, V = Fau, W = We, Z = Tsett)."
-  },
-  {
-    id: "c3333333-3333-4333-8333-333333333302",
-    level: "A1",
-    section: "Lesen",
-    title: "Teil 1: Kurze E-Mails & Notizen verstehen",
-    slug: "a1-goethe-lesen-teil-1",
-    description: "Reading short personal messages, invitations, and notices.",
-    content: "Read short texts like informal emails from friends about meeting up, birthdays, or office appointments. Answer True/False (Richtig/Falsch) questions.",
-    tips: "Watch out for signal words like 'nicht', 'kein', 'leider', and exact times (um 14 Uhr vs. ab 14 Uhr)."
-  },
-  {
-    id: "c3333333-3333-4333-8333-333333333303",
-    level: "A1",
-    section: "Schreiben",
-    title: "Teil 2: Eine kurze persönliche E-Mail schreiben",
-    slug: "a1-goethe-schreiben-teil-2",
-    description: "Writing approximately 30 words addressing 3 given bullet points.",
-    content: "You will be given a scenario (e.g. You cannot come to the German class). You must address all 3 bullet points, include greeting ('Liebe Maria,' or 'Lieber Peter,') and farewell ('Herzliche Grüße').",
-    tips: "Never skip any bullet point. Each point carries marks for grammar, vocabulary, and relevance."
-  },
-  {
-    id: "c3333333-3333-4333-8333-333333333304",
-    level: "A1",
-    section: "Hören",
-    title: "Teil 1 & 2: Alltagsgespräche & Durchsagen",
-    slug: "a1-goethe-hoeren-teil-1",
-    description: "Listening to short conversations and public station announcements.",
-    content: "Part 1 conversations are played twice. Part 2 train station / airport announcements are played only ONCE.",
-    tips: "Always read the questions during the pause before the audio plays so you know what key numbers, platforms, or times to listen for."
-  },
-  {
-    id: "c3333333-3333-4333-8333-333333333305",
-    level: "B1",
-    section: "Sprechen",
-    title: "Teil 2 & 3: Präsentation & Diskussion",
-    slug: "b1-goethe-sprechen-teil-2",
-    description: "Structuring a 3-4 minute presentation on a topic with pros and cons.",
-    content: "Follow the 5-step presentation structure:\n1. Thema vorstellen & Struktur\n2. Eigene Erfahrung\n3. Situation im Heimatland (Indien / Kerala)\n4. Vor- und Nachteile\n5. Eigene Meinung & Abschluss",
-    tips: "Use clear transitions like 'Ein weiterer Vorteil ist...', 'In meinem Heimatland Indien ist das anders...'."
-  }
-];
+export const initialGoetheMaterials: GoetheMaterial[] = [];
+
