@@ -244,65 +244,65 @@ export default function AudioRecorder({
   };
 
   return (
-    <div className="space-y-1.5 p-3 border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/50">
+    <div className="space-y-2 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
       <div className="flex items-center justify-between gap-2">
-        <label className="text-xs font-black uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
           {label}
         </label>
         {localUrl && !isRecording && (
-          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/50">
             <CheckCircle2 className="w-3.5 h-3.5" /> Audio Attached
           </span>
         )}
       </div>
 
       {errorMsg && (
-        <div className="flex items-center gap-1.5 p-2 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs font-bold">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 text-xs font-semibold">
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* State 1: Active Recording */}
       {isRecording ? (
-        <div className="flex items-center justify-between gap-3 p-3 bg-red-50 dark:bg-red-950/40 border-2 border-red-500">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-red-600 animate-ping" />
-            <span className="text-xs font-black uppercase text-red-700 dark:text-red-300 tracking-wider">
+        <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800">
+          <div className="flex items-center gap-2.5">
+            <span className="w-3 h-3 rounded-full bg-rose-600 animate-ping" />
+            <span className="text-xs font-bold uppercase text-rose-700 dark:text-rose-300 tracking-wider">
               Recording: {formatSeconds(recordSeconds)}
             </span>
           </div>
           <button
             type="button"
             onClick={stopRecording}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white font-black text-xs uppercase border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-red-700 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 text-white font-bold text-xs uppercase rounded-xl shadow-xs hover:bg-rose-700 transition-all cursor-pointer"
           >
-            <Square className="w-3.5 h-3.5 fill-current" /> Stop & Save
+            <Square className="w-3.5 h-3.5 fill-current" /> Stop &amp; Save
           </button>
         </div>
       ) : isGenerating ? (
-        <div className="flex items-center justify-center gap-2 py-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-xs font-bold text-emerald-800 dark:text-emerald-300">
-          <Loader2 className="w-4 h-4 animate-spin text-emerald-600 dark:text-emerald-400" />
+        <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+          <Loader2 className="w-4 h-4 animate-spin text-indigo-600 dark:text-indigo-400" />
           <span>Synthesizing German audio with Google AI...</span>
         </div>
       ) : isUploading ? (
-        <div className="flex items-center justify-center gap-2 py-3 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-xs font-bold text-neutral-700 dark:text-neutral-300">
-          <Loader2 className="w-4 h-4 animate-spin text-black dark:text-white" />
+        <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <Loader2 className="w-4 h-4 animate-spin text-slate-900 dark:text-white" />
           <span>Uploading audio to storage...</span>
         </div>
       ) : localUrl ? (
         /* State 2: Recorded & Attached */
-        <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-white dark:bg-[#141414] border border-black dark:border-neutral-700 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(250,204,21,0.2)]">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-xs">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={togglePlay}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#ffe600] text-black border border-black font-black text-xs uppercase shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:shadow-none cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-xs hover:bg-indigo-700 transition-all cursor-pointer"
             >
               {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
               {isPlaying ? "Pause" : "Play Preview"}
             </button>
-            <span className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400 truncate max-w-[160px] sm:max-w-[220px]">
+            <span className="text-xs font-mono text-slate-500 dark:text-slate-400 truncate max-w-[160px] sm:max-w-[220px]">
               {localUrl.split("/").pop()}
             </span>
           </div>
@@ -313,7 +313,7 @@ export default function AudioRecorder({
                 type="button"
                 onClick={handleGenerateAiAudio}
                 title="Regenerate pronunciation with Google AI"
-                className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 font-bold text-xs uppercase hover:border-black dark:hover:border-white cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 font-bold text-xs uppercase hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
               >
                 <Sparkles className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Re-generate AI
               </button>
@@ -322,7 +322,7 @@ export default function AudioRecorder({
               type="button"
               onClick={startRecording}
               title="Re-record voice note"
-              className="inline-flex items-center gap-1 px-2 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-300 dark:border-neutral-700 font-bold text-xs uppercase hover:border-black dark:hover:border-white cursor-pointer"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600/80 font-bold text-xs uppercase hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3 h-3" /> Re-record
             </button>
@@ -330,20 +330,20 @@ export default function AudioRecorder({
               type="button"
               onClick={handleRemove}
               title="Delete audio"
-              className="p-1 text-red-600 hover:text-red-700 dark:text-red-400 border border-transparent hover:border-red-500 cursor-pointer"
+              className="p-1.5 rounded-lg text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
             </button>
           </div>
         </div>
       ) : (
         /* State 3: Empty / Not Recorded */
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           {textToSynthesize !== undefined && (
             <button
               type="button"
               onClick={handleGenerateAiAudio}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border border-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs uppercase shadow-xs hover:shadow-md transition-all cursor-pointer"
               title="Auto-generate natural German pronunciation using Google Cloud Neural2 AI"
             >
               <Sparkles className="w-3.5 h-3.5" /> Auto-Generate AI Audio
@@ -353,12 +353,12 @@ export default function AudioRecorder({
           <button
             type="button"
             onClick={startRecording}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#ffe600] text-black border border-black font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs uppercase shadow-xs hover:shadow-md transition-all cursor-pointer"
           >
             <Mic className="w-3.5 h-3.5" /> Record Audio
           </button>
 
-          <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-300 dark:border-neutral-700 font-bold text-xs uppercase hover:border-black dark:hover:border-white transition-all cursor-pointer">
+          <label className="inline-flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-xs uppercase hover:bg-slate-50 dark:hover:bg-slate-700 shadow-xs transition-all cursor-pointer">
             <UploadCloud className="w-3.5 h-3.5" /> Upload File
             <input
               type="file"

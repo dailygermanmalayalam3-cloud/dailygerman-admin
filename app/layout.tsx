@@ -11,7 +11,6 @@ const geistSans = Geist({
 const notoSansMalayalam = Noto_Sans_Malayalam({
   variable: "--font-malayalam",
   subsets: ["malayalam"],
-  weight: ["400", "500", "600", "700", "900"],
 });
 
 export const metadata: Metadata = {

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
@@ -28,7 +28,7 @@ export default function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="w-8 h-8 border border-neutral-300 dark:border-neutral-700 p-1.5 opacity-0" />
+      <div className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 p-1.5 opacity-0" />
     );
   }
 
@@ -37,12 +37,12 @@ export default function ThemeToggle() {
       onClick={toggleTheme}
       aria-label={isDark ? "Switch to Light Mode" : "Switch to Night Mode"}
       title={isDark ? "Light Mode" : "Night Mode"}
-      className="p-1.5 border border-black dark:border-neutral-600 bg-white dark:bg-neutral-900 text-black dark:text-yellow-400 hover:bg-[#ffe600] dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+      className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-amber-400 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs transition-all cursor-pointer"
     >
       {isDark ? (
-        <Sun className="w-4 h-4 text-yellow-400" />
+        <Sun className="w-4 h-4 text-amber-400 transition-transform duration-300 rotate-0 hover:rotate-45" />
       ) : (
-        <Moon className="w-4 h-4 text-black" />
+        <Moon className="w-4 h-4 text-slate-700 transition-transform duration-300 rotate-0 hover:-rotate-12" />
       )}
     </button>
   );
