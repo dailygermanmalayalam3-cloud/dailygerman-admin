@@ -46,7 +46,7 @@ function LoginForm() {
 
   return (
     <div className="max-w-md mx-auto my-12 px-4">
-      <div className="border-2 border-black dark:border-neutral-700 bg-white dark:bg-[#141414] p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(250,204,21,0.3)] transition-all">
+      <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl p-8 sm:p-10 shadow-xl transition-all">
         {/* Official Logo */}
         <div className="flex justify-center mb-5">
           <Image
@@ -54,46 +54,46 @@ function LoginForm() {
             alt="Daily German Malayalam"
             width={160}
             height={124}
-            className="h-24 w-auto object-contain drop-shadow-md"
+            className="h-20 w-auto object-contain drop-shadow-sm"
             priority
           />
         </div>
 
         {/* Header Badge */}
-        <div className="flex items-center justify-center mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#ffe600] text-black border-2 border-black font-black text-xs uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-            <ShieldCheck className="w-4 h-4" />
-            <span>Admin Portal</span>
+        <div className="flex items-center justify-center mb-5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-full font-bold text-xs uppercase tracking-wider">
+            <ShieldCheck className="w-4 h-4 text-amber-500" />
+            <span>CMS Admin Portal</span>
           </div>
         </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-black text-black dark:text-white tracking-tight uppercase">
-            CMS Login
+        <div className="text-center mb-7">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight">
+            Sign In
           </h1>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-2 leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
             Restricted to authorized administrators. Sign in with your registered Google account to manage vocabulary, grammar, and lesson content.
           </p>
         </div>
 
         {errorMessage && (
-          <div className="flex items-start gap-2 p-3 text-xs font-semibold mb-6 border-2 border-red-500 bg-red-50 dark:bg-red-950/50 text-red-900 dark:text-red-200">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 p-3 text-xs font-semibold mb-6 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* GOOGLE SIGN IN BUTTON ONLY */}
+        {/* GOOGLE SIGN IN BUTTON */}
         <button
           onClick={handleGoogleAuth}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-3 px-4 border-2 border-black dark:border-neutral-700 bg-white dark:bg-neutral-900 text-black dark:text-white font-black text-sm shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.2)] hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-bold text-sm shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700/80 hover:shadow-md transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed active:scale-98"
         >
           {loading ? (
             <span className="animate-pulse">Connecting to Google...</span>
           ) : (
             <>
-              <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -116,8 +116,8 @@ function LoginForm() {
           )}
         </button>
 
-        <div className="mt-8 pt-4 border-t border-neutral-200 dark:border-neutral-800 text-center">
-          <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+        <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800 text-center">
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">
             Daily German Malayalam • Content Management System
           </p>
         </div>
