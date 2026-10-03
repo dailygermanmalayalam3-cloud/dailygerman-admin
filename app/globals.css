@@ -82,3 +82,108 @@ body {
 .font-malayalam {
   font-family: "Noto Sans Malayalam", -apple-system, BlinkMacSystemFont, sans-serif;
 }
+
+/* ==========================================================================
+   GLOBAL DARK MODE & THEME INTEGRITY OVERRIDES
+   Ensures neo-brutalist forms, cards, tables & inputs cleanly transition
+   between Light and Dark modes without unstyled white blocks or dark text
+   ========================================================================== */
+
+/* Universal chevron visibility helper */
+svg.lucide-chevron-down,
+svg.lucide-chevron-up,
+svg.lucide-chevrons-up-down {
+  stroke-width: 2.5px;
+}
+
+html.dark {
+  /* Invert stark black borders into sleek dark borders */
+  .border-black:not([data-preserve-color]),
+  .border-neutral-900:not([data-preserve-color]) {
+    border-color: var(--border-primary) !important;
+  }
+
+  /* Invert stark white backgrounds into dark card surfaces */
+  .bg-white:not([data-preserve-color]) {
+    background-color: var(--bg-card) !important;
+  }
+
+  /* Invert text-black into foreground light text */
+  .text-black:not([data-preserve-color]):not([class*="bg-amber"]):not([class*="bg-yellow"]) {
+    color: var(--foreground) !important;
+  }
+
+  /* Neutral surfaces & cards in dark mode */
+  .bg-neutral-50:not([data-preserve-color]),
+  .bg-neutral-100:not([data-preserve-color]),
+  .bg-slate-50:not([data-preserve-color]),
+  .bg-slate-100:not([data-preserve-color]) {
+    background-color: var(--bg-card-subtle) !important;
+  }
+
+  .border-neutral-200:not([data-preserve-color]),
+  .border-neutral-300:not([data-preserve-color]),
+  .border-slate-200:not([data-preserve-color]) {
+    border-color: var(--border-primary) !important;
+  }
+
+  .text-neutral-900:not([data-preserve-color]),
+  .text-slate-900:not([data-preserve-color]) {
+    color: var(--foreground) !important;
+  }
+
+  .text-neutral-800:not([data-preserve-color]),
+  .text-neutral-700:not([data-preserve-color]),
+  .text-slate-700:not([data-preserve-color]) {
+    color: var(--text-secondary) !important;
+  }
+
+  .text-neutral-600:not([data-preserve-color]),
+  .text-neutral-500:not([data-preserve-color]),
+  .text-slate-500:not([data-preserve-color]) {
+    color: var(--text-muted) !important;
+  }
+
+  /* Form inputs, textareas, and selects */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+  select,
+  textarea {
+    background-color: var(--bg-card-subtle) !important;
+    color: var(--foreground) !important;
+    border-color: var(--border-primary) !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-muted) !important;
+  }
+
+  /* Tables: alternating row and header contrasts */
+  table th {
+    background-color: var(--bg-card-subtle) !important;
+    color: var(--foreground) !important;
+    border-color: var(--border-primary) !important;
+  }
+
+  table td {
+    border-color: var(--border-subtle) !important;
+  }
+
+  /* Preserve black text on yellow/amber buttons & badges */
+  [class*="bg-[#ffe600]"],
+  [class*="bg-amber-400"],
+  [class*="bg-yellow-"] {
+    color: #000000 !important;
+  }
+  [class*="bg-[#ffe600]"] *,
+  [class*="bg-amber-400"] *,
+  [class*="bg-yellow-"] * {
+    color: #000000 !important;
+  }
+
+  /* Shadow softness in dark mode */
+  [class*="shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"],
+  [class*="shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"] {
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.5) !important;
+  }
+}

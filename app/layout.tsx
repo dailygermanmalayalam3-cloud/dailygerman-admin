@@ -44,9 +44,9 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var saved = localStorage.getItem('dg_theme');
-                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  if (saved === 'dark' || (!saved && prefersDark)) {
+                  var mode = localStorage.getItem('dg_theme_mode') || localStorage.getItem('dg_theme');
+                  // Default theme is light-normal whenever opened; only use dark if explicitly selected
+                  if (mode === 'dark') {
                     document.documentElement.classList.add('dark');
                   } else {
                     document.documentElement.classList.remove('dark');
@@ -59,7 +59,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)] transition-colors duration-200">
         <AdminHeader />
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
+        <main className="flex-1 w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-8">
           {children}
         </main>
         <footer className="border-t border-neutral-200 dark:border-neutral-800 py-6 text-center text-xs text-neutral-500">

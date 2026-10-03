@@ -20,9 +20,11 @@ export default function ThemeToggle() {
     if (nextIsDark) {
       document.documentElement.classList.add("dark");
       localStorage.setItem("dg_theme", "dark");
+      localStorage.setItem("dg_theme_mode", "dark");
     } else {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("dg_theme", "light");
+      localStorage.setItem("dg_theme_mode", "light");
     }
   };
 
