@@ -2,13 +2,22 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockAdminUser = {
   id: "admin-uuid-1111-2222-3333-444444444444",
-  email: "dailygermanmalayalam3@gmail.com",
+  email: `admin-${Date.now().toString(36)}@example.com`,
 };
+
+const randomPrefix1 = `learner1-${Date.now().toString(36)}`;
+const randomLearner1Email = `${randomPrefix1}@example.com`;
+
+const randomPrefix2 = `user2-${Date.now().toString(36)}`;
+const randomLearner2Email = `${randomPrefix2}@mock-auth.net`;
+
+const randomPrefix3 = `unverified-${Date.now().toString(36)}`;
+const randomLearner3Email = `${randomPrefix3}@example.com`;
 
 const mockLearners = [
   {
     id: "learner-uuid-1",
-    email: "learner1@example.com",
+    email: randomLearner1Email,
     phone: null,
     created_at: "2026-10-01T10:00:00.000Z",
     last_sign_in_at: "2026-10-08T09:00:00.000Z",
@@ -23,22 +32,22 @@ const mockLearners = [
   },
   {
     id: "learner-uuid-2",
-    email: "tonysebastian247@gmail.com",
+    email: randomLearner2Email,
     phone: null,
     created_at: "2026-09-13T18:00:00.000Z",
     last_sign_in_at: "2026-10-08T04:00:00.000Z",
     email_confirmed_at: "2026-09-13T18:01:00.000Z",
     confirmed_at: "2026-09-13T18:01:00.000Z",
     role: "authenticated",
-    fullName: "Tony Sebastian",
+    fullName: "Sample Learner Two",
     avatarUrl: "https://lh3.googleusercontent.com/avatar",
     provider: "google",
-    raw_user_meta_data: { full_name: "Tony Sebastian" },
+    raw_user_meta_data: { full_name: "Sample Learner Two" },
     raw_app_meta_data: { provider: "google" },
   },
   {
     id: "learner-uuid-3",
-    email: "unverified@example.com",
+    email: randomLearner3Email,
     phone: null,
     created_at: "2026-10-07T12:00:00.000Z",
     last_sign_in_at: null,
@@ -103,13 +112,13 @@ describe("Admin Backend API: /api/admin/users", () => {
     it("should filter users by search query (name or email)", async () => {
       const { GET } = await import("@/app/api/admin/users/route");
 
-      const req = new Request("http://localhost:3001/api/admin/users?search=tony");
+      const req = new Request(`http://localhost:3001/api/admin/users?search=${randomPrefix2}`);
       const res = await GET(req);
 
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data.users).toHaveLength(1);
-      expect(data.users[0].email).toBe("tonysebastian247@gmail.com");
+      expect(data.users[0].email).toBe(randomLearner2Email);
     });
 
     it("should filter users by verified status", async () => {
@@ -124,7 +133,7 @@ describe("Admin Backend API: /api/admin/users", () => {
       const resUnverified = await GET(reqUnverified);
       const dataUnverified = await resUnverified.json();
       expect(dataUnverified.users).toHaveLength(1);
-      expect(dataUnverified.users[0].email).toBe("unverified@example.com");
+      expect(dataUnverified.users[0].email).toBe(randomLearner3Email);
     });
 
     it("should filter users by provider (google vs email)", async () => {
