@@ -18,8 +18,14 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    if (!body.topic_id || !body.video_url) {
-      return NextResponse.json({ error: "Missing required fields (topic_id, video_url)" }, { status: 400 });
+    const hasVideo = typeof body.video_url === "string" && body.video_url.trim().length > 0;
+    const hasPdf = typeof body.pdf_url === "string" && body.pdf_url.trim().length > 0;
+
+    if (!body.topic_id || (!hasVideo && !hasPdf)) {
+      return NextResponse.json(
+        { error: "Missing required fields (topic_id and at least one of video_url or pdf_url)" },
+        { status: 400 }
+      );
     }
     const item = await mutateGrammarVideo(body);
     await revalidateLearnerPaths(["/grammar", "/a1", "/a2", "/b1", "/b2"]);

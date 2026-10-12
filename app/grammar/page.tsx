@@ -17,6 +17,8 @@ import {
   Layers,
   ExternalLink,
   X,
+  Upload,
+  Loader2,
 } from "lucide-react";
 
 const LEVELS: Level[] = ["A1", "A2", "B1", "B2"];
@@ -39,11 +41,13 @@ export default function AdminGrammarPage() {
   const [activeTopic, setActiveTopic] = useState<GrammarTopic | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<"videos" | "exercises">("videos");
 
-  // Videos State for Active Topic
+  // Videos & PDFs State for Active Topic
   const [videos, setVideos] = useState<GrammarVideo[]>([]);
   const [videosLoading, setVideosLoading] = useState(false);
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState("");
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [uploadingPdf, setUploadingPdf] = useState(false);
   const [videoTitle, setVideoTitle] = useState("");
   const [videoDesc, setVideoDesc] = useState("");
   const [videoOrder, setVideoOrder] = useState<number>(1);
@@ -102,6 +106,7 @@ export default function AdminGrammarPage() {
     setEditingVideoId(null);
     setEditingExerciseId(null);
     setVideoUrl("");
+    setPdfUrl("");
     setVideoTitle("");
     setVideoDesc("");
     setExerciseTitle("");
@@ -211,16 +216,56 @@ export default function AdminGrammarPage() {
     }
   };
 
-  // ----------------- VIDEO MANAGEMENT -----------------
+  // ----------------- VIDEO & PDF MANAGEMENT -----------------
+  const handleUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setStatusMsg(null);
+    setUploadingPdf(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/grammar/upload-pdf", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Failed to upload PDF");
+      }
+      setPdfUrl(data.url);
+      setStatusMsg({ type: "success", text: "PDF uploaded to Supabase Storage! Click Save to attach it." });
+    } catch (err: unknown) {
+      setStatusMsg({ type: "error", text: (err as Error).message });
+    } finally {
+      setUploadingPdf(false);
+      e.target.value = "";
+    }
+  };
+
   const handleSaveVideo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeTopic) return;
     setStatusMsg(null);
 
+    const cleanVideo = videoUrl.trim();
+    const cleanPdf = pdfUrl.trim();
+
+    if (!cleanVideo && !cleanPdf) {
+      setStatusMsg({
+        type: "error",
+        text: "Please provide a YouTube/Video link, upload a PDF document, or both.",
+      });
+      return;
+    }
+
     const payload = {
       ...(editingVideoId ? { id: editingVideoId } : {}),
       topic_id: activeTopic.id,
-      video_url: videoUrl.trim(),
+      video_url: cleanVideo,
+      pdf_url: cleanPdf || null,
       title: videoTitle.trim(),
       description: videoDesc.trim(),
       order_index: Number(videoOrder) || 1,
@@ -240,12 +285,13 @@ export default function AdminGrammarPage() {
         });
         setEditingVideoId(null);
         setVideoUrl("");
+        setPdfUrl("");
         setVideoTitle("");
         setVideoDesc("");
         setVideoOrder(videos.length + 2);
-        setStatusMsg({ type: "success", text: "Grammar video saved successfully!" });
+        setStatusMsg({ type: "success", text: "Grammar video / PDF saved successfully!" });
       } else {
-        throw new Error(data.error || "Failed to save video");
+        throw new Error(data.error || "Failed to save video / PDF");
       }
     } catch (err: unknown) {
       setStatusMsg({ type: "error", text: (err as Error).message });
@@ -254,7 +300,8 @@ export default function AdminGrammarPage() {
 
   const handleEditVideo = (v: GrammarVideo) => {
     setEditingVideoId(v.id);
-    setVideoUrl(v.video_url);
+    setVideoUrl(v.video_url || "");
+    setPdfUrl(v.pdf_url || "");
     setVideoTitle(v.title || "");
     setVideoDesc(v.description || "");
     setVideoOrder(v.order_index ?? 1);
@@ -715,7 +762,7 @@ export default function AdminGrammarPage() {
             </button>
           </div>
 
-          {/* Sub-Tabs: Videos vs Exercises */}
+          {/* Sub-Tabs: Videos & PDFs vs Exercises */}
           <div className="flex items-center gap-2 border-b-2 border-black pb-2">
             <button
               onClick={() => setActiveSubTab("videos")}
@@ -726,7 +773,7 @@ export default function AdminGrammarPage() {
               }`}
             >
               <Video className="w-3.5 h-3.5" />
-              <span>🎥 Videos ({videos.length})</span>
+              <span>🎥 Videos &amp; PDFs ({videos.length})</span>
             </button>
 
             <button
@@ -742,10 +789,10 @@ export default function AdminGrammarPage() {
             </button>
           </div>
 
-          {/* ----------------- SUB-TAB: VIDEOS ----------------- */}
+          {/* ----------------- SUB-TAB: VIDEOS & STUDY PDFS ----------------- */}
           {activeSubTab === "videos" && (
             <div className="space-y-6">
-              {/* Add / Edit Video Form */}
+              {/* Add / Edit Video & PDF Form */}
               <form
                 onSubmit={handleSaveVideo}
                 className="border-2 border-black bg-white p-4 sm:p-5 space-y-4 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
@@ -753,7 +800,11 @@ export default function AdminGrammarPage() {
                 <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
                   <h4 className="text-xs font-black uppercase text-black flex items-center gap-2">
                     <Video className="w-3.5 h-3.5 text-black" />
-                    <span>{editingVideoId ? "Edit Grammar Video" : "Add New Grammar Video"}</span>
+                    <span>
+                      {editingVideoId
+                        ? "Edit Grammar Video / Study PDF"
+                        : "Add Grammar Video & Study PDF (Video, PDF, or Both)"}
+                    </span>
                   </h4>
                   {editingVideoId && (
                     <button
@@ -761,6 +812,7 @@ export default function AdminGrammarPage() {
                       onClick={() => {
                         setEditingVideoId(null);
                         setVideoUrl("");
+                        setPdfUrl("");
                         setVideoTitle("");
                         setVideoDesc("");
                         setVideoOrder(videos.length + 1);
@@ -775,24 +827,23 @@ export default function AdminGrammarPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2">
                     <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
-                      YouTube / Video Link *
+                      YouTube / Video Link (Optional if PDF uploaded)
                     </label>
                     <input
                       type="url"
-                      required
                       placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
                       value={videoUrl}
                       onChange={(e) => setVideoUrl(e.target.value)}
                       className="w-full px-2.5 py-1.5 border-2 border-black text-xs font-mono"
                     />
                     <span className="text-[10px] text-neutral-500 font-medium">
-                      Supports standard YouTube, Shorts, youtu.be, Vimeo, or MP4 URLs.
+                      Supports standard YouTube, Shorts, youtu.be, Vimeo, or MP4 URLs. Leave empty if adding PDF only.
                     </span>
                   </div>
 
                   <div>
                     <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
-                      Video Order # *
+                      Item Order # *
                     </label>
                     <input
                       type="number"
@@ -805,10 +856,65 @@ export default function AdminGrammarPage() {
                   </div>
                 </div>
 
+                {/* PDF Upload & URL Section */}
+                <div className="border-2 border-dashed border-neutral-400 bg-neutral-50 p-3.5 space-y-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div>
+                      <label className="block text-[11px] font-black uppercase text-black">
+                        📄 Study Notes PDF (Optional if Video link provided)
+                      </label>
+                      <p className="text-[10px] text-neutral-600 font-medium">
+                        Upload a PDF to Supabase Storage (max 15 MB) or paste a PDF URL. Learners can view it inline (non-downloadable).
+                      </p>
+                    </div>
+
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-black bg-[#ffe600] text-black text-[11px] font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none transition-all cursor-pointer shrink-0 self-start">
+                      {uploadingPdf ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading PDF...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Upload PDF File</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        onChange={handleUploadPdf}
+                        disabled={uploadingPdf}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      placeholder="https://.../grammar/document.pdf (auto-filled on upload)"
+                      value={pdfUrl}
+                      onChange={(e) => setPdfUrl(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border-2 border-black bg-white text-xs font-mono"
+                    />
+                    {pdfUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setPdfUrl("")}
+                        className="px-2.5 py-1.5 border-2 border-black bg-red-500 text-white text-[11px] font-black uppercase hover:bg-red-600 transition-colors cursor-pointer shrink-0"
+                        title="Remove PDF"
+                      >
+                        Remove PDF
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
-                      Video Title (Optional)
+                      Title (Optional)
                     </label>
                     <input
                       type="text"
@@ -821,11 +927,11 @@ export default function AdminGrammarPage() {
 
                   <div>
                     <label className="block text-[11px] font-bold uppercase text-neutral-700 mb-1">
-                      Short Description / Timestamps (Optional)
+                      Short Description / Notes (Optional)
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Watch this 5-min clip before attempting the exercises"
+                      placeholder="e.g. Watch the video and review the grammar cheat-sheet PDF"
                       value={videoDesc}
                       onChange={(e) => setVideoDesc(e.target.value)}
                       className="w-full px-2.5 py-1.5 border-2 border-black text-xs"
@@ -836,92 +942,124 @@ export default function AdminGrammarPage() {
                 <div className="flex justify-end pt-2 border-t border-neutral-200">
                   <button
                     type="submit"
-                    className="px-4 py-2 border-2 border-black bg-[#ffe600] text-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none transition-all cursor-pointer"
+                    disabled={uploadingPdf}
+                    className="px-4 py-2 border-2 border-black bg-[#ffe600] text-black text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none transition-all cursor-pointer disabled:opacity-50"
                   >
-                    {editingVideoId ? "Update Video" : "+ Add Video"}
+                    {editingVideoId ? "Update Video / PDF" : "+ Save Video / PDF"}
                   </button>
                 </div>
               </form>
 
-              {/* Videos List */}
+              {/* Videos & PDFs List */}
               <div className="space-y-3">
                 <h4 className="text-xs font-black uppercase tracking-wider text-neutral-700">
-                  Attached Videos ({videos.length})
+                  Attached Videos &amp; Study PDFs ({videos.length})
                 </h4>
 
                 {videosLoading ? (
-                  <p className="text-xs text-neutral-500">Loading videos...</p>
+                  <p className="text-xs text-neutral-500">Loading items...</p>
                 ) : videos.length === 0 ? (
                   <div className="text-center py-8 border border-neutral-300 bg-white p-4">
                     <p className="text-xs text-neutral-600 font-bold">
-                      No video links added to &quot;{activeTopic.title}&quot; yet.
+                      No videos or PDFs added to &quot;{activeTopic.title}&quot; yet.
                     </p>
-                    <p className="text-[11px] text-neutral-500">Paste your YouTube link above to add one.</p>
+                    <p className="text-[11px] text-neutral-500">
+                      Paste a YouTube link or upload a PDF above to add one.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {videos.map((v) => (
-                      <div
-                        key={v.id}
-                        className="border-2 border-black bg-white p-3.5 flex items-center justify-between gap-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className="w-6 h-6 flex items-center justify-center bg-[#ffe600] border border-black font-black text-xs text-black shrink-0">
-                            {v.order_index ?? 1}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-xs font-black text-black truncate">
-                              {v.title || "Grammar Video"}
-                            </p>
-                            <a
-                              href={v.video_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 font-mono truncate"
+                    {videos.map((v) => {
+                      const hasVid = Boolean(v.video_url && v.video_url.trim());
+                      const hasPdf = Boolean(v.pdf_url && v.pdf_url.trim());
+                      return (
+                        <div
+                          key={v.id}
+                          className="border-2 border-black bg-white p-3.5 flex items-center justify-between gap-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="w-6 h-6 flex items-center justify-center bg-[#ffe600] border border-black font-black text-xs text-black shrink-0">
+                              {v.order_index ?? 1}
+                            </span>
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="text-xs font-black text-black truncate">
+                                  {v.title || (hasVid && hasPdf ? "Grammar Video & PDF" : hasPdf ? "Grammar Study PDF" : "Grammar Video")}
+                                </p>
+                                {hasVid && (
+                                  <span className="px-1.5 py-0.5 bg-blue-100 border border-black text-[9px] font-black uppercase text-black">
+                                    🎥 Video
+                                  </span>
+                                )}
+                                {hasPdf && (
+                                  <span className="px-1.5 py-0.5 bg-emerald-100 border border-black text-[9px] font-black uppercase text-black">
+                                    📄 PDF Attached
+                                  </span>
+                                )}
+                              </div>
+                              {hasVid && (
+                                <a
+                                  href={v.video_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 font-mono truncate"
+                                >
+                                  <span className="truncate">Video: {v.video_url}</span>
+                                  <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                                </a>
+                              )}
+                              {hasPdf && (
+                                <a
+                                  href={v.pdf_url!}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] text-emerald-700 hover:underline flex items-center gap-1 font-mono truncate"
+                                >
+                                  <span className="truncate">PDF: {v.pdf_url}</span>
+                                  <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                                </a>
+                              )}
+                              {v.description && (
+                                <p className="text-[10px] text-neutral-500 mt-0.5 truncate">{v.description}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateVideoOrder(v, Math.max(1, (v.order_index ?? 1) - 1))}
+                              className="p-1 border border-black hover:bg-neutral-100 cursor-pointer"
+                              title="Move up"
                             >
-                              <span className="truncate">{v.video_url}</span>
-                              <ExternalLink className="w-2.5 h-2.5 shrink-0" />
-                            </a>
-                            {v.description && (
-                              <p className="text-[10px] text-neutral-500 mt-0.5 truncate">{v.description}</p>
-                            )}
+                              <ChevronUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateVideoOrder(v, (v.order_index ?? 1) + 1)}
+                              className="p-1 border border-black hover:bg-neutral-100 cursor-pointer"
+                              title="Move down"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => handleEditVideo(v)}
+                              className="p-1 border border-black hover:bg-[#ffe600] transition-colors cursor-pointer"
+                              title="Edit Item"
+                            >
+                              <Edit3 className="w-3 h-3 text-black" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteVideo(v.id)}
+                              className="p-1 border border-black hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
+                              title="Delete Item"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateVideoOrder(v, Math.max(1, (v.order_index ?? 1) - 1))}
-                            className="p-1 border border-black hover:bg-neutral-100 cursor-pointer"
-                            title="Move up"
-                          >
-                            <ChevronUp className="w-3 h-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateVideoOrder(v, (v.order_index ?? 1) + 1)}
-                            className="p-1 border border-black hover:bg-neutral-100 cursor-pointer"
-                            title="Move down"
-                          >
-                            <ChevronDown className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => handleEditVideo(v)}
-                            className="p-1 border border-black hover:bg-[#ffe600] transition-colors cursor-pointer"
-                            title="Edit Video"
-                          >
-                            <Edit3 className="w-3 h-3 text-black" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteVideo(v.id)}
-                            className="p-1 border border-black hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
-                            title="Delete Video"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

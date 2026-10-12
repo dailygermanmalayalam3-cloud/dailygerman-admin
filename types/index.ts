@@ -40,6 +40,7 @@ export interface GrammarVideo {
   topic_id: string;
   title?: string;
   video_url: string;
+  pdf_url?: string | null;
   description?: string;
   order_index?: number;
   created_at?: string;

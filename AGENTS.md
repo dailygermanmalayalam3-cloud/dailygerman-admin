@@ -125,3 +125,22 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - When modifying database schema or adding new tables, query `pg_policies` and `pg_indexes` via Supabase MCP (`execute_sql`) to confirm that 100% of mutation policies enforce `is_admin()` and all foreign keys are indexed.
 
 
+## 13. Stealth Browser Lane Standard (`stealth-chrome-devtools`)
+- **Overview & Bot-Detection Immunity**:
+  - `stealth-chrome-devtools` is a nodriver-based stealth browser backend that bypasses enterprise WAF and bot-detection platforms (Cloudflare Turnstile, Akamai, Datadome, Google reCAPTCHA).
+  - Guarantees `navigator.webdriver = false`, genuine viewport metrics, and passes all tests on `bot.sannysoft.com` with green status.
+- **Operating Guardrails**:
+  - **Always check running instances first**: Execute `list_instances` or `stealthy ls` before spawning. Never stack duplicate backends over an active profile directory.
+  - **Singleton Lifecycle**: The stealth backend is a shared singleton across workspaces. **NEVER kill the server process**; only recycle browser windows via `close_instance`.
+
+## 14. Mandatory LLM-Readable `CHANGELOG.md` & Complete Feature Documentation (MANDATORY)
+- **Every Merge to `main` Must Update `CHANGELOG.md`**:
+  - Going forward, every feature or bugfix branch merged into `main` MUST include a comprehensive entry in `CHANGELOG.md` (in both `DailyGermanVercel` and `DailyGermanAdmin` whenever changes span both repositories).
+- **LLM-First Architectural Clarity**:
+  - `CHANGELOG.md` is specifically designed so that any future LLM or developer entering the repository with zero prior conversation context can immediately understand:
+    1. **Complete Feature Catalog**: Every active feature, module, security gate, storage bucket, caching mechanism, and UI capability in the platform.
+    2. **Database & Storage Schema**: Exact PostgreSQL tables, columns, constraints, RLS policies, and Supabase Storage buckets affected.
+    3. **File & Route Map**: Exact file paths, API endpoints, components, and test suites added or modified.
+    4. **Design Rationale & Invariants**: Non-obvious constraints (e.g., why `video_url` uses empty string `""` for PDF-only items, why PDFs render on `<canvas>` via PDF.js instead of native `<iframe>`, how the zero-leak Medical auth gate works, etc.).
+- **Pre-Merge Gate**:
+  - Before requesting user permission to merge a branch into `main`, verify that `CHANGELOG.md` is updated and committed on the branch.

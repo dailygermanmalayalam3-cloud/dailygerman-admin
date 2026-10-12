@@ -456,12 +456,22 @@ export async function getGrammarVideos(topicId?: string): Promise<GrammarVideo[]
     .sort((a, b) => (a.order_index ?? 1) - (b.order_index ?? 1));
 }
 
-export async function mutateGrammarVideo(item: Partial<GrammarVideo> & { topic_id: string; video_url: string }): Promise<GrammarVideo> {
+export async function mutateGrammarVideo(
+  item: Partial<GrammarVideo> & { topic_id: string }
+): Promise<GrammarVideo> {
+  const cleanVideoUrl = (item.video_url || "").trim();
+  const cleanPdfUrl = item.pdf_url ? item.pdf_url.trim() : null;
+
+  if (!cleanVideoUrl && !cleanPdfUrl) {
+    throw new Error("At least a Video URL or a PDF URL is required.");
+  }
+
   const payload: GrammarVideo = {
     id: item.id || crypto.randomUUID(),
     topic_id: item.topic_id,
     title: item.title || "",
-    video_url: item.video_url.trim(),
+    video_url: cleanVideoUrl,
+    pdf_url: cleanPdfUrl,
     description: item.description || "",
     order_index: item.order_index !== undefined ? Number(item.order_index) : 1,
     created_at: item.created_at || new Date().toISOString(),
@@ -487,6 +497,25 @@ export async function mutateGrammarVideo(item: Partial<GrammarVideo> & { topic_i
 export async function deleteGrammarVideo(id: string): Promise<boolean> {
   const supabase = await createServerSupabaseClient();
   if (supabase) {
+    // Check if the item has an uploaded PDF in grammar-pdfs storage to clean up
+    try {
+      const { data: existing } = await supabase
+        .from("grammar_videos")
+        .select("pdf_url")
+        .eq("id", id)
+        .maybeSingle();
+      const pdfUrl = (existing as { pdf_url?: string | null } | null)?.pdf_url;
+      if (pdfUrl && pdfUrl.includes("/storage/v1/object/public/grammar-pdfs/")) {
+        const marker = "/storage/v1/object/public/grammar-pdfs/";
+        const path = decodeURIComponent(pdfUrl.slice(pdfUrl.indexOf(marker) + marker.length).split("?")[0]);
+        if (path && supabase.storage) {
+          await supabase.storage.from("grammar-pdfs").remove([path]);
+        }
+      }
+    } catch {
+      // Non-fatal storage cleanup error
+    }
+
     const { error } = await supabase.from("grammar_videos").delete().eq("id", id);
     if (error) {
       console.error("Supabase delete grammar video error:", error.message);

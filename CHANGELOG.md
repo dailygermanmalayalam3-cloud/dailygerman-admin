@@ -1,0 +1,99 @@
+# Daily German Admin CMS — Comprehensive Feature Reference & Changelog (`DailyGermanAdmin`)
+
+> **LLM Context Guide**: This document serves two purposes:
+> 1. **Complete System & Feature Reference (Section 1)**: Gives any AI agent or engineer immediate, complete architectural context across the Admin CMS (`e:\DailyGermanAdmin`), Learner App (`e:\DailyGermanVercel`), and Supabase backend (`wivtdopwvgefybojakuo`).
+> 2. **Chronological Merge Changelog (Section 2)**: Documents every merge to `main` with exact database migrations, API routes, UI components, design invariants, and test suites.
+>
+> **Mandatory Rule (`AGENTS.md` Rule 14)**: Every merge to `main` MUST append a detailed entry in Section 2 and update Section 1 if architectural capabilities change.
+
+---
+
+## 1. Complete System Architecture & Admin CMS Feature Catalog
+
+### 1.1 Dual-Repository Topology
+| Repository | Local Path | Dev Port | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Admin CMS (`DailyGermanAdmin`)** | `e:\DailyGermanAdmin` | `3001` | Role-gated Content Management System for curriculum CRUD, audio/PDF uploads, user management, suggestions moderation, and on-demand Learner cache invalidation. |
+| **Learner App (`DailyGermanVercel`)** | `e:\DailyGermanVercel` | `3000` | Public-facing German learning platform (A1–B2, Goethe Exam Prep, Medical German) with Edge ISR caching (`revalidate = 120`). |
+| **Supabase Backend** | Project ID `wivtdopwvgefybojakuo` | Cloud | PostgreSQL database (strict RFC 4122 UUID PKs/FKs, RLS enforced via `public.is_admin()`), Supabase Auth, and Supabase Storage buckets. |
+
+---
+
+### 1.2 Admin Authentication, RBAC & Security Architecture
+- **Cookie-Verified Admin Auth (`lib/auth/verify-admin.ts`, `middleware.ts`)**:
+  - Every `/api/admin/*` route calls `verifyAdminRequest()` to validate the Supabase session and confirm `user_roles.role === 'admin'`.
+  - Database-level Row Level Security (RLS) policies on all content tables enforce `public.is_admin()` on `INSERT`, `UPDATE`, `DELETE` operations.
+- **On-Demand Learner Edge Cache Revalidation (`lib/revalidate-learner.ts`)**:
+  - Every mutation endpoint (`POST`, `PUT`, `PATCH`, `DELETE`) invokes `await revalidateLearnerPaths([...])`, which sends a non-blocking signed webhook (`x-revalidation-secret`) to `DailyGermanVercel` (`POST /api/revalidate`) to immediately invalidate affected static/ISR pages and memory caches.
+
+---
+
+### 1.3 Admin CMS Modules & API Routes
+
+1. **Vocabulary & Categories (`/vocabulary`, `/api/admin/vocabulary`, `/api/admin/vocabulary/categories`)**:
+   - Full CRUD + bulk ordering for German–English–Malayalam vocabulary items and categories across A1–B2.
+2. **Verbs (`/verbs`, `/api/admin/verbs`)**:
+   - Full CRUD for German verb conjugations (`Präsens`, `Perfekt`, `Präteritum`), level tagging, and example sentences.
+3. **Grammar Topics, Videos/PDFs & Workouts (`/grammar`, `/api/admin/grammar`, `/api/admin/grammar/videos`, `/api/admin/grammar/upload-pdf`, `/api/admin/grammar/exercises`)**:
+   - **Grammar Topics**: Level-filtered topics (`A1`–`B2`) with Markdown reference tables, Malayalam explanations, and example sentences.
+   - **Grammar Videos & Study Notes PDFs (`public.grammar_videos`)**:
+     - Supports **4 combinations** per resource item:
+       1. **Video Only**: YouTube URL present (`video_url`), no PDF (`pdf_url = null`).
+       2. **PDF Only**: PDF uploaded/linked (`pdf_url`), `video_url` stored as `""` (empty string) to satisfy PostgreSQL `NOT NULL` while satisfying `grammar_videos_media_check`.
+       3. **Both Video & PDF**: Both `video_url` and `pdf_url` present on the same lesson item.
+       4. **Neither**: Topic has 0 attached items (or validation rejects empty items with `400 Bad Request`).
+     - **Direct PDF Upload (`POST / DELETE /api/admin/grammar/upload-pdf`)**:
+       - Validates `application/pdf` MIME type / `.pdf` extension and max 15 MB size.
+       - Uploads to Supabase Storage bucket `grammar-pdfs` under `grammar/<uuid>.pdf` (`Cache-Control: 31536000`).
+       - Deleting a PDF or deleting a `grammar_videos` row (`deleteGrammarVideo` in `lib/db/content.ts`) automatically deletes the underlying file from `grammar-pdfs` storage so zero orphaned files remain.
+   - **Grammar Exercises (Workouts)**: Multiple-choice, fill-in-the-blank, and sentence-reordering exercises per topic.
+4. **Reading (`/reading`, `/api/admin/reading`)**:
+   - Manages reading topics, multi-paragraph passages, translations, and comprehension questions.
+5. **Listening (`/listening`, `/api/admin/listening`, `/api/admin/listening/upload-audio`)**:
+   - Manages listening topics, audio tracks uploaded to `listening-audio` bucket (with automatic storage cleanup on deletion), transcripts, and questions.
+6. **Speaking (`/speaking`, `/api/admin/speaking`)**:
+   - Manages speaking topics and structured dialogue turns (`speaker`, `german`, `english`, `malayalam`).
+7. **Writing (`/writing`, `/api/admin/writing`)**:
+   - Manages writing topics and structured prompt/sample sections.
+8. **Goethe Exam Prep (`/goethe`, `/api/admin/goethe`)**:
+   - Manages official-format exam practice sets across `Lesen`, `Hören`, `Schreiben`, and `Sprechen`.
+9. **Medical German (`/medical`, `/api/admin/medical`, `/api/admin/medical/upload-audio`)**:
+   - Manages medical categories, hospital vocabulary (with word & sentence audio uploaded to `medical-audio` bucket and auto-deleted on record deletion), and doctor–patient dialogues.
+10. **Registered Users Management (`/users`, `/api/admin/users`)**:
+    - Lists all `auth.users` accounts via Supabase Service Role API, supports banning/unbanning users, and permanently deleting accounts.
+11. **Learner Suggestions & Feedback Moderation (`/suggestions`, `/api/admin/suggestions`)**:
+    - Views, filters, updates status (`pending`, `reviewed`, `implemented`, `archived`), and deletes learner feedback submitted via `/contact`.
+
+---
+
+## 2. Chronological Merge Changelog
+
+### [2026-10-12] — Grammar PDF Upload, Supabase Storage Management & 4-State Media Support (`feat/grammar-pdf-upload`)
+
+#### Summary
+Added PDF study-notes upload and management to the Grammar Admin CMS (`/grammar`), backed by the `grammar-pdfs` Supabase Storage bucket with automatic storage file cleanup on deletion. Updated `mutateGrammarVideo` and `/api/admin/grammar/videos` to support Video-only, PDF-only, or Both Video + PDF per resource item. Added `AGENTS.md` Rule 14 requiring comprehensive LLM-readable changelog updates on every merge to `main`.
+
+#### Database & Storage Migrations (Supabase `wivtdopwvgefybojakuo`)
+- **Migration `add_grammar_videos_pdf_url_and_bucket`**:
+  - Added `pdf_url TEXT` to `public.grammar_videos`.
+  - Created `grammar-pdfs` bucket (`public: true`, 15 MB max file size, `application/pdf` MIME type).
+  - Created RLS policies `"Public read access for grammar-pdfs"` (`SELECT`) and `"Admin manage grammar-pdfs"` (`ALL` using `public.is_admin()`).
+- **Migration `add_grammar_videos_media_check_constraint`**:
+  - Added `CHECK` constraint `grammar_videos_media_check`: `CHECK (btrim(coalesce(video_url, '')) <> '' OR btrim(coalesce(pdf_url, '')) <> '')`.
+
+#### Files Added / Modified in `DailyGermanAdmin`
+- `types/index.ts`: Added `pdf_url?: string | null` to `GrammarVideo`.
+- `app/api/admin/grammar/upload-pdf/route.ts` *(NEW)*:
+  - `POST`: Verifies admin session, validates PDF file (`application/pdf` or `.pdf`, max 15 MB), uploads to `grammar-pdfs/grammar/<uuid>.pdf`, and returns `{ url, path }`.
+  - `DELETE`: Verifies admin session, extracts the storage path inside `grammar-pdfs`, and deletes the file from Supabase Storage.
+- `lib/db/content.ts`:
+  - Updated `mutateGrammarVideo`: Validates that at least one of `video_url` or `pdf_url` is non-empty, defaults `video_url` to `""` when PDF-only, and persists `pdf_url`.
+  - Updated `deleteGrammarVideo`: Queries `pdf_url` before row deletion and removes the corresponding object from `grammar-pdfs` bucket in Supabase Storage.
+- `app/api/admin/grammar/videos/route.ts`:
+  - Relaxed `POST` validation to require `topic_id` and at least one of `video_url` or `pdf_url` (supporting Video-only, PDF-only, and Both).
+- `app/grammar/page.tsx`:
+  - Added PDF file upload button (`Upload PDF File`), direct PDF URL field, `Remove PDF` action (which also cleans up Supabase Storage), and `[🎥 Video]` / `[📄 PDF Attached]` status badges in the Grammar Resources tab.
+- `__tests__/backend/api-admin-grammar.test.ts`:
+  - Added unit tests covering Video-only, PDF-only, Both Video + PDF, and validation failure when neither is provided.
+- `AGENTS.md` & `CHANGELOG.md`:
+  - Added Rule 14 (`Mandatory LLM-Readable CHANGELOG.md & Complete Feature Documentation`) and initialized this comprehensive changelog.
