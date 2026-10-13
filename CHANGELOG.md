@@ -97,6 +97,22 @@ Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`),
 - `components/AdminHeader.tsx`: Added `Mock Exams` navigation link with `Sparkles` icon to desktop Specialty dropdown and mobile menu drawer.
 - `__tests__/backend/api-admin-mock-exams.test.ts` *(NEW)*: Comprehensive backend tests covering GET, POST, DELETE, missing field validation, and learner cache revalidation triggers.
 
+### [2026-10-13] — Authentic Goethe Examination Task Format Fidelity Restoration (`fix/authentic-goethe-question-formats`)
+
+#### Summary
+- **Restoration of Authentic Goethe Examination Task Types**:
+  - Restored true-to-exam question format mechanisms across all 86 questions while preserving 100% original, copyright-differentiated scenarios:
+    - **Richtig / Falsch (2 options)**: Restored for A1 Teil 1 (5 Qs), A1 Teil 3 (5 Qs), and B1 Teil 1 (6 Qs).
+    - **Website A / Website B (2 options)**: Restored for A1 Teil 2 (5 Qs).
+    - **Ja / Nein (2 options)**: Restored for B1 Teil 4 (7 Qs reader forum).
+    - **3-Choice Multiple Choice (a, b, c)**: Restored for A2 Teils 1, 2, 3 (15 Qs), B1 Teils 2 & 5 (10 Qs), and B2 Teils 3 & 4 (12 Qs).
+    - **4-Choice Matching (a, b, c, d)**: Preserved for B2 Teil 1 (9 Qs matching 4 forum posters) and classified matching with *Keine Anzeige* in A2 Teil 4 (5 Qs) and B1 Teil 3 (7 Qs).
+- **Rule 16 Policy Invariant Updated**:
+  - Refined **Rule 16** in both `DailyGermanVercel/AGENTS.md` and `DailyGermanAdmin/AGENTS.md` to forbid flattening authentic exam task formats into generic 4-choice questions, enforcing exact blueprint format parity.
+- **Verification & Production Revalidation**:
+  - 100% test pass rate across both repositories (180 tests in `DailyGermanVercel`, 136 tests in `DailyGermanAdmin`).
+  - Successfully revalidated Edge ISR cache across `/goethe`, `/mock`, `/mock/a1`, `/mock/a2`, `/mock/b1`, `/mock/b2`.
+
 ---
 
 ### [2026-10-13] — Goethe Mock Exam Complete Context Transposition & 4-Option Moderate Standardization (`feat/copyright-safe-goethe-mock-content`)

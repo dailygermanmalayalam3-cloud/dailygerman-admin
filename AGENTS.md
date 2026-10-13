@@ -160,13 +160,16 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## 16. Goethe Mock Exam & Content Copyright Differentiation Standard (MANDATORY)
 - **Format Parity with Borderline Copyright Differentiation**:
-  - All mock examinations across A1, A2, B1, and B2 must replicate the official Goethe-Institut blueprint, time limits, question quotas, and CEFR linguistic difficulty, but MUST NEVER copy verbatim copyrighted text, specific character names, or proprietary entity names.
+  - All mock examinations across A1, A2, B1, and B2 must replicate the official Goethe-Institut blueprint, time limits, question quotas, CEFR linguistic difficulty, and **exact task format types per Teil**.
+  - **NEVER** flatten authentic task formats into generic 4-choice questions. Preserve the natural Goethe task types:
+    - **Richtig / Falsch (2 options)**: Used strictly for True/False reading tasks (e.g., A1 Teil 1, A1 Teil 3, B1 Teil 1).
+    - **Website A / Website B (2 options)**: Used strictly for classified website search (e.g., A1 Teil 2).
+    - **Ja / Nein (2 options)**: Used strictly for reader opinions in youth forums (e.g., B1 Teil 4).
+    - **3-Choice Multiple Choice (a, b, c)**: Used for standard reading comprehension tasks (e.g., A2 Teils 1, 2, 3; B1 Teils 2, 5; B2 Teils 3, 4).
+    - **4-Choice Matching / Multiple Choice (a, b, c, d)**: Used ONLY where the blueprint genuinely requires 4 options (e.g., matching 4 forum posters in B2 Teil 1, or classified matching with *Keine Anzeige* in A2 Teil 4 and B1 Teil 3).
 - **Mandatory Complete Context & Scenario Transposition**:
-  - Whenever designing questions modeled on Goethe test formats, transposing the real-world setting to a completely different context is mandatory (e.g., if a reference passage is set in a train station, transpose it to a long-distance bus terminal or airport; if set in a corporate canteen, transpose it to a hospital staff wellness program; if set in an apartment flat hunt, transpose it to a vocational trainee flat or campus dormitory).
+  - Whenever designing questions modeled on Goethe test formats, transposing the real-world setting to a completely different context is mandatory (e.g., if a reference passage is set in a railway station, transpose it to a long-distance bus terminal or airport; if set in a corporate canteen, transpose it to a hospital staff wellness program; if set in an apartment flat hunt, transpose it to a vocational trainee flat or campus dormitory).
   - The underlying CEFR grammatical structures, case declensions, prepositions, and vocabulary difficulty must remain identical to ensure genuine examination readiness, while the creative narrative context is 100% original.
-- **Mandatory 4-Option Moderate-Difficulty Standardization**:
-  - All mock examination questions across all levels (A1, A2, B1, B2) must strictly feature **exactly 4 options (A, B, C, D)** (`options` JSON array length = 4).
-  - Questions must feature one unambiguously correct option supported by the passage and three plausible, moderate-difficulty distractors designed with authentic German linguistic pitfalls (not trivial or too obvious, nor unfairly tricky).
 - **Mandatory Entity & Name Alterations**:
   - Every mock exam passage and test item added to the database or codebase must alter all identifying elements:
     1. **Character Names**: Alter all fictional letter writers, forum posters, and subjects (e.g., never use *Gülcan*, *Susanne's Brieftasche*, or *Erik/Katharina/Franzi/Nils* verbatim).
