@@ -97,6 +97,23 @@ Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`),
 - `components/AdminHeader.tsx`: Added `Mock Exams` navigation link with `Sparkles` icon to desktop Specialty dropdown and mobile menu drawer.
 - `__tests__/backend/api-admin-mock-exams.test.ts` *(NEW)*: Comprehensive backend tests covering GET, POST, DELETE, missing field validation, and learner cache revalidation triggers.
 
+### [2026-10-13] — Goethe-Format B2 5-Teil Blueprint Completion to 30 Questions (`feat/complete-goethe-b2-30-questions`)
+
+#### Summary
+- **Goethe-Zertifikat B2 Reading Examination Blueprint Completion**:
+  - Restored full compliance with the official 5-Teil, 30-question, 65-minute Goethe B2 Reading blueprint by authoring and inserting the missing 9 questions (advancing B2 question bank from 21 to 30 questions):
+    - **Teil 2 (Q10–Q15 — 6 Questions)**: Cohesion sentence insertion into text gaps of a feature article (*Die Renaissance moderner Holzarchitektur in europäischen Großstädten*). Tests B2 sentence connectives, causal relationships, and cross-sentence pronouns.
+    - **Teil 5 (Q28–Q30 — 3 Questions)**: Administrative catalog matching for statutory regulations (*Ausbildungs- & Prüfungsordnung der Europäischen Akademie für Erneuerbare Energien*). Tests formal nominal style and legal terminology across § 14, § 15, and § 16.
+- **Copyright Differentiation & Linguistic Grounding**:
+  - 100% original, copyright-differentiated scenarios, entities, and phrasing.
+  - Complete dual English and Malayalam diagnostic explanations for all new questions.
+- **Rule 16 Invariant Updated**:
+  - Updated Rule 16 in `AGENTS.md` across both repositories documenting the exact 5-Teil, 30-question B2 format and quotas for A1 (15 Qs), A2 (20 Qs), B1 (30 Qs), and B2 (30 Qs).
+- **Database & Metadata Updated**:
+  - Updated `public.mock_exams` for B2 (`44444444-aaaa-4444-8444-444444444444`) setting `total_questions = 30`.
+
+---
+
 ### [2026-10-13] — Authentic Goethe Examination Task Format Fidelity Restoration (`fix/authentic-goethe-question-formats`)
 
 #### Summary
