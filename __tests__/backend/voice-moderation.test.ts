@@ -146,6 +146,7 @@ describe("Admin Voice Moderation & Stealth Listen-In Engine (100% Coverage)", ()
     };
     (globalThis as any).AudioContext = MockAudioContext;
     (globalThis as any).Audio = MockAudio;
+    process.env.NEXT_PUBLIC_VOICE_HUB_URL = "https://dailygerman-voice-hub.voice-hub.workers.dev";
   });
 
   afterEach(() => {

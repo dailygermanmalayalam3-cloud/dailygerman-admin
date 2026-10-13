@@ -139,8 +139,7 @@ export class AdminStealthListener {
         };
       }
 
-      const hubUrl =
-        process.env.NEXT_PUBLIC_VOICE_HUB_URL || "https://dailygerman-voice-hub.voice-hub.workers.dev";
+      const hubUrl = process.env.NEXT_PUBLIC_VOICE_HUB_URL || "";
       if (hubUrl) {
         try {
           const wsUrl = hubUrl.replace(/^http/, "ws");

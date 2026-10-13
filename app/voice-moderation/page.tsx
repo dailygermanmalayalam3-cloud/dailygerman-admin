@@ -157,13 +157,14 @@ export default function VoiceModerationPage() {
 
   const handleDeleteReport = async (reportId: string) => {
     if (!supabase) return;
-    const hubUrl =
-      process.env.NEXT_PUBLIC_VOICE_HUB_URL || "https://dailygerman-voice-hub.voice-hub.workers.dev";
-    try {
-      await fetch(`${hubUrl.replace(/\/$/, "")}/api/reports/${reportId}`, {
-        method: "DELETE",
-      });
-    } catch {}
+    const hubUrl = process.env.NEXT_PUBLIC_VOICE_HUB_URL || "";
+    if (hubUrl) {
+      try {
+        await fetch(`${hubUrl.replace(/\/$/, "")}/api/reports/${reportId}`, {
+          method: "DELETE",
+        });
+      } catch {}
+    }
     await supabase.from("voice_reports").delete().eq("id", reportId);
     setActionMessage("Report and Cloudflare audio evidence deleted.");
     fetchModerationData();
