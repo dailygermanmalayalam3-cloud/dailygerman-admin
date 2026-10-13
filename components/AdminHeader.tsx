@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Shield, BookOpen, FileText, Award, MessageSquare, LogOut, Menu, X, ExternalLink, Stethoscope, Lightbulb, Volume2, Zap, Headphones, Users, Radio } from 'lucide-react';
+import { Shield, BookOpen, FileText, Award, MessageSquare, LogOut, Menu, X, ExternalLink, Stethoscope, Lightbulb, Volume2, Zap, Headphones, Users, Radio, Sparkles } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
 
@@ -54,6 +54,7 @@ export default function AdminHeader() {
   ];
 
   const specialtyNav = [
+    { label: 'Mock Exams', href: '/mock', icon: Sparkles },
     { label: 'Medical', href: '/medical', icon: Stethoscope },
     { label: 'Exam Prep', href: '/goethe', icon: Award },
   ];
@@ -61,6 +62,7 @@ export default function AdminHeader() {
   const allNavItems = [
     { label: 'Overview', href: '/', icon: Shield },
     { label: 'Audio AI Studio', href: '/audio', icon: Volume2, featured: true },
+    { label: 'Mock Exams', href: '/mock', icon: Sparkles },
     { label: 'Vocabulary', href: '/vocabulary', icon: BookOpen },
     { label: 'Verbs', href: '/verbs', icon: Zap },
     { label: 'Grammar', href: '/grammar', icon: FileText },

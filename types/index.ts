@@ -373,3 +373,42 @@ export interface VerbItem {
   updated_at?: string;
 }
 
+// Mock Exam Simulator Interfaces
+export interface MockExamOption {
+  id: string;
+  text: string;
+}
+
+export interface MockExam {
+  id: string;
+  slug: string;
+  title: string;
+  level: Level;
+  module: "lesen" | "hoeren" | "schreiben" | "sprechen";
+  description?: string;
+  duration_minutes: number;
+  passing_percentage: number;
+  total_questions: number;
+  is_published: boolean;
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MockExamQuestion {
+  id: string;
+  exam_id: string;
+  level?: Level;
+  teil_number: number;
+  question_index: number;
+  passage_text?: string;
+  image_url?: string;
+  question_text: string;
+  options: MockExamOption[];
+  correct_option_id: string;
+  explanation_malayalam?: string;
+  explanation_english?: string;
+  points: number;
+  created_at?: string;
+  updated_at?: string;
+}

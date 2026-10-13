@@ -77,7 +77,25 @@
 #### Summary
 - Built `/voice-moderation` (`app/voice-moderation/page.tsx`) and `lib/voice/moderation-engine.ts` (`AdminStealthListener`, `findActiveSpeakersAtSecond`, `formatReportDuration`).
 - Added `Voice Rooms` (`/voice-moderation`) link to `components/AdminHeader.tsx`.
-- Added unit tests in `__tests__/backend/voice-moderation.test.ts`.
+### [2026-10-13] — Goethe Mock Exam Simulator Admin CRUD & Question Bank (`feat/mock-exam-admin-crud`)
+
+#### Summary
+Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`), enabling administrators to manage mock exam configurations (level, passing score, duration, question count) and the authentic Goethe question banks (Teils 1–3, reading passages, multiple choice / Richtig/Falsch options, correct answer keys, and dual Malayalam/English diagnostic explanations). Integrated on-demand edge ISR cache invalidation (`revalidateLearnerPaths`) targeting `/mock` and `/mock/[slug]`.
+
+#### Database & Models (`mock_exams` & `mock_exam_questions`)
+- Models added to `types/index.ts`: `MockExam`, `MockExamOption`, and `MockExamQuestion`.
+- Database query functions added to `lib/db/content.ts`: `getMockExams()`, `getMockQuestions(examId?)`, `saveMockExam()`, `deleteMockExam()`, `saveMockQuestion()`, and `deleteMockQuestion()`.
+
+#### Files Added / Modified in `DailyGermanAdmin`
+- `types/index.ts`: Added `MockExam`, `MockExamOption`, and `MockExamQuestion` interfaces.
+- `lib/db/content.ts`: Added mock exam and question query and mutation methods.
+- `app/api/admin/mock-list/route.ts` *(NEW)*: GET endpoint fetching exam sets and questions.
+- `app/api/admin/mock/route.ts` *(NEW)*: POST and DELETE endpoints for mock exam records with automatic learner cache revalidation.
+- `app/api/admin/mock/questions/route.ts` *(NEW)*: POST and DELETE endpoints for questions in the question bank.
+- `app/mock/page.tsx` *(NEW)*: Complete two-tab Admin interface (`Mock Exam Sets` and `Question Bank`) with filter-by-exam dropdown, passage and options editor, and Malayalam explanation fields.
+- `app/page.tsx`: Added `Goethe Mock Simulator` metrics card to dashboard.
+- `components/AdminHeader.tsx`: Added `Mock Exams` navigation link with `Sparkles` icon to desktop Specialty dropdown and mobile menu drawer.
+- `__tests__/backend/api-admin-mock-exams.test.ts` *(NEW)*: Comprehensive backend tests covering GET, POST, DELETE, missing field validation, and learner cache revalidation triggers.
 
 ---
 

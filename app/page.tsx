@@ -11,8 +11,10 @@ import {
   getMedicalCategories,
   getMedicalWords,
   getMedicalConversationTopics,
+  getMockExams,
+  getMockQuestions,
 } from "@/lib/db/content";
-import { BookOpen, FileText, Award, MessageSquare, FileEdit, PlusCircle, ArrowRight, Stethoscope, Headphones, ExternalLink } from "lucide-react";
+import { BookOpen, FileText, Award, MessageSquare, FileEdit, PlusCircle, ArrowRight, Stethoscope, Headphones, ExternalLink, Sparkles } from "lucide-react";
 
 import { isCurrentUserAdmin } from "@/lib/supabase/auth";
 import { redirect } from "next/navigation";
@@ -25,7 +27,7 @@ export default async function AdminDashboardPage() {
     redirect("/login");
   }
 
-  const [vocab, grammar, speaking, reading, writing, listening, goethe, categories, medCats, medWords, medTopics] = await Promise.all([
+  const [vocab, grammar, speaking, reading, writing, listening, goethe, categories, medCats, medWords, medTopics, mockExams, mockQuestions] = await Promise.all([
     getVocabulary(),
     getGrammarTopics(),
     getSpeakingTopics(),
@@ -37,6 +39,8 @@ export default async function AdminDashboardPage() {
     getMedicalCategories(),
     getMedicalWords(),
     getMedicalConversationTopics(),
+    getMockExams(),
+    getMockQuestions(),
   ]);
 
   const cards = [
@@ -111,6 +115,15 @@ export default async function AdminDashboardPage() {
       href: "/goethe",
       icon: Award,
       iconBg: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50",
+    },
+    {
+      title: "Goethe Mock Simulator",
+      count: mockExams.length,
+      unit: `${mockExams.length} exams • ${mockQuestions.length} questions`,
+      description: "Manage randomized mock exam sets and authentic Goethe question pools.",
+      href: "/mock",
+      icon: Sparkles,
+      iconBg: "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/50",
     },
   ];
 

@@ -35,6 +35,8 @@ import {
   Suggestion,
   SuggestionStatus,
   BlacklistedUser,
+  MockExam,
+  MockExamQuestion,
 } from "@/types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -1662,6 +1664,126 @@ export async function unblacklistUser(id: string): Promise<boolean> {
       throw new Error(`Supabase delete error: ${error.message}`);
     }
   }
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Mock Exam Simulator Admin Methods
+// ---------------------------------------------------------------------------
+
+export async function getMockExams(): Promise<MockExam[]> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("mock_exams")
+      .select("*")
+      .order("level", { ascending: true })
+      .order("order_index", { ascending: true });
+    if (error) {
+      console.error("Supabase getMockExams error:", error.message);
+      return [];
+    }
+    return (data || []) as MockExam[];
+  }
+  return [];
+}
+
+export async function getMockQuestions(examId?: string): Promise<MockExamQuestion[]> {
+  const supabase = await createServerSupabaseClient();
+  if (supabase) {
+    let query = supabase
+      .from("mock_exam_questions")
+      .select("*")
+      .order("teil_number", { ascending: true })
+      .order("question_index", { ascending: true });
+
+    if (examId) {
+      query = query.eq("exam_id", examId);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      console.error("Supabase getMockQuestions error:", error.message);
+      return [];
+    }
+    return (data || []) as MockExamQuestion[];
+  }
+  return [];
+}
+
+export async function saveMockExam(exam: Partial<MockExam>): Promise<MockExam> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) throw new Error("Supabase client not initialized");
+
+  const payload = {
+    ...exam,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (payload.id) {
+    const { data, error } = await supabase
+      .from("mock_exams")
+      .update(payload)
+      .eq("id", payload.id)
+      .select()
+      .single();
+    if (error) throw new Error(`Supabase error: ${error.message}`);
+    return data as MockExam;
+  } else {
+    const { data, error } = await supabase
+      .from("mock_exams")
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw new Error(`Supabase error: ${error.message}`);
+    return data as MockExam;
+  }
+}
+
+export async function deleteMockExam(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) throw new Error("Supabase client not initialized");
+
+  const { error } = await supabase.from("mock_exams").delete().eq("id", id);
+  if (error) throw new Error(`Supabase delete error: ${error.message}`);
+  return true;
+}
+
+export async function saveMockQuestion(question: Partial<MockExamQuestion>): Promise<MockExamQuestion> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) throw new Error("Supabase client not initialized");
+
+  const payload = {
+    ...question,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (payload.id) {
+    const { data, error } = await supabase
+      .from("mock_exam_questions")
+      .update(payload)
+      .eq("id", payload.id)
+      .select()
+      .single();
+    if (error) throw new Error(`Supabase error: ${error.message}`);
+    return data as MockExamQuestion;
+  } else {
+    const { data, error } = await supabase
+      .from("mock_exam_questions")
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw new Error(`Supabase error: ${error.message}`);
+    return data as MockExamQuestion;
+  }
+}
+
+export async function deleteMockQuestion(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) throw new Error("Supabase client not initialized");
+
+  const { error } = await supabase.from("mock_exam_questions").delete().eq("id", id);
+  if (error) throw new Error(`Supabase delete error: ${error.message}`);
   return true;
 }
 
