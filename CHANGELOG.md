@@ -97,6 +97,23 @@ Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`),
 - `components/AdminHeader.tsx`: Added `Mock Exams` navigation link with `Sparkles` icon to desktop Specialty dropdown and mobile menu drawer.
 - `__tests__/backend/api-admin-mock-exams.test.ts` *(NEW)*: Comprehensive backend tests covering GET, POST, DELETE, missing field validation, and learner cache revalidation triggers.
 
+### [2026-10-13] — Level A2 Question Bank Scaled to 100 Authentic Questions (`feat/scale-mock-questions-bank-400`)
+
+#### Summary
+- **Level A2 Question Bank Scaled to 100 Questions**:
+  - Expanded Level A2 from 20 to **100 authentic, copyright-free questions** in the Supabase database across Teils 1, 2, 3, and 4:
+    - **Teil 1 (25 Questions, 3-Choice)**: Informative magazine and news reports (workplace ergonomics in clinics, Westend community library modernization, Münster bicycle commuting revolution, Nuremberg apprentice-run gastronomy restaurant, Dresden repair café initiative).
+    - **Teil 2 (25 Questions, 3-Choice)**: Everyday floor directories and guides (Bürgerpark sports center, Alster-Galerie shopping mall, central city hall and registry citizen bureau, university campus center, central train station service building).
+    - **Teil 3 (25 Questions, 3-Choice)**: Detailed personal emails (Miriam's Cologne media trainee shared flat, Julian's advertising internship in Leipzig, Katja's farm holiday in the Bavarian Allgäu, Felix's new Munich apartment, Sandra's Salzburg hotel receptionist position).
+    - **Teil 4 (25 Questions, 4-Choice with *Keine Anzeige passt*)**: Bulletin board classified ads (pet sitting, home painting, language courses, math/English tutoring, bicycle repair, gardening, DIY woodwork, Thai cooking, window cleaning).
+- **Zero Duplicates & Full Integrity**:
+  - Verified 100 unique RFC 4122 UUIDs with 0 duplicate entries.
+  - Complete dual English and Malayalam diagnostic explanations for all 100 questions.
+- **Passage-Grouped Randomizer Engine Active**:
+  - The learner interface dynamically selects exactly **20 cohesive questions** (5 + 5 + 5 + 5) from the 100-question pool on every test run, keeping reading passages strictly clustered.
+
+---
+
 ### [2026-10-13] — Level A1 Question Bank Scaled to 100 Authentic Questions (`feat/scale-mock-questions-bank-400`)
 
 #### Summary
