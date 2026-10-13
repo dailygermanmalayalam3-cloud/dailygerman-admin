@@ -144,3 +144,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
     4. **Design Rationale & Invariants**: Non-obvious constraints (e.g., why `video_url` uses empty string `""` for PDF-only items, why PDFs render on `<canvas>` via PDF.js instead of native `<iframe>`, how the zero-leak Medical auth gate works, etc.).
 - **Pre-Merge Gate**:
   - Before requesting user permission to merge a branch into `main`, verify that `CHANGELOG.md` is updated and committed on the branch.
+
+## 15. 100% Dynamic Layout, Sizing & Zoom Calculations — Zero Hardcoded Pixel Dimensions (MANDATORY)
+- **Strictly Dynamic Sizing & Scaling**:
+  - All UI components, media viewers (PDF canvas, video embeds, modals, tables, popups), and interactive zoom/pan controls MUST compute dimensions **100% dynamically** from live container measurements (`clientWidth`, `clientHeight`, `getComputedStyle`, `ResizeObserver`, `devicePixelRatio`) and viewport-relative CSS units (`%`, `rem`, `dvh`, `dvw`, `fr`, `w-fit`, `flex-1`).
+  - **NEVER** hardcode static pixel widths/heights (e.g., `720px`, `340px`, `240px`) or arbitrary pixel padding guesses in JavaScript or CSS that could break aspect ratios or overflow on different screen sizes.
+- **Proportional 4-Way Zoom & 2D Panning Invariant**:
+  - Any zoomable element (such as `<canvas>` in `ProtectedPdfViewer`) MUST scale `width` and `height` proportionally by the exact same multiplier (`max-w-none`, never `max-w-full` which clamps one axis while the other grows).
+  - Scrollable 2D viewports MUST use unclipped overflow containers (`overflow-auto touch-pan-x touch-pan-y` with `w-fit mx-auto` children, never `flex items-center` which clips left-side overflow) and re-render dynamically on orientation/window resize via `ResizeObserver`.

@@ -68,6 +68,13 @@
 
 ## 2. Chronological Merge Changelog
 
+### [2026-10-13] — Enforce 100% Dynamic Layout, Sizing & Zoom Calculations (`docs/dynamic-layout-rule`)
+
+#### Summary
+- Added **Rule 15** to `AGENTS.md` prohibiting hardcoded pixel dimensions/zoom values and requiring 100% dynamic, container/viewport-relative layout and scaling calculations across all components.
+
+---
+
 ### [2026-10-12] — Grammar PDF Upload, Supabase Storage Management & 4-State Media Support (`feat/grammar-pdf-upload`)
 
 #### Summary
