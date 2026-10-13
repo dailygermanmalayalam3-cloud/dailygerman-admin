@@ -99,10 +99,24 @@ Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`),
 
 ---
 
-### [2026-10-13] — Institutionalize Rule 16 & Targeted Copyright Differentiation (`feat/copyright-safe-goethe-mock-content`)
+### [2026-10-13] — Goethe Mock Exam Complete Context Transposition & 4-Option Moderate Standardization (`feat/copyright-safe-goethe-mock-content`)
 
 #### Summary
-Added **Rule 16** (`Goethe Mock Exam & Content Copyright Differentiation Standard`) to `AGENTS.md` in both repositories, mandating format parity with targeted entity alterations (names, institutions, and distinctive phrasing) across all current and future curriculum content to permanently prevent copyright issues.
+- **Universal Context & Scenario Transposition Across All 86 Questions**:
+  - Transposed every reading comprehension scenario across all levels (A1, A2, B1, B2) to fresh, original real-world contexts to completely eliminate copyright and trademark liability:
+    - **A1 (15 Qs)**: Transposed to weekend cycling tour meetup, dentist appointment rescheduling, long-distance coach tickets (FlixBus), weekend cooking workshops, and public pool/library/airport notices.
+    - **A2 (20 Qs)**: Transposed to hospital staff wellness and nutrition initiatives, community sports & cultural center building directories, vocational trainee shared flats in Cologne, and local services classifieds.
+    - **B1 (30 Qs)**: Transposed to lost camera backpack on an island ferry, zero-waste eco-districts in Freiburg, historical walking tours in Rothenburg, adult education center (VHS) courses, and youth debates on digital learning tablets.
+    - **B2 (21 Qs)**: Transposed to sustainable urban mobility and car-free living, algorithmic bias and AI decision-making in corporate recruitment, and the evolution of modern co-living and flexible workplaces.
+- **Strict Standardization to 4 Moderate-Difficulty Options (A, B, C, D)**:
+  - Standardized 100% of questions (86/86) to exactly 4 options (`options` JSON length = 4, `correct_option_id IN ('a', 'b', 'c', 'd')`).
+  - Added plausible, moderate-difficulty German distractors testing genuine linguistic and contextual comprehension rather than superficial keyword matching.
+  - Synchronized complete, detailed Malayalam and English explanations for every question explaining why the correct answer is right and why the distractors are wrong.
+- **Permanent Policy Rule 16 in `AGENTS.md`**:
+  - Expanded **Rule 16: Goethe Mock Exam & Content Copyright Differentiation Standard** in both `DailyGermanVercel/AGENTS.md` and `DailyGermanAdmin/AGENTS.md` mandating complete context transposition and 4-option moderate-difficulty standardization for all future educational content.
+- **Automated Verification & Edge Cache Revalidation**:
+  - 100% pass rate across all 180 tests in `DailyGermanVercel` and 136 tests in `DailyGermanAdmin`.
+  - Revalidated Edge ISR cache across `/goethe`, `/mock`, `/mock/a1`, `/mock/a2`, `/mock/b1`, `/mock/b2` on production.
 
 ---
 

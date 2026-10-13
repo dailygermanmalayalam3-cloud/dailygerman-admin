@@ -161,6 +161,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## 16. Goethe Mock Exam & Content Copyright Differentiation Standard (MANDATORY)
 - **Format Parity with Borderline Copyright Differentiation**:
   - All mock examinations across A1, A2, B1, and B2 must replicate the official Goethe-Institut blueprint, time limits, question quotas, and CEFR linguistic difficulty, but MUST NEVER copy verbatim copyrighted text, specific character names, or proprietary entity names.
+- **Mandatory Complete Context & Scenario Transposition**:
+  - Whenever designing questions modeled on Goethe test formats, transposing the real-world setting to a completely different context is mandatory (e.g., if a reference passage is set in a train station, transpose it to a long-distance bus terminal or airport; if set in a corporate canteen, transpose it to a hospital staff wellness program; if set in an apartment flat hunt, transpose it to a vocational trainee flat or campus dormitory).
+  - The underlying CEFR grammatical structures, case declensions, prepositions, and vocabulary difficulty must remain identical to ensure genuine examination readiness, while the creative narrative context is 100% original.
+- **Mandatory 4-Option Moderate-Difficulty Standardization**:
+  - All mock examination questions across all levels (A1, A2, B1, B2) must strictly feature **exactly 4 options (A, B, C, D)** (`options` JSON array length = 4).
+  - Questions must feature one unambiguously correct option supported by the passage and three plausible, moderate-difficulty distractors designed with authentic German linguistic pitfalls (not trivial or too obvious, nor unfairly tricky).
 - **Mandatory Entity & Name Alterations**:
   - Every mock exam passage and test item added to the database or codebase must alter all identifying elements:
     1. **Character Names**: Alter all fictional letter writers, forum posters, and subjects (e.g., never use *Gülcan*, *Susanne's Brieftasche*, or *Erik/Katharina/Franzi/Nils* verbatim).
@@ -170,3 +176,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - This rule applies universally to all future reading passages, listening transcripts, mock exam questions, and vocabulary example sentences added to `DailyGermanVercel`, `DailyGermanAdmin`, or Supabase.
 - **Nominative Fair Use & Disclaimers**:
   - Maintain clear descriptive labeling (*"Goethe-Format Mock Exam"*) accompanied by the prominent disclaimer that *Daily German is an independent educational platform not affiliated with or endorsed by the Goethe-Institut e.V.*
+
