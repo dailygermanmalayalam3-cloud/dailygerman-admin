@@ -157,3 +157,16 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **Proportional 4-Way Zoom & 2D Panning Invariant**:
   - Any zoomable element (such as `<canvas>` in `ProtectedPdfViewer`) MUST scale `width` and `height` proportionally by the exact same multiplier (`max-w-none`, never `max-w-full` which clamps one axis while the other grows).
   - Scrollable 2D viewports MUST use unclipped overflow containers (`overflow-auto touch-pan-x touch-pan-y` with `w-fit mx-auto` children, never `flex items-center` which clips left-side overflow) and re-render dynamically on orientation/window resize via `ResizeObserver`.
+
+## 16. Goethe Mock Exam & Content Copyright Differentiation Standard (MANDATORY)
+- **Format Parity with Borderline Copyright Differentiation**:
+  - All mock examinations across A1, A2, B1, and B2 must replicate the official Goethe-Institut blueprint, time limits, question quotas, and CEFR linguistic difficulty, but MUST NEVER copy verbatim copyrighted text, specific character names, or proprietary entity names.
+- **Mandatory Entity & Name Alterations**:
+  - Every mock exam passage and test item added to the database or codebase must alter all identifying elements:
+    1. **Character Names**: Alter all fictional letter writers, forum posters, and subjects (e.g., never use *Gülcan*, *Susanne's Brieftasche*, or *Erik/Katharina/Franzi/Nils* verbatim).
+    2. **Organizations & Trademarks**: Rename specific commercial businesses, malls, schools, and publications (e.g., rename *Firma Gutbrecht*, *Kaufhaus Alexa*, *BZW Dresden*, *Magazin Puls* to realistic fictional German equivalents).
+    3. **Sentence Paraphrasing**: Distinct phrasing, opening sentences, and narrative passages must be paraphrased so no verbatim string matches exist with official Goethe Modellsätze or publisher books.
+- **Applies to All Future Content**:
+  - This rule applies universally to all future reading passages, listening transcripts, mock exam questions, and vocabulary example sentences added to `DailyGermanVercel`, `DailyGermanAdmin`, or Supabase.
+- **Nominative Fair Use & Disclaimers**:
+  - Maintain clear descriptive labeling (*"Goethe-Format Mock Exam"*) accompanied by the prominent disclaimer that *Daily German is an independent educational platform not affiliated with or endorsed by the Goethe-Institut e.V.*

@@ -99,6 +99,13 @@ Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`),
 
 ---
 
+### [2026-10-13] — Institutionalize Rule 16 & Targeted Copyright Differentiation (`feat/copyright-safe-goethe-mock-content`)
+
+#### Summary
+Added **Rule 16** (`Goethe Mock Exam & Content Copyright Differentiation Standard`) to `AGENTS.md` in both repositories, mandating format parity with targeted entity alterations (names, institutions, and distinctive phrasing) across all current and future curriculum content to permanently prevent copyright issues.
+
+---
+
 ### [2026-10-13] — Mock Exam CMS Synchronization & Authentic Question Bank Expansion (`feat/complete-authentic-goethe-question-banks`)
 
 #### Summary
