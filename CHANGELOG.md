@@ -97,6 +97,22 @@ Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`),
 - `components/AdminHeader.tsx`: Added `Mock Exams` navigation link with `Sparkles` icon to desktop Specialty dropdown and mobile menu drawer.
 - `__tests__/backend/api-admin-mock-exams.test.ts` *(NEW)*: Comprehensive backend tests covering GET, POST, DELETE, missing field validation, and learner cache revalidation triggers.
 
+### [2026-10-13] — Level A1 Question Bank Scaled to 100 Authentic Questions (`feat/scale-mock-questions-bank-400`)
+
+#### Summary
+- **Level A1 Question Bank Scaled to 100 Questions**:
+  - Expanded Level A1 from 15 to **100 authentic, copyright-free questions** in the Supabase database across Teils 1, 2, and 3:
+    - **Teil 1 (30 Questions, Richtig/Falsch)**: Short private and semi-formal emails and messages (birthday parties, doctor appointments, moving help, language tandems, football tickets, bakeries, lost keys, car TÜV inspection, concert tickets, apartment water shutoffs).
+    - **Teil 2 (35 Questions, Website A/B)**: Daily situations matched to dual website options (city bicycles, evening German courses, dog-friendly hotels, vegetarian cookbooks, children's cinema, beginner swimming, night trains, van rentals, museum nights, guitar lessons, express dry cleaning, vocabulary apps, lake camping, Saturday yoga, organic veggie boxes, ski rentals, online exam prep, English tours, laptop repairs, sushi workshops, late-night pizza, secondhand washing machines, 24h vet clinics, instant passport photos, nursing German, Mother's Day flowers, piano tuning, children's swim badges, Sunday flea markets, student WG flat-shares).
+    - **Teil 3 (35 Questions, Richtig/Falsch)**: Public signs and notices (supermarket cash/card counters, fitness gym hygiene, tram track replacement buses, university cafeteria hours, eye doctor waiting rooms, bank ATMs, park barbecue zones, train quiet zones, holiday dental clinics, mall elevators, 24h pharmacy bells, bus front-boarding rules, zoo animal feeding bans, library Wi-Fi, hotel check-out times, laundry tokens, playground dog bans, museum flash bans, train bicycle tickets, office kitchen dishwashers, cloakrooms, parking pay-stations, citizen bureau appointments, 24/7 book return drops, table reservations, parcel pick-up IDs, water slides, ICE bistros, waste separation bins, emergency dental hotlines).
+- **Zero Duplicates & Full Integrity**:
+  - Verified 100 unique RFC 4122 UUIDs with 0 duplicate entries.
+  - Complete dual English and Malayalam diagnostic explanations for all 100 questions.
+- **Passage-Grouped Randomizer Engine Active**:
+  - The learner interface dynamically selects exactly **15 cohesive questions** (5 + 5 + 5) from the 100-question pool on every test run, keeping reading passages strictly clustered.
+
+---
+
 ### [2026-10-13] — Goethe-Format B2 5-Teil Blueprint Completion to 30 Questions (`feat/complete-goethe-b2-30-questions`)
 
 #### Summary
