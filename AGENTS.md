@@ -14,10 +14,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **NEVER commit or push directly to `main`**.
 - Always create and switch to a dedicated feature or bugfix branch (e.g., `git checkout -b feat/...` or `git checkout -b fix/...`) before making any code modifications.
 
-## 2. Mandatory Local Testing
-- Before merging any changes into `main`, test locally:
+## 2. Mandatory Local Testing (Zero Errors, Zero Warnings, Zero Deprecations)
+- Before merging any changes into `main`, test locally across **BOTH** `DailyGermanAdmin` (Admin CMS) and `DailyGermanVercel` (Learner UI):
   - Run `npm test` to ensure 100% passing tests with 0 failures across all backend test suites.
-  - Run `npm run build` to ensure 0 TypeScript / compilation errors.
+  - Run `npm run build` in **both** `DailyGermanAdmin` and `DailyGermanVercel` to ensure **0 TypeScript/compilation errors, 0 build warnings (`⚠`), and 0 framework deprecation notices** (e.g., always use `proxy.ts` with `export async function proxy` instead of deprecated `middleware.ts`).
   - Verify changes on the local dev server (port 3001 for Admin CMS, port 3000 for Learner UI) and confirm functionality.
 
 ## 3. Mandatory User Permission Before Merging
@@ -96,15 +96,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **Build Verification Requirement**:
   - After adding any new route or endpoint, run `npm run build` to verify that the route table confirms `○ (Static)` or `● (SSG)`, with 0 unintended `ƒ (Dynamic)` routes.
 
-## 10. Pre-Push Dependency Freshness & Security Verification (MANDATORY)
+## 10. Pre-Push Dependency Freshness, Zero-Warning & Zero-Deprecation Verification (MANDATORY — Both Admin CMS & Learner UI)
+- **Dual-Repository Pre-Push Verification**:
+  - Every pre-push verification MUST be executed across **BOTH** `e:\DailyGermanAdmin` (Admin CMS) and `e:\DailyGermanVercel` (Learner UI) so neither repository ever drifts or accumulates obsolete dependencies/conventions.
 - **Mandatory Package Freshness Check Before Every Push**:
-  - Before every push to remote and before requesting permission to merge into `main`, verify all dependencies and devDependencies in `package.json` against the latest versions available on the internet (via `npm outdated` and npm registry queries).
-  - Update all packages to their latest compatible releases.
+  - Before every push to remote and before requesting permission to merge into `main`, verify all dependencies and devDependencies in `package.json` in **both** repositories against the latest versions available on the internet (via `npm outdated` and npm registry queries).
+  - Update all packages to their latest compatible releases so `npm outdated` returns 0 outdated packages.
+- **Zero Build Warnings & Zero Framework Deprecations Standard (10-Year Longevity Guarantee)**:
+  - Inspect the full terminal output of `npm run build` and `npm test` in **both** `DailyGermanAdmin` and `DailyGermanVercel`.
+  - Any framework deprecation warning (such as Next.js `middleware.ts` -> `proxy.ts` convention warnings, deprecated config flags, or obsolete APIs) MUST be migrated and resolved immediately before requesting permission to merge.
 - **Zero Known Vulnerabilities Standard**:
-  - Run `npm audit` to ensure 0 critical or high security vulnerabilities exist in the dependency tree.
+  - Run `npm audit` in both repositories to ensure 0 critical or high runtime security vulnerabilities exist in the dependency tree.
   - Patch or upgrade any affected packages immediately upon security disclosure.
 - **Mandatory Test & Build Pass Post-Upgrade**:
-  - After updating any dependency, run `npm test` (100% passing tests) and `npm run build` (0 TypeScript / compilation errors) to verify complete runtime and build compatibility.
+  - After updating any dependency or migrating any deprecated convention, run `npm test` (100% passing tests) and `npm run build` (0 errors, 0 warnings, 0 deprecations) in **both** repositories to verify complete runtime and build compatibility.
 
 ## 11. Mandatory User Confirmation on Implementation Plans (MANDATORY)
 - **Zero-Auto-Execution on Implementation Plans**:
