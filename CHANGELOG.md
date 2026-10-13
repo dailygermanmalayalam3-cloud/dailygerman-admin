@@ -97,6 +97,30 @@ Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`),
 - `components/AdminHeader.tsx`: Added `Mock Exams` navigation link with `Sparkles` icon to desktop Specialty dropdown and mobile menu drawer.
 - `__tests__/backend/api-admin-mock-exams.test.ts` *(NEW)*: Comprehensive backend tests covering GET, POST, DELETE, missing field validation, and learner cache revalidation triggers.
 
+### [2026-10-13] — Full 400-Question Goethe Mock Exam Bank Completed (100 Questions Each for A1, A2, B1, B2) (`feat/scale-mock-questions-bank-400`)
+
+#### Summary
+- **Bank Scaled to 400 Authentic, Copyright-Free Questions**:
+  - Expanded the question bank to exactly **100 questions per CEFR level ($4 \times 100 = 400$ total in DB)** in Supabase (`wivtdopwvgefybojakuo`):
+    - **Level A1 (100 Questions)**: 30 Qs $\times$ Richtig/Falsch (Teil 1), 35 Qs $\times$ Website A/B (Teil 2), 35 Qs $\times$ Richtig/Falsch (Teil 3).
+    - **Level A2 (100 Questions)**: 25 Qs $\times$ 3-Choice (Teil 1), 25 Qs $\times$ 3-Choice Floor Guides (Teil 2), 25 Qs $\times$ 3-Choice Emails (Teil 3), 25 Qs $\times$ 4-Choice Classifieds with *Keine Anzeige passt* (Teil 4).
+    - **Level B1 (100 Questions)**: 24 Qs $\times$ Richtig/Falsch Travel & Lifestyle Blogs (Teil 1), 18 Qs $\times$ 3-Choice Press Articles (Teil 2), 21 Qs $\times$ 4-Choice Community Board Ads with *Keine Anzeige passt* (Teil 3), 21 Qs $\times$ Ja/Nein Youth Forum Debates (Teil 4), 16 Qs $\times$ 3-Choice Facility House Regulations (Teil 5).
+    - **Level B2 (100 Questions)**: 27 Qs $\times$ 4-Choice Forum Commenter Matching (Teil 1), 24 Qs $\times$ Text-Gap Cohesion Sentence Insertion (Teil 2), 18 Qs $\times$ 3-Choice Analytical & Scientific Reports (Teil 3), 18 Qs $\times$ 3-Choice Multi-Section Heading Matching (Teil 4), 13 Qs $\times$ Administrative Examination & Study Statutes Matching (Teil 5).
+- **Passage-Grouped Randomizer Engine (`lib/mock/randomizer.ts`)**:
+  - Automatically clusters questions by `passage_title` using `groupQuestionsByPassage()` so that reading passages stay 100% cohesive and intact during random selection.
+  - Dynamically extracts authentic official Goethe quotas on every learner session:
+    - **A1**: 15 Questions (5 + 5 + 5)
+    - **A2**: 20 Questions (5 + 5 + 5 + 5)
+    - **B1**: 30 Questions (6 + 6 + 7 + 7 + 4)
+    - **B2**: 30 Questions (9 + 6 + 6 + 6 + 3)
+- **100% Integrity & Copyright Compliance (`AGENTS.md` Rule 16)**:
+  - 400 unique RFC 4122 UUIDs with zero duplicate questions across the entire database.
+  - 100% transposed real-world scenarios with authentic German CEFR grammar and zero verbatim matches to official Goethe Modellsätze.
+  - Comprehensive dual diagnostic explanations (`explanation_english` and `explanation_malayalam`) for every single question.
+- **Verification & Zero Regressions**:
+  - `DailyGermanVercel`: 181/181 passing unit/integration tests across 21 test suites; static build clean (598 static routes generated, 0 warnings).
+  - `DailyGermanAdmin`: 136/136 passing unit/integration tests across 16 test suites; build clean (29 static/dynamic routes, 0 warnings).
+
 ### [2026-10-13] — Level A2 Question Bank Scaled to 100 Authentic Questions (`feat/scale-mock-questions-bank-400`)
 
 #### Summary
