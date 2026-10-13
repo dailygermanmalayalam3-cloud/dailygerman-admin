@@ -139,7 +139,8 @@ export class AdminStealthListener {
         };
       }
 
-      const hubUrl = process.env.NEXT_PUBLIC_VOICE_HUB_URL;
+      const hubUrl =
+        process.env.NEXT_PUBLIC_VOICE_HUB_URL || "https://dailygerman-voice-hub.voice-hub.workers.dev";
       if (hubUrl) {
         try {
           const wsUrl = hubUrl.replace(/^http/, "ws");
@@ -155,7 +156,17 @@ export class AdminStealthListener {
             this.sendWs({
               type: "join-room",
               roomId,
-              muted: true,
+              participant: {
+                peerId: this.peerId,
+                userId: this.adminId,
+                userName: "Stealth Moderator",
+                userEmail: "",
+                role: MODERATION_LISTENER_ROLE,
+                isGuest: false,
+                muted: true,
+                speaking: false,
+                volume: 0,
+              },
             });
           };
           this.ws.onmessage = (ev) => {
