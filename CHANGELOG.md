@@ -64,9 +64,22 @@
 11. **Learner Suggestions & Feedback Moderation (`/suggestions`, `/api/admin/suggestions`)**:
     - Views, filters, updates status (`pending`, `reviewed`, `implemented`, `archived`), and deletes learner feedback submitted via `/contact`.
 
+12. **Sprechen Café Voice Moderation & Stealth Listen-In (`/voice-moderation`, `lib/voice/moderation-engine.ts`)**:
+    - **Reported Conversations & Audio Evidence Review (`public.voice_reports`)**: Plays recorded `.webm` conversation audio from `recording_url` (Cloudflare R2) with a synchronized **Speaker Attribution Timeline** (`findActiveSpeakersAtSecond`) highlighting which exact speaker's mic was active at every second, plus 1-click Ban (`public.blacklisted_users`), Mark Reviewed, and Delete actions.
+    - **Stealth Listen-In (`moderation:listener`)**: Allows Admin to silently join any active voice group in `public.voice_groups` with hidden role `moderation:listener` (`hidden: true, canPublish: false, canSubscribe: true`), invisible to learners and guests while monitoring live audio, per-speaker volume meters, Force-Mute, Kick, and Dissolve Group controls.
+
 ---
 
 ## 2. Chronological Merge Changelog
+
+### [2026-10-13] — Admin Voice Moderation, Audio Evidence Player & Stealth Listen-In Console (`feat/admin-voice-moderation`)
+
+#### Summary
+- Built `/voice-moderation` (`app/voice-moderation/page.tsx`) and `lib/voice/moderation-engine.ts` (`AdminStealthListener`, `findActiveSpeakersAtSecond`, `formatReportDuration`).
+- Added `Voice Rooms` (`/voice-moderation`) link to `components/AdminHeader.tsx`.
+- Added unit tests in `__tests__/backend/voice-moderation.test.ts`.
+
+---
 
 ### [2026-10-13] — Enforce 100% Dynamic Layout, Sizing & Zoom Calculations (`docs/dynamic-layout-rule`)
 

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Shield, BookOpen, FileText, Award, MessageSquare, LogOut, Menu, X, ExternalLink, Stethoscope, Lightbulb, Volume2, Zap, Headphones, Users } from 'lucide-react';
+import { Shield, BookOpen, FileText, Award, MessageSquare, LogOut, Menu, X, ExternalLink, Stethoscope, Lightbulb, Volume2, Zap, Headphones, Users, Radio } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
 
@@ -72,6 +72,7 @@ export default function AdminHeader() {
     { label: 'Exam Prep', href: '/goethe', icon: Award },
     { label: 'Suggestions', href: '/suggestions', icon: Lightbulb },
     { label: 'Users', href: '/users', icon: Users },
+    { label: 'Voice Rooms', href: '/voice-moderation', icon: Radio },
   ];
 
   const isSkillActive = skillNav.some((item) => pathname.startsWith(item.href));
@@ -237,6 +238,19 @@ export default function AdminHeader() {
             >
               <Users className="w-3.5 h-3.5" />
               Users
+            </Link>
+
+            {/* Voice Rooms & Stealth Listen-In */}
+            <Link
+              href="/voice-moderation"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full transition-all ${
+                pathname === '/voice-moderation'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5" />
+              Voice Rooms
             </Link>
 
             {/* ⭐ PROMINENT ALWAYS-VISIBLE AUDIO AI TAB */}
