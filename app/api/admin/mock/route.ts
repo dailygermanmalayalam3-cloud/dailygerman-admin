@@ -5,7 +5,7 @@ import { revalidateLearnerPaths } from "@/lib/revalidate";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    if (!body.title || !body.level || !body.module || !body.slug) {
+    if (!body.title || !body.level || !body.slug) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 

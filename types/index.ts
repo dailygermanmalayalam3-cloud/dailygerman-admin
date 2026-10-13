@@ -384,13 +384,11 @@ export interface MockExam {
   slug: string;
   title: string;
   level: Level;
-  module: "lesen" | "hoeren" | "schreiben" | "sprechen";
+  section: GoetheSection;
   description?: string;
-  duration_minutes: number;
+  time_limit_minutes: number;
   passing_percentage: number;
   total_questions: number;
-  is_published: boolean;
-  order_index?: number;
   created_at?: string;
   updated_at?: string;
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MockExam, MockExamQuestion, Level } from "@/types";
+import { MockExam, MockExamQuestion, Level, GoetheSection } from "@/types";
 import {
   Plus,
   Trash2,
@@ -32,22 +32,20 @@ export default function AdminMockExamsPage() {
     title: string;
     slug: string;
     level: Level;
-    module: "lesen" | "hoeren" | "schreiben" | "sprechen";
+    section: GoetheSection;
     description: string;
-    duration_minutes: number;
+    time_limit_minutes: number;
     passing_percentage: number;
     total_questions: number;
-    is_published: boolean;
   }>({
     title: "",
     slug: "",
     level: "A1",
-    module: "lesen",
+    section: "Lesen",
     description: "",
-    duration_minutes: 25,
+    time_limit_minutes: 25,
     passing_percentage: 60,
     total_questions: 15,
-    is_published: true,
   });
 
   // Question Form State
@@ -98,12 +96,11 @@ export default function AdminMockExamsPage() {
       title: "",
       slug: "",
       level: "A1",
-      module: "lesen",
+      section: "Lesen",
       description: "",
-      duration_minutes: 25,
+      time_limit_minutes: 25,
       passing_percentage: 60,
       total_questions: 15,
-      is_published: true,
     });
     setEditingExamId(null);
     setShowExamForm(false);
@@ -114,12 +111,11 @@ export default function AdminMockExamsPage() {
       title: exam.title,
       slug: exam.slug,
       level: exam.level,
-      module: exam.module,
+      section: exam.section || "Lesen",
       description: exam.description || "",
-      duration_minutes: exam.duration_minutes,
+      time_limit_minutes: exam.time_limit_minutes,
       passing_percentage: exam.passing_percentage,
       total_questions: exam.total_questions,
-      is_published: exam.is_published,
     });
     setEditingExamId(exam.id);
     setShowExamForm(true);
@@ -424,8 +420,8 @@ export default function AdminMockExamsPage() {
                     type="number"
                     min="5"
                     max="180"
-                    value={examFormData.duration_minutes}
-                    onChange={(e) => setExamFormData({ ...examFormData, duration_minutes: Number(e.target.value) })}
+                    value={examFormData.time_limit_minutes}
+                    onChange={(e) => setExamFormData({ ...examFormData, time_limit_minutes: Number(e.target.value) })}
                     className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                   />
                 </div>
@@ -503,7 +499,7 @@ export default function AdminMockExamsPage() {
                           {exam.level}
                         </span>
                         <span className="text-xs uppercase font-bold text-slate-400">
-                          {exam.module}
+                          {exam.section}
                         </span>
                       </div>
                       <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/50">
@@ -522,7 +518,7 @@ export default function AdminMockExamsPage() {
                     </p>
                     <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" /> {exam.duration_minutes} Mins
+                        <Clock className="w-3.5 h-3.5" /> {exam.time_limit_minutes} Mins
                       </span>
                       <span>Target: {exam.total_questions} Qs</span>
                       <span>Pass: {exam.passing_percentage}%</span>

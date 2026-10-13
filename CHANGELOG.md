@@ -99,6 +99,23 @@ Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`),
 
 ---
 
+### [2026-10-13] — Mock Exam CMS Synchronization & Authentic Question Bank Expansion (`feat/complete-authentic-goethe-question-banks`)
+
+#### Summary
+Synchronized the Mock Exam Admin CMS module (`/mock`, `/api/admin/mock`, `/api/admin/mock/questions`) with the live database schema and official Goethe-Institut examination blueprints across A1 (15 Qs), A2 (20 Qs), B1 (30 Qs), and B2 (21 Qs).
+
+#### Key Files Added / Modified in `DailyGermanAdmin`
+- `types/index.ts`: Aligned `MockExam` interface with PostgreSQL columns:
+  - `section: GoetheSection` (`"Lesen" | "Hören" | "Schreiben" | "Sprechen"`)
+  - `time_limit_minutes: number`
+  - `passing_percentage: number`
+  - `total_questions: number`
+- `app/api/admin/mock/route.ts`: Fixed missing `await req.json()` body parsing in `POST` handler; triggered on-demand revalidation for `/mock` paths.
+- `app/mock/page.tsx`: Updated exam form state and card rendering from obsolete `module`/`duration_minutes` to `section`/`time_limit_minutes`.
+- `__tests__/backend/api-admin-mock-exams.test.ts`: 100% passing tests (6 tests) verifying CRUD and revalidation triggers.
+
+---
+
 ### [2026-10-13] — Enforce 100% Dynamic Layout, Sizing & Zoom Calculations (`docs/dynamic-layout-rule`)
 
 #### Summary
