@@ -77,6 +77,24 @@
 #### Summary
 - Built `/voice-moderation` (`app/voice-moderation/page.tsx`) and `lib/voice/moderation-engine.ts` (`AdminStealthListener`, `findActiveSpeakersAtSecond`, `formatReportDuration`).
 - Added `Voice Rooms` (`/voice-moderation`) link to `components/AdminHeader.tsx`.
+### [2026-10-17] — Goethe Redemittel & Universal Exam Matrix Manager (`/exam-templates`) (`feat/goethe-exam-templates-matrix`)
+
+#### Summary
+Built administrative control panel for the Goethe Redemittel & Universal Exam Matrix (`/exam-templates`), enabling administrators to manage official Goethe Schreiben and Sprechen templates across levels A1, A2, B1, and B2. Supports full CRUD operations, trilingual model answer editing (German, English, and Malayalam), CEFR connector tagging, and instant on-demand Edge cache invalidation (`revalidateLearnerPaths`) targeting `/tools/exam-templates`.
+
+#### Database & Schema (`public.goethe_exam_templates`)
+- Table `goethe_exam_templates`: Native RFC 4122 UUID primary keys, composite index on `(level, module_type, order_index)`, and strict `is_admin()` RLS policies on mutations (`INSERT`, `UPDATE`, `DELETE`).
+- Query functions added to `lib/db/content.ts`: `getGoetheExamTemplates(level?, moduleType?)`, `mutateGoetheExamTemplate(item)`, and `deleteGoetheExamTemplate(id)`.
+
+#### Files Added / Modified in `DailyGermanAdmin`
+- `types/index.ts`: Added `GoetheExamTemplate` interface.
+- `lib/db/content.ts`: Added template queries and mutation methods.
+- `app/api/admin/exam-templates/route.ts` *(NEW)*: GET, POST, and DELETE endpoints with automatic learner cache revalidation.
+- `components/ExamTemplatesManager.tsx` *(NEW)*: Full administrative management interface with level/module filters, trilingual textareas, and live learner tool links.
+- `app/exam-templates/page.tsx` *(NEW)*: Admin route rendering `ExamTemplatesManager`.
+- `components/AdminHeader.tsx`: Added `Exam Templates` navigation link with `FileText` icon to desktop specialty navigation and mobile drawer.
+- `__tests__/backend/api-admin-exam-templates.test.ts` *(NEW)*: 5 unit tests covering GET, POST, DELETE, validation, and revalidation callouts (100% pass rate).
+
 ### [2026-10-13] — Goethe Mock Exam Simulator Admin CRUD & Question Bank (`feat/mock-exam-admin-crud`)
 
 #### Summary
