@@ -208,6 +208,15 @@ Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`),
   - 100% pass rate across all 180 tests in `DailyGermanVercel` and 136 tests in `DailyGermanAdmin`.
   - Revalidated Edge ISR cache across `/goethe`, `/mock`, `/mock/a1`, `/mock/a2`, `/mock/b1`, `/mock/b2` on production.
 
+### [2026-10-16] — Official Goethe Exam Pass Score & Grade Calculator Integration (`feat/goethe-exam-calculator`)
+
+#### Summary
+Documented the deployment of the official **Goethe Exam Pass Score & Grade Calculator** (`/tools/goethe-calculator`) in `DailyGermanVercel` for levels **A1, A2, B1, B2, C1, and C2**. The calculator accurately reflects official Goethe-Institut *Durchführungsbestimmungen* (DbP) regulations, sub-threshold requirements (such as A2's mandatory 45/75 written and 15/25 oral minimums), non-linear raw-to-scaled conversion tables for 30-item modules (B1/B2/C1), and C2 component multipliers. Edge cache revalidation endpoints have been synchronized.
+
+#### Administrative & Architectural Alignment
+- Synchronized revalidation prefix `/tools/` across admin invalidation workflows.
+- Maintained strict token parity and dual-repository build/test compliance.
+
 ---
 
 ### [2026-10-13] — Mock Exam CMS Synchronization & Authentic Question Bank Expansion (`feat/complete-authentic-goethe-question-banks`)
