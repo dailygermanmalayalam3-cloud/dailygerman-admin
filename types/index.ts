@@ -410,3 +410,26 @@ export interface MockExamQuestion {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface GoetheExamTemplate {
+  id: string;
+  level: Level;
+  module_type: "schreiben" | "sprechen";
+  section: string;
+  title: string;
+  title_en: string;
+  title_ml: string;
+  register: "informell" | "halbformell" | "formell" | "forum";
+  recommended_time: string;
+  target_word_count: string;
+  skeleton_structure: Record<string, unknown>;
+  model_prompt_de: string;
+  model_answer_de: string;
+  model_answer_en: string;
+  model_answer_ml: string;
+  connectors: string[];
+  order_index?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+

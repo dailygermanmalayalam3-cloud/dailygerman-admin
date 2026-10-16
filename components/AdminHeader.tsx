@@ -55,6 +55,7 @@ export default function AdminHeader() {
 
   const specialtyNav = [
     { label: 'Mock Exams', href: '/mock', icon: Sparkles },
+    { label: 'Exam Templates', href: '/exam-templates', icon: FileText },
     { label: 'Medical', href: '/medical', icon: Stethoscope },
     { label: 'Exam Prep', href: '/goethe', icon: Award },
   ];
@@ -63,6 +64,7 @@ export default function AdminHeader() {
     { label: 'Overview', href: '/', icon: Shield },
     { label: 'Audio AI Studio', href: '/audio', icon: Volume2, featured: true },
     { label: 'Mock Exams', href: '/mock', icon: Sparkles },
+    { label: 'Exam Templates', href: '/exam-templates', icon: FileText },
     { label: 'Vocabulary', href: '/vocabulary', icon: BookOpen },
     { label: 'Verbs', href: '/verbs', icon: Zap },
     { label: 'Grammar', href: '/grammar', icon: FileText },

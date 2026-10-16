@@ -37,6 +37,7 @@ import {
   BlacklistedUser,
   MockExam,
   MockExamQuestion,
+  GoetheExamTemplate,
 } from "@/types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -1786,6 +1787,77 @@ export async function deleteMockQuestion(id: string): Promise<boolean> {
   if (error) throw new Error(`Supabase delete error: ${error.message}`);
   return true;
 }
+
+export async function getGoetheExamTemplates(
+  level?: Level,
+  moduleType?: "schreiben" | "sprechen"
+): Promise<GoetheExamTemplate[]> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from("goethe_exam_templates")
+    .select("*")
+    .order("order_index", { ascending: true });
+
+  if (level) {
+    query = query.eq("level", level);
+  }
+  if (moduleType) {
+    query = query.eq("module_type", moduleType);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("Error fetching goethe exam templates:", error.message);
+    return [];
+  }
+  return (data || []) as GoetheExamTemplate[];
+}
+
+export async function mutateGoetheExamTemplate(
+  item: Partial<GoetheExamTemplate>
+): Promise<GoetheExamTemplate> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) throw new Error("Supabase client not initialized");
+
+  const payload = {
+    ...item,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (payload.id) {
+    const { data, error } = await supabase
+      .from("goethe_exam_templates")
+      .update(payload)
+      .eq("id", payload.id)
+      .select()
+      .single();
+    if (error) throw new Error(`Supabase error: ${error.message}`);
+    return data as GoetheExamTemplate;
+  } else {
+    const { data, error } = await supabase
+      .from("goethe_exam_templates")
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw new Error(`Supabase error: ${error.message}`);
+    return data as GoetheExamTemplate;
+  }
+}
+
+export async function deleteGoetheExamTemplate(id: string): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) throw new Error("Supabase client not initialized");
+
+  const { error } = await supabase
+    .from("goethe_exam_templates")
+    .delete()
+    .eq("id", id);
+  if (error) throw new Error(`Supabase delete error: ${error.message}`);
+  return true;
+}
+
 
 
 
