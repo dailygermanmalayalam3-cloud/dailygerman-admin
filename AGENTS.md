@@ -187,3 +187,25 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **Nominative Fair Use & Disclaimers**:
   - Maintain clear descriptive labeling (*"Goethe-Format Mock Exam"*) accompanied by the prominent disclaimer that *Daily German is an independent educational platform not affiliated with or endorsed by the Goethe-Institut e.V.*
 
+## 17. Deep Engineering & Native-Linguist Rigor Rubric (MANDATORY — Every Feature & Tool)
+- **Deep Over Wide Architectural Mandate**:
+  - Whenever designing or implementing any learner feature, interactive tool, content generator, grammar engine, or practice module, **NEVER build shallow, cosmetic, or "toy" implementations** (e.g., rigid fill-in-the-blank text blocks, naive string concatenation, static placeholders, or fake mock data that doesn't obey linguistic laws).
+  - Every feature must be designed from the combined perspective of a **C2 German native linguist/Goethe certified rater** and a **10-year senior software systems engineer**.
+- **The 4-Pillar Native-Linguist & Engineering Protocol**:
+  Before writing code or saving implementation artifacts for any feature, the agent MUST explicitly enforce:
+  1. **Professional Domain Counter-Analysis (The Unasked Traps)**:
+     - Identify and eliminate hidden domain failure modes that non-specialists overlook (e.g., the Goethe examiner "memorized template" blacklist/penalty (*Floskel-Falle*), clause word-order traps (*Nebensatz-Endstellung* vs. *Inversion*), dialectal vs. standard Hochdeutsch anomalies, or CEFR level-inappropriate vocabulary).
+  2. **Rawest Primary Material Grounding**:
+     - Never rely on third-party blog summaries, second-hand prep websites, or arbitrary LLM memory.
+     - Always ground features in the rawest primary regulatory sources: official Goethe-Institut & telc *Prüferhandbücher* (examiner manuals), *Durchführungsbestimmungen (DbP)*, *Prüfungsordnung (PO)*, and the official *CEFR Profile Deutsch* grammatical/communicative inventory.
+  3. **Linguistic & Software Engineering Rigor**:
+     - **Topological Sentence Model (*Felderanalyse*)**: When generating or manipulating German text, obey the topological sentence structure (*Vorfeld*, *linke Satzklammer*, *Mittelfeld*, *rechte Satzklammer*, *Nachfeld*).
+     - **Morphological & Case Governance Engines**: Never perform naive string concatenation (`prefix + noun + suffix`) that yields broken grammar (e.g., failing to inflect for *Genitiv*, *Dativ*, *Akkusativ*, or failing to decline adjectives and articles). Dynamic text assembly must include deterministic morphological agreement logic.
+     - **Orthogonal Architecture**: Build modular matrices (separating register, connector tier, and semantic slots) rather than static, brittle monolithic templates.
+     - **Zero Runtime Overhead & Edge ISR**: Implement deterministic logic in pure client/TypeScript routines with zero paid external API dependencies, zero runtime latency, and 100% Edge ISR compliance (`revalidate = 120`).
+  4. **Objective Third-Party Proof of Correctness**:
+     - The correctness of the feature must not depend on the developer's or user's subjective impression.
+     - Provide verifiable, automated proof:
+       * 100% compliance with official Goethe examiner 4-point rating grids (*Aufgabenerfüllung*, *Kohärenz*, *Wortschatz*, *Strukturen*).
+       * Automated unit tests (`npm test`) covering edge cases, irregular conjugations, noun declensions, and boundary word counts.
+       * Zero syntax errors, zero grammatical agreement mismatches, and zero build warnings.
