@@ -211,11 +211,11 @@ Built administrative control panel for the Goethe Mock Exam Simulator (`/mock`),
 ### [2026-10-16] — Official Goethe Exam Pass Score & Grade Calculator Integration (`feat/goethe-exam-calculator`)
 
 #### Summary
-Documented the deployment of the official **Goethe Exam Pass Score & Grade Calculator** (`/tools/goethe-calculator`) in `DailyGermanVercel` for levels **A1, A2, B1, B2, C1, and C2**. The calculator accurately reflects official Goethe-Institut *Durchführungsbestimmungen* (DbP) regulations, sub-threshold requirements (such as A2's mandatory 45/75 written and 15/25 oral minimums), non-linear raw-to-scaled conversion tables for 30-item modules (B1/B2/C1), and C2 component multipliers. Edge cache revalidation endpoints have been synchronized.
+Documented the deployment and refinement of the official **Goethe Exam Pass Score & Grade Calculator** (`/tools/goethe-calculator`) in `DailyGermanVercel` for levels **A1, A2, B1, B2, C1, and C2**. The calculator features a 100% English interface designed for non-technical international learners, verified direct links to official Goethe-Institut regulatory PDFs returning `HTTP 200 OK` (resolving external web 404/403 blocking), official *Durchführungsbestimmungen* (DbP) regulations, sub-threshold requirements (such as A2's mandatory 45/75 written and 15/25 oral minimums), non-linear raw-to-scaled conversion tables for 30-item modules (B1/B2/C1), and C2 component multipliers. Edge cache revalidation endpoints have been synchronized.
 
 #### Administrative & Architectural Alignment
 - Synchronized revalidation prefix `/tools/` across admin invalidation workflows.
-- Maintained strict token parity and dual-repository build/test compliance.
+- Maintained strict token parity and dual-repository build/test compliance (193/193 tests in Learner App, 136/136 tests in Admin CMS).
 
 ---
 
