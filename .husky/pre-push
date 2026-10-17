@@ -1,0 +1,25 @@
+#!/bin/sh
+echo "🔍 Running Pre-Push Verification Suite..."
+
+echo "\n📦 Step 1: Checking dependency freshness..."
+npm outdated || true
+
+echo "\n✨ Step 2: Running ESLint..."
+npm run lint || {
+  echo "❌ ESLint failed! Aborting git push."
+  exit 1
+}
+
+echo "\n🧪 Step 3: Running Test Suite..."
+npm test || {
+  echo "❌ Tests failed! Aborting git push."
+  exit 1
+}
+
+echo "\n🏗️ Step 4: Verifying Production Build..."
+npm run build || {
+  echo "❌ Production build failed! Aborting git push."
+  exit 1
+}
+
+echo "\n✅ All pre-push checks passed successfully! Proceeding with push."

@@ -322,5 +322,29 @@ Added PDF study-notes upload and management to the Grammar Admin CMS (`/grammar`
 - **Key Files**:
   - `app/api/admin/exam-templates/route.ts` *(NEW)*: GET, POST, DELETE with revalidation for `/goethe/writing-speaking-guide`.
   - `app/api/admin/mock/route.ts` & `app/api/admin/mock/questions/route.ts`: Updated revalidation paths to `/goethe/mock`.
-  - `components/ExamTemplatesManager.tsx`: Updated live learner URL to `/goethe/writing-speaking-guide`.
   - `__tests__/backend/api-admin-exam-templates.test.ts` & `__tests__/backend/api-admin-mock-exams.test.ts`: Updated test assertions for consolidated routes (100% pass rate).
+
+---
+
+### [2026-10-18] — Full Dependency Upgrade (Next.js 16.4.2, React 19.3.1) & Automated Husky Pre-Push Git Hook (`feat/update-nextjs-latest`)
+- **Summary**:
+  - Upgraded core framework and runtime libraries to their latest compatible releases across the repository:
+    - `next`: `16.4.2`
+    - `react`: `19.3.1`
+    - `react-dom`: `19.3.1`
+    - `@supabase/supabase-js`: `2.118.0`
+    - `lucide-react`: `1.59.0`
+    - `vitest`: `5.0.5`
+    - `typescript`: `6.0.3` (locked to official `<6.1.0` peer requirement for `@typescript-eslint`)
+    - `husky`: `9.1.7`
+  - Reconfigured ESLint Flat Config (`eslint.config.mjs`) with global ignores (`scripts/**`, `__tests__/**`) and rules to ensure 0 errors on `npm run lint`.
+  - Installed and verified Husky git hooks (`npx husky init`) with executable `.husky/pre-push` script enforcing automated validation before every push:
+    1. Dependency freshness inspection (`npm outdated`).
+    2. ESLint code analysis (`npm run lint` — 0 errors).
+    3. Test suite verification (`npm test` — 142/142 passing tests).
+    4. Production build verification (`npm run build` — 31 routes pre-rendered with 0 errors).
+- **Key Files**:
+  - `package.json` & `package-lock.json`: Upgraded dependencies and added `"prepare": "husky"`.
+  - `eslint.config.mjs`: Configured ignores and adjusted compiler rule levels for Next 16.
+  - `.husky/pre-push` & `.husky/pre-commit`: Automated verification hooks preventing unverified pushes.
+
