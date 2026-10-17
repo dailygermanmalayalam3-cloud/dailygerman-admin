@@ -245,3 +245,17 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
     3. It MUST be exposed in `DailyGermanAdmin/app/audio/page.tsx` for real-time inventory tracking and 1-click batch generation with Google Cloud Permanent Free Tier protection.
 - **Learner App Audio Playback**:
   - Learner components must use standard HTML5 audio playback (`new Audio(audioUrl)`) or `<audio>` controls backed by the CDN-cached Supabase Storage public URL with loading, playing, and pause states.
+
+## 19. Semantic Versioning Standard (Major.Minor.Patch) & CHANGELOG Synchronization (MANDATORY)
+- **Strict SemVer Versioning across Dual Repositories**:
+  - Both `DailyGermanVercel` (Learner UI) and `DailyGermanAdmin` (Admin CMS) strictly adhere to Semantic Versioning (`MAJOR.MINOR.PATCH`), initialized at `0.0.1`.
+  - Every subsequent feature, bugfix, or release merged into `main` MUST increment the version in:
+    1. `package.json` (`"version": "X.Y.Z"`) in both affected repositories.
+    2. `lib/config/version.ts` (`export const APP_VERSION = "X.Y.Z";` or `ADMIN_VERSION = "X.Y.Z"`).
+    3. Visible UI badges in `components/Footer.tsx` (Learner UI) and `components/AdminHeader.tsx` (Admin CMS).
+- **Increment Rules**:
+  - **PATCH (`0.0.X`)**: Bug fixes, linting resolutions, dependency upgrades, refactorings with zero user-facing breaking changes.
+  - **MINOR (`0.X.0`)**: New learner tools, exam templates, curriculum modules, admin management panels, or backwards-compatible feature additions.
+  - **MAJOR (`X.0.0`)**: Significant platform overhauls, database schema overhauls requiring data migrations, or breaking architectural changes.
+- **Mandatory CHANGELOG.md Synchronization**:
+  - Whenever a version is incremented, the new version number (`[X.Y.Z]`) must be documented as the header of the latest chronological entry in `CHANGELOG.md` in both repositories, detailing the summary of changes, rationale, and affected files.
