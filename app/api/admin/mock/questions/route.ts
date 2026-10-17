@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     }
 
     const result = await saveMockQuestion(body);
-    await revalidateLearnerPaths(["/", "/mock"]);
+    await revalidateLearnerPaths(["/", "/goethe", "/goethe/mock", "/mock"]);
 
     return NextResponse.json({ success: true, question: result });
   } catch (err: unknown) {
@@ -25,7 +25,7 @@ export async function DELETE(req: Request) {
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
     await deleteMockQuestion(id);
-    await revalidateLearnerPaths(["/", "/mock"]);
+    await revalidateLearnerPaths(["/", "/goethe", "/goethe/mock", "/mock"]);
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

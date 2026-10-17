@@ -290,3 +290,19 @@ Added PDF study-notes upload and management to the Grammar Admin CMS (`/grammar`
   - Added unit tests covering Video-only, PDF-only, Both Video + PDF, and validation failure when neither is provided.
 - `AGENTS.md` & `CHANGELOG.md`:
   - Added Rule 14 (`Mandatory LLM-Readable CHANGELOG.md & Complete Feature Documentation`) and initialized this comprehensive changelog.
+
+---
+
+### [2026-10-17] — Goethe Exam Hub Consolidation & Writing/Speaking Guide CMS (`feat/goethe-exam-templates-matrix`)
+- **Summary**:
+  - Implemented the Admin CMS module for the Goethe Universal Exam Matrix and Writing & Speaking Guide at `/exam-templates`.
+  - Created table `public.goethe_exam_templates` with native UUIDv4 primary keys, RLS enforcing `is_admin()`, and indexes on `(level, module_type, section)`.
+  - Added CRUD endpoints at `app/api/admin/exam-templates/route.ts` with on-demand Edge revalidation.
+  - Updated `revalidateLearnerPaths` calls in `/api/admin/mock`, `/api/admin/mock/questions`, and `/api/admin/exam-templates` to target the consolidated `/goethe/*` routes (`/goethe`, `/goethe/mock`, `/goethe/writing-speaking-guide`).
+  - Updated learner tool preview link in `ExamTemplatesManager.tsx` to `http://localhost:3000/goethe/writing-speaking-guide`.
+  - All 141 backend tests passing (100% pass rate).
+- **Key Files**:
+  - `app/api/admin/exam-templates/route.ts` *(NEW)*: GET, POST, DELETE with revalidation for `/goethe/writing-speaking-guide`.
+  - `app/api/admin/mock/route.ts` & `app/api/admin/mock/questions/route.ts`: Updated revalidation paths to `/goethe/mock`.
+  - `components/ExamTemplatesManager.tsx`: Updated live learner URL to `/goethe/writing-speaking-guide`.
+  - `__tests__/backend/api-admin-exam-templates.test.ts` & `__tests__/backend/api-admin-mock-exams.test.ts`: Updated test assertions for consolidated routes (100% pass rate).

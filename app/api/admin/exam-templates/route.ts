@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     }
 
     const result = await mutateGoetheExamTemplate(body);
-    await revalidateLearnerPaths(["/", "/tools/exam-templates", "/goethe"]);
+    await revalidateLearnerPaths(["/", "/goethe/writing-speaking-guide", "/tools/exam-templates", "/goethe"]);
     return NextResponse.json({ success: true, item: result });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
@@ -47,7 +47,7 @@ export async function DELETE(req: Request) {
     }
 
     await deleteGoetheExamTemplate(id);
-    await revalidateLearnerPaths(["/", "/tools/exam-templates", "/goethe"]);
+    await revalidateLearnerPaths(["/", "/goethe/writing-speaking-guide", "/tools/exam-templates", "/goethe"]);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

@@ -144,7 +144,7 @@ export default function ExamTemplatesManager() {
           </p>
         </div>
         <a
-          href="http://localhost:3000/tools/exam-templates"
+          href="http://localhost:3000/goethe/writing-speaking-guide"
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-sm text-white shadow transition-all shrink-0"

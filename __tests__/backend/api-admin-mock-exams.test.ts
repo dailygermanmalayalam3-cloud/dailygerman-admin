@@ -102,9 +102,11 @@ describe("Admin Backend API: /api/admin/mock and /api/admin/mock-list", () => {
     expect(data.exam.level).toBe("B1");
     expect(revalidateLearnerPaths).toHaveBeenCalledWith([
       "/",
+      "/goethe",
+      "/goethe/mock",
+      "/goethe/mock/goethe-b1-lesen-modellsatz",
       "/mock",
       "/mock/goethe-b1-lesen-modellsatz",
-      "/goethe",
     ]);
   });
 
@@ -123,8 +125,10 @@ describe("Admin Backend API: /api/admin/mock and /api/admin/mock-list", () => {
     expect(deleteMockExam).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000001");
     expect(revalidateLearnerPaths).toHaveBeenCalledWith([
       "/",
-      "/mock",
       "/goethe",
+      "/goethe/mock",
+      "/mock",
+      "/goethe/mock/goethe-a1-lesen-modellsatz-01",
       "/mock/goethe-a1-lesen-modellsatz-01",
     ]);
   });
@@ -153,7 +157,7 @@ describe("Admin Backend API: /api/admin/mock and /api/admin/mock-list", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.success).toBe(true);
-    expect(revalidateLearnerPaths).toHaveBeenCalledWith(["/", "/mock"]);
+    expect(revalidateLearnerPaths).toHaveBeenCalledWith(["/", "/goethe", "/goethe/mock", "/mock"]);
   });
 
   it("should delete a mock question and trigger learner revalidation", async () => {
@@ -169,6 +173,6 @@ describe("Admin Backend API: /api/admin/mock and /api/admin/mock-list", () => {
     const res = await DELETE(req);
     expect(res.status).toBe(200);
     expect(deleteMockQuestion).toHaveBeenCalledWith("11111111-1111-4111-8111-111111111101");
-    expect(revalidateLearnerPaths).toHaveBeenCalledWith(["/", "/mock"]);
+    expect(revalidateLearnerPaths).toHaveBeenCalledWith(["/", "/goethe", "/goethe/mock", "/mock"]);
   });
 });

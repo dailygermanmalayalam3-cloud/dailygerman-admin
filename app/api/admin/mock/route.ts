@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     }
 
     const result = await saveMockExam(body);
-    await revalidateLearnerPaths(["/", "/mock", `/mock/${result.slug}`, "/goethe"]);
+    await revalidateLearnerPaths(["/", "/goethe", "/goethe/mock", `/goethe/mock/${result.slug}`, "/mock", `/mock/${result.slug}`]);
 
     return NextResponse.json({ success: true, exam: result });
   } catch (err: unknown) {
@@ -26,8 +26,11 @@ export async function DELETE(req: Request) {
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
     await deleteMockExam(id);
-    const paths = ["/", "/mock", "/goethe"];
-    if (slug) paths.push(`/mock/${slug}`);
+    const paths = ["/", "/goethe", "/goethe/mock", "/mock"];
+    if (slug) {
+      paths.push(`/goethe/mock/${slug}`);
+      paths.push(`/mock/${slug}`);
+    }
     await revalidateLearnerPaths(paths);
 
     return NextResponse.json({ success: true });
