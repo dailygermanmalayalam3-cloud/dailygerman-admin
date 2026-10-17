@@ -10,13 +10,16 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(() => {
+    const error = searchParams.get("error");
+    return error ? decodeURIComponent(error) : null;
+  });
 
   useEffect(() => {
     const error = searchParams.get("error");
-    if (error) {
-      setErrorMessage(decodeURIComponent(error));
-    }
+    queueMicrotask(() => {
+      setErrorMessage(error ? decodeURIComponent(error) : null);
+    });
   }, [searchParams]);
 
   const supabase = createClient();

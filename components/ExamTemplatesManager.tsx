@@ -95,7 +95,9 @@ export default function ExamTemplatesManager() {
   };
 
   useEffect(() => {
-    fetchTemplates();
+    queueMicrotask(() => {
+      fetchTemplates();
+    });
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {

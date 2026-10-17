@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Shield, BookOpen, FileText, Award, MessageSquare, LogOut, Menu, X, ExternalLink, Stethoscope, Lightbulb, Volume2, Zap, Headphones, Users, Radio, Sparkles } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
+import { ADMIN_VERSION } from '@/lib/config/version';
 
 export default function AdminHeader() {
   const pathname = usePathname();
@@ -97,6 +98,9 @@ export default function AdminHeader() {
             />
             <div className="flex items-center gap-2">
               <span className="font-mono font-bold text-xs tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-md shadow-xs">ADMIN</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                v{ADMIN_VERSION}
+              </span>
               <span className="font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white">Daily German Malayalam</span>
             </div>
           </div>
@@ -122,6 +126,9 @@ export default function AdminHeader() {
                 priority
               />
               <span className="font-mono font-bold text-[11px] tracking-wider bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded shadow-2xs">ADMIN</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                v{ADMIN_VERSION}
+              </span>
               <span className="font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white hidden sm:inline">Daily German</span>
             </Link>
           </div>

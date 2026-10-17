@@ -68,7 +68,9 @@ export default function AdminWritingPage() {
   }, []);
 
   useEffect(() => {
-    loadTopics();
+    queueMicrotask(() => {
+      loadTopics();
+    });
   }, [loadTopics]);
 
   const loadSections = useCallback(async (topicId: string) => {

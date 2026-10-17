@@ -126,7 +126,7 @@ export class AdminStealthListener {
     this.activeRoomId = roomId;
 
     if (typeof window !== "undefined") {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (AudioContextClass) {
         this.audioCtx = new AudioContextClass();
         this.tapNode = this.audioCtx.createMediaStreamDestination();
@@ -248,14 +248,14 @@ export class AdminStealthListener {
     });
   }
 
-  private handleSignal(msg: any) {
+  private handleSignal(msg: Record<string, unknown>) {
     if (!msg || typeof msg !== "object") return;
     if (msg.roomId && this.activeRoomId && msg.roomId !== this.activeRoomId) return;
 
     switch (msg.type) {
       case "peer-announce":
       case "join-room": {
-        const p: LiveMonitoredParticipant | undefined = msg.participant;
+        const p = msg.participant as LiveMonitoredParticipant | undefined;
         if (!p || p.peerId === this.peerId || p.role === MODERATION_LISTENER_ROLE) return;
         this.participants.set(p.peerId, p);
         this.emitParticipants();
@@ -266,7 +266,7 @@ export class AdminStealthListener {
       case "room-state": {
         if (Array.isArray(msg.participants)) {
           this.participants.clear();
-          for (const p of msg.participants) {
+          for (const p of msg.participants as LiveMonitoredParticipant[]) {
             if (p.role !== MODERATION_LISTENER_ROLE) {
               this.participants.set(p.peerId, {
                 ...p,
@@ -303,17 +303,24 @@ export class AdminStealthListener {
       case "webrtc-signal": {
         if (msg.targetPeerId && msg.targetPeerId !== this.peerId) return;
         const fromPeerId = String(msg.fromPeerId || "");
-        if (msg.fromParticipant && msg.fromParticipant.role !== MODERATION_LISTENER_ROLE) {
-          this.participants.set(fromPeerId, msg.fromParticipant);
+        const fromParticipant = msg.fromParticipant as LiveMonitoredParticipant | undefined;
+        if (fromParticipant && fromParticipant.role !== MODERATION_LISTENER_ROLE) {
+          this.participants.set(fromPeerId, fromParticipant);
           this.emitParticipants();
         }
-        this.handleWebRtcSignal(fromPeerId, msg.signal);
+        const signal = msg.signal as { sdp?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit } | undefined;
+        if (signal) {
+          this.handleWebRtcSignal(fromPeerId, signal);
+        }
         break;
       }
     }
   }
 
-  private async handleWebRtcSignal(fromPeerId: string, signal: any) {
+  private async handleWebRtcSignal(
+    fromPeerId: string,
+    signal: { sdp?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit }
+  ) {
     if (!signal || typeof RTCPeerConnection === "undefined") return;
     let pc = this.peers.get(fromPeerId);
     if (!pc) {
@@ -411,14 +418,14 @@ export class AdminStealthListener {
     if (changed) this.emitParticipants();
   }
 
-  private broadcast(payload: Record<string, any>) {
+  private broadcast(payload: Record<string, unknown>) {
     try {
       this.broadcastChannel?.postMessage(payload);
     } catch {}
     this.sendWs(payload);
   }
 
-  private sendWs(payload: Record<string, any>) {
+  private sendWs(payload: Record<string, unknown>) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       try {
         this.ws.send(JSON.stringify(payload));

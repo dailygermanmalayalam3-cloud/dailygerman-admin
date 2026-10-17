@@ -226,7 +226,11 @@ export default function AdminVocabularyPage() {
     setWordEntries((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleWordEntryChange = (index: number, field: keyof WordEntryInput, value: any) => {
+  const handleWordEntryChange = (
+    index: number,
+    field: keyof WordEntryInput,
+    value: WordEntryInput[keyof WordEntryInput]
+  ) => {
     setWordEntries((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };

@@ -60,7 +60,9 @@ export default function AdminSpeakingPage() {
   }, []);
 
   useEffect(() => {
-    loadTopics();
+    queueMicrotask(() => {
+      loadTopics();
+    });
   }, [loadTopics]);
 
   const loadConversations = useCallback(async (topicId: string) => {

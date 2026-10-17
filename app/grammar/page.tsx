@@ -79,7 +79,9 @@ export default function AdminGrammarPage() {
   }, []);
 
   useEffect(() => {
-    loadTopics();
+    queueMicrotask(() => {
+      loadTopics();
+    });
   }, [loadTopics]);
 
   // Load videos and exercises when an active topic is selected

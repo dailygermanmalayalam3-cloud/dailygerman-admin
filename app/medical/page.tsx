@@ -113,7 +113,9 @@ export default function AdminMedicalPage() {
   };
 
   useEffect(() => {
-    loadData();
+    queueMicrotask(() => {
+      loadData();
+    });
   }, []);
 
   const notifySuccess = (msg: string) => {

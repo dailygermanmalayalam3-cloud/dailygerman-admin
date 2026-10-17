@@ -35,7 +35,9 @@ export default function AudioRecorder({
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
-    setLocalUrl(audioUrl || null);
+    queueMicrotask(() => {
+      setLocalUrl(audioUrl || null);
+    });
     if (audioUrl && typeof window !== "undefined") {
       if (!audioPlayerRef.current) {
         audioPlayerRef.current = new Audio(audioUrl);

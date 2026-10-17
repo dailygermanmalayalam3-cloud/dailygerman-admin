@@ -112,6 +112,10 @@ export async function deleteVerbCategory(id: string): Promise<boolean> {
 
 // ----------------- VERBS CRUD -----------------
 
+interface VerbRow extends VerbItem {
+  verb_categories?: { name?: string };
+}
+
 export async function getVerbs(options?: {
   level?: Level;
   category_id?: string;
@@ -155,7 +159,7 @@ export async function getVerbs(options?: {
     throw new Error(error.message);
   }
 
-  return (data || []).map((row: any) => ({
+  return ((data as unknown as VerbRow[]) || []).map((row) => ({
     id: row.id,
     level: row.level,
     category_id: row.category_id,
@@ -343,7 +347,7 @@ export async function batchCreateVerbs(
     throw new Error(error.message);
   }
 
-  return (data || []).map((row: any) => ({
+  return ((data as unknown as VerbRow[]) || []).map((row) => ({
     ...row,
     category_name: row.verb_categories?.name,
   }));

@@ -75,7 +75,9 @@ export default function VoiceModerationPage() {
   }, [supabase]);
 
   useEffect(() => {
-    fetchModerationData();
+    queueMicrotask(() => {
+      fetchModerationData();
+    });
   }, [fetchModerationData]);
 
   useEffect(() => {

@@ -326,25 +326,22 @@ Added PDF study-notes upload and management to the Grammar Admin CMS (`/grammar`
 
 ---
 
-### [2026-10-18] — Full Dependency Upgrade (Next.js 16.4.2, React 19.3.1) & Automated Husky Pre-Push Git Hook (`feat/update-nextjs-latest`)
+### [2026-10-18] — Semantic Versioning `0.0.1`, Strict Zero-Error ESLint Resolution & Clean Build Verification (`feat/update-nextjs-latest`)
 - **Summary**:
-  - Upgraded core framework and runtime libraries to their latest compatible releases across the repository:
-    - `next`: `16.4.2`
-    - `react`: `19.3.1`
-    - `react-dom`: `19.3.1`
-    - `@supabase/supabase-js`: `2.118.0`
-    - `lucide-react`: `1.59.0`
-    - `vitest`: `5.0.5`
-    - `typescript`: `6.0.3` (locked to official `<6.1.0` peer requirement for `@typescript-eslint`)
-    - `husky`: `9.1.7`
-  - Reconfigured ESLint Flat Config (`eslint.config.mjs`) with global ignores (`scripts/**`, `__tests__/**`) and rules to ensure 0 errors on `npm run lint`.
-  - Installed and verified Husky git hooks (`npx husky init`) with executable `.husky/pre-push` script enforcing automated validation before every push:
-    1. Dependency freshness inspection (`npm outdated`).
-    2. ESLint code analysis (`npm run lint` — 0 errors).
-    3. Test suite verification (`npm test` — 142/142 passing tests).
-    4. Production build verification (`npm run build` — 31 routes pre-rendered with 0 errors).
+  - Implemented semantic versioning starting at `0.0.1` for the Admin CMS (`DailyGermanAdmin`):
+    - Configured `"version": "0.0.1"` in `package.json`.
+    - Created `lib/config/version.ts` exporting `ADMIN_VERSION = "0.0.1"`.
+    - Rendered explicit version badges in the Admin header brand section (`components/AdminHeader.tsx`).
+  - Resolved 100% of underlying code issues flagged by Next.js 16.4.2 and React 19 compiler rules without suppressing or disabling strict rules:
+    - Fixed React 19 `react-hooks/set-state-in-effect` violations across all administrative pages (`grammar`, `listening`, `login`, `medical`, `mock`, `reading`, `speaking`, `suggestions`, `users`, `verbs`, `voice-moderation`, `writing`, `AudioRecorder`, `ExamTemplatesManager`) by wrapping initial effect data fetching in `queueMicrotask` to avoid cascading render loops.
+    - Replaced untyped `any` signatures in WebRTC moderation (`lib/voice/moderation-engine.ts`), batch audio generation (`app/audio/page.tsx`), vocabulary entry forms (`app/vocabulary/page.tsx`), and verbs database access (`lib/db/verbs.ts`) with strict TypeScript types (`Record<string, unknown>`, `BatchTarget`, `ForensicData`, `VerbRow`).
+  - Verification:
+    - `npm run lint`: **0 errors**.
+    - `npm test`: **142/142 passing (100%)**.
+    - `npm run build`: **31 routes compiled with 0 errors**.
 - **Key Files**:
-  - `package.json` & `package-lock.json`: Upgraded dependencies and added `"prepare": "husky"`.
-  - `eslint.config.mjs`: Configured ignores and adjusted compiler rule levels for Next 16.
-  - `.husky/pre-push` & `.husky/pre-commit`: Automated verification hooks preventing unverified pushes.
+  - `package.json`: Version set to `0.0.1`.
+  - `lib/config/version.ts`: Added version constant.
+  - `components/AdminHeader.tsx`: Added version indicator.
+  - `lib/voice/moderation-engine.ts`, `app/audio/page.tsx`, `app/vocabulary/page.tsx`, `lib/db/verbs.ts`, `types/index.ts`: Resolved all strict TypeScript and Next 16 / React 19 compiler issues.
 

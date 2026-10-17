@@ -64,7 +64,7 @@ export default function AudioGeneratorPage() {
   const testAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Batch Generation State
-  const [batchTarget, setBatchTarget] = useState<
+  type BatchTarget =
     | "vocab_words"
     | "vocab_sentences"
     | "medical_words"
@@ -77,8 +77,9 @@ export default function AudioGeneratorPage() {
     | "reading_texts"
     | "listening_audios"
     | "goethe_materials"
-    | "goethe_exam_templates"
-  >("vocab_words");
+    | "goethe_exam_templates";
+
+  const [batchTarget, setBatchTarget] = useState<BatchTarget>("vocab_words");
   const [isBatchRunning, setIsBatchRunning] = useState(false);
   const isBatchRunningRef = useRef(false);
   const [batchLogs, setBatchLogs] = useState<string[]>([]);
@@ -836,7 +837,7 @@ export default function AudioGeneratorPage() {
 
         {/* Batch Target Selector */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
+          {([
             { id: "vocab_words", title: "Vocab Words", count: stats?.vocabWords.missing || 0 },
             { id: "vocab_sentences", title: "Vocab Sentences", count: stats?.vocabSentences.missing || 0 },
             { id: "medical_words", title: "Medical Words", count: stats?.medicalWords.missing || 0 },
@@ -850,12 +851,12 @@ export default function AudioGeneratorPage() {
             { id: "listening_audios", title: "Listening Audios (Hören)", count: stats?.listeningAudios?.missing || 0 },
             { id: "goethe_materials", title: "Goethe Exam Prep", count: stats?.goetheMaterials?.missing || 0 },
             { id: "goethe_exam_templates", title: "Exam Templates (Writing/Speaking)", count: stats?.goetheExamTemplates?.missing || 0 },
-          ].map((item) => (
+          ] as { id: BatchTarget; title: string; count: number }[]).map((item) => (
             <button
               key={item.id}
               type="button"
               disabled={isBatchRunning}
-              onClick={() => setBatchTarget(item.id as any)}
+              onClick={() => setBatchTarget(item.id)}
               className={`p-3 text-left border-2 transition-all cursor-pointer ${
                 batchTarget === item.id
                   ? "border-black bg-[#ffe600] text-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"

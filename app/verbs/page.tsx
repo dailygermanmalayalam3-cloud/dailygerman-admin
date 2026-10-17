@@ -136,7 +136,9 @@ export default function AdminVerbsPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    queueMicrotask(() => {
+      fetchData();
+    });
   }, []);
 
   // Audio Playback

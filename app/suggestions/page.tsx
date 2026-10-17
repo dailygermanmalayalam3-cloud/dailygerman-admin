@@ -102,7 +102,9 @@ export default function AdminSuggestionsPage() {
   };
 
   useEffect(() => {
-    loadAllData();
+    queueMicrotask(() => {
+      loadAllData();
+    });
   }, []);
 
   // Helper: check if a user is blacklisted

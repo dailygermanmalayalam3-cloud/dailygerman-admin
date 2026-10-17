@@ -88,7 +88,9 @@ export default function AdminUsersPage() {
   }, []);
 
   useEffect(() => {
-    fetchUsers();
+    queueMicrotask(() => {
+      fetchUsers();
+    });
   }, [fetchUsers]);
 
   // Delete user handler

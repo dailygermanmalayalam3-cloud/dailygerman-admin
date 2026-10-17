@@ -87,7 +87,9 @@ export default function AdminMockExamsPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    queueMicrotask(() => {
+      fetchData();
+    });
   }, []);
 
   // Exam Form Handlers

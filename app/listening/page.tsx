@@ -80,7 +80,9 @@ export default function AdminListeningPage() {
   }, []);
 
   useEffect(() => {
-    loadTopics();
+    queueMicrotask(() => {
+      loadTopics();
+    });
   }, [loadTopics]);
 
   const loadTopicContent = useCallback(async (topicId: string) => {

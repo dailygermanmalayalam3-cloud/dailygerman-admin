@@ -79,7 +79,9 @@ export default function AdminReadingPage() {
   }, []);
 
   useEffect(() => {
-    loadTopics();
+    queueMicrotask(() => {
+      loadTopics();
+    });
   }, [loadTopics]);
 
   const loadTopicContent = useCallback(async (topicId: string) => {

@@ -308,6 +308,39 @@ export type MedicalConversationTopic = ConversationTopic;
 // User Suggestions & Feedback
 export type SuggestionStatus = "unread" | "read" | "in_progress" | "resolved" | "archived";
 
+export interface ForensicData {
+  network?: {
+    proxy_chain?: string[];
+    asn?: string;
+    isp_name?: string;
+    coordinates?: string;
+    edge_timezone?: string;
+  };
+  client_hints?: {
+    model?: string;
+    platform?: string;
+    platform_version?: string;
+  };
+  device_telemetry?: {
+    screen?: {
+      width?: number;
+      height?: number;
+      pixel_ratio?: number;
+    };
+    hardware?: {
+      concurrency?: number;
+      device_memory_gb?: number;
+      max_touch_points?: number;
+    };
+    locale?: {
+      timezone_name?: string;
+      timezone_offset_minutes?: number;
+    };
+    interaction_duration_ms?: number;
+  };
+  [key: string]: unknown;
+}
+
 export interface Suggestion {
   id: string;
   name: string;
@@ -322,7 +355,7 @@ export interface Suggestion {
   ip_city?: string;
   isp_asn?: string;
   isp_name?: string;
-  forensic_data?: Record<string, any>;
+  forensic_data?: ForensicData;
   status: SuggestionStatus;
   admin_notes?: string;
   created_at?: string;
