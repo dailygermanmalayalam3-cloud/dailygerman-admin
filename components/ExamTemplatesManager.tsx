@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GoetheExamTemplate, Level } from '@/types';
 import {
   FileText,
@@ -12,6 +12,8 @@ import {
   AlertCircle,
   ExternalLink,
   Sparkles,
+  Volume2,
+  Square,
 } from 'lucide-react';
 
 export default function ExamTemplatesManager() {
@@ -21,6 +23,8 @@ export default function ExamTemplatesManager() {
   const [filterModule, setFilterModule] = useState<string>('ALL');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<Partial<GoetheExamTemplate>>({
@@ -39,8 +43,41 @@ export default function ExamTemplatesManager() {
     model_answer_en: '',
     model_answer_ml: '',
     connectors: ['obwohl', 'deshalb'],
+    audio_url: '',
     order_index: 0,
   });
+
+  const toggleAudio = (templateId: string, url?: string | null) => {
+    if (!url) return;
+    if (playingAudioId === templateId) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setPlayingAudioId(null);
+      return;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    setPlayingAudioId(templateId);
+    audio.play().catch(() => setPlayingAudioId(null));
+    audio.onended = () => {
+      setPlayingAudioId(null);
+      audioRef.current = null;
+    };
+  };
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
 
   const fetchTemplates = async () => {
     try {
@@ -92,6 +129,7 @@ export default function ExamTemplatesManager() {
           model_answer_en: '',
           model_answer_ml: '',
           connectors: ['obwohl', 'deshalb'],
+          audio_url: '',
           order_index: 0,
         });
         fetchTemplates();
@@ -297,6 +335,18 @@ export default function ExamTemplatesManager() {
                 required
               />
             </div>
+            <div className="md:col-span-3">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Studio Audio URL (Supabase Storage)
+              </label>
+              <input
+                type="url"
+                value={formData.audio_url || ''}
+                onChange={(e) => setFormData({ ...formData, audio_url: e.target.value })}
+                placeholder="https://wivtdopwvgefybojakuo.supabase.co/storage/v1/object/public/pronunciations/goethe-templates/..."
+                className="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white text-xs font-mono"
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
@@ -321,6 +371,7 @@ export default function ExamTemplatesManager() {
                     model_answer_en: '',
                     model_answer_ml: '',
                     connectors: ['obwohl', 'deshalb'],
+                    audio_url: '',
                     order_index: 0,
                   });
                 }}
@@ -430,8 +481,39 @@ export default function ExamTemplatesManager() {
               </div>
 
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-                <span>Target: {t.target_word_count}</span>
-                <span>Time: {t.recommended_time}</span>
+                <div className="flex items-center gap-2">
+                  <span>Target: {t.target_word_count}</span>
+                  <span>•</span>
+                  <span>Time: {t.recommended_time}</span>
+                </div>
+                {t.audio_url ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleAudio(t.id, t.audio_url)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
+                      playingAudioId === t.id
+                        ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 border-rose-300'
+                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 border-emerald-300 hover:bg-emerald-100'
+                    }`}
+                    title={playingAudioId === t.id ? "Stop audio" : "Play studio audio"}
+                  >
+                    {playingAudioId === t.id ? (
+                      <>
+                        <Square className="w-2.5 h-2.5 fill-current" />
+                        <span>Stop</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-2.5 h-2.5" />
+                        <span>Studio Audio</span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-400">
+                    No Audio
+                  </span>
+                )}
               </div>
             </div>
           ))}

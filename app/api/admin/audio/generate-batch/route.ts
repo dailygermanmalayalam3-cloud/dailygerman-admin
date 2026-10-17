@@ -17,7 +17,8 @@ export type BatchTarget =
   | "conversation_turns"
   | "reading_texts"
   | "listening_audios"
-  | "goethe_materials";
+  | "goethe_materials"
+  | "goethe_exam_templates";
 
 export async function GET() {
   try {
@@ -177,6 +178,16 @@ export async function GET() {
       .eq("section", "Hören")
       .or("audio_url.is.null,audio_url.eq.");
 
+    // 8. Goethe Exam Templates stats
+    const { count: totalGoetheTemplates } = await supabase
+      .from("goethe_exam_templates")
+      .select("*", { count: "exact", head: true });
+
+    const { count: goetheTemplatesMissing } = await supabase
+      .from("goethe_exam_templates")
+      .select("*", { count: "exact", head: true })
+      .or("audio_url.is.null,audio_url.eq.");
+
     return NextResponse.json({
       success: true,
       stats: {
@@ -242,6 +253,11 @@ export async function GET() {
           hoerenTotal: totalGoetheHoeren || 0,
           hoerenMissing: goetheHoerenMissing || 0,
         },
+        goetheExamTemplates: {
+          total: totalGoetheTemplates || 0,
+          missing: goetheTemplatesMissing || 0,
+          generated: (totalGoetheTemplates || 0) - (goetheTemplatesMissing || 0),
+        },
       },
     });
   } catch (err: unknown) {
@@ -297,12 +313,13 @@ export async function POST(req: Request) {
         "reading_texts",
         "listening_audios",
         "goethe_materials",
+        "goethe_exam_templates",
       ].includes(target)
     ) {
       return NextResponse.json(
         {
           error:
-            "Invalid target. Must be one of: vocab_words, vocab_sentences, medical_words, medical_sentences, verb_infinitives, verb_praeteritums, verb_perfekts, verbs_all, conversation_turns, reading_texts, goethe_materials",
+            "Invalid target. Must be one of: vocab_words, vocab_sentences, medical_words, medical_sentences, verb_infinitives, verb_praeteritums, verb_perfekts, verbs_all, conversation_turns, reading_texts, listening_audios, goethe_materials, goethe_exam_templates",
         },
         { status: 400 }
       );
@@ -1018,6 +1035,60 @@ export async function POST(req: Request) {
           errors.push(`Goethe material ${row.id}: ${(itemErr as Error).message}`);
         }
       }
+    } else if (target === "goethe_exam_templates") {
+      const { data: rows, error: fetchErr } = await supabase
+        .from("goethe_exam_templates")
+        .select("id, title, level, section, model_answer_de, model_prompt_de")
+        .or("audio_url.is.null,audio_url.eq.")
+        .limit(safeLimit);
+
+      if (fetchErr) throw fetchErr;
+
+      for (const row of rows || []) {
+        const text = (row.model_answer_de || row.model_prompt_de || "")
+          .replace(/[*#_`]/g, "")
+          .trim();
+        if (!text) continue;
+
+        try {
+          const { audioBuffer, ext } = await synthesizeGermanSpeech({
+            text,
+            voiceName: voiceName || "de-DE-Neural2-F",
+            speakingRate: speakingRate || 0.92,
+          });
+
+          const filePath = `goethe-templates/${row.id}.${ext}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("pronunciations")
+            .upload(filePath, audioBuffer, {
+              contentType: "audio/mpeg",
+              upsert: true,
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data: publicData } = supabase.storage
+            .from("pronunciations")
+            .getPublicUrl(filePath);
+
+          const { error: updateErr } = await supabase
+            .from("goethe_exam_templates")
+            .update({ audio_url: publicData.publicUrl })
+            .eq("id", row.id);
+
+          if (updateErr) throw updateErr;
+
+          processedItems.push({
+            id: row.id,
+            text: `[${row.level} ${row.section}] ${row.title}: ${text.slice(0, 50)}...`,
+            url: publicData.publicUrl,
+          });
+        } catch (itemErr: unknown) {
+          console.error(`Error processing goethe exam template ${row.id}:`, itemErr);
+          errors.push(`Goethe template ${row.id}: ${(itemErr as Error).message}`);
+        }
+      }
     }
 
     // Revalidate learner pages if any audio was updated
@@ -1034,6 +1105,8 @@ export async function POST(req: Request) {
         await revalidateLearnerPaths(["/", "/listening", "/a1", "/a2", "/b1", "/b2"]);
       } else if (target === "goethe_materials") {
         await revalidateLearnerPaths(["/", "/goethe"]);
+      } else if (target === "goethe_exam_templates") {
+        await revalidateLearnerPaths(["/", "/goethe", "/goethe/writing-speaking-guide"]);
       }
     }
 
@@ -1131,6 +1204,12 @@ export async function POST(req: Request) {
       } else if (target === "goethe_materials") {
         const { count } = await supabase
           .from("goethe_materials")
+          .select("*", { count: "exact", head: true })
+          .or("audio_url.is.null,audio_url.eq.");
+        remaining = count ?? 0;
+      } else if (target === "goethe_exam_templates") {
+        const { count } = await supabase
+          .from("goethe_exam_templates")
           .select("*", { count: "exact", head: true })
           .or("audio_url.is.null,audio_url.eq.");
         remaining = count ?? 0;

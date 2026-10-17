@@ -77,6 +77,24 @@
 #### Summary
 - Built `/voice-moderation` (`app/voice-moderation/page.tsx`) and `lib/voice/moderation-engine.ts` (`AdminStealthListener`, `findActiveSpeakersAtSecond`, `formatReportDuration`).
 - Added `Voice Rooms` (`/voice-moderation`) link to `components/AdminHeader.tsx`.
+### [2026-10-17] — Studio-Grade Neural TTS Audio Integration & Batch Generation for Goethe Exam Templates (`fix/neural-audio-goethe-templates`)
+
+#### Summary
+Integrated studio-grade Google Cloud Neural2 audio synthesis into the Admin CMS for Goethe Writing & Speaking exam templates. Added `audio_url` field to `goethe_exam_templates` table and schema, added audio preview player and badge to `ExamTemplatesManager`, extended `BatchTarget` to include `"goethe_exam_templates"`, and added an inventory card and 1-click batch processing button to the Audio Pronunciation Generator hub (`/audio`).
+
+#### Database & Schema (`public.goethe_exam_templates`)
+- Added column: `ALTER TABLE public.goethe_exam_templates ADD COLUMN IF NOT EXISTS audio_url TEXT;`
+- Populated all 18 templates with verified public storage URLs (`https://wivtdopwvgefybojakuo.supabase.co/storage/v1/object/public/pronunciations/goethe-templates/...`).
+
+#### Files Added / Modified in `DailyGermanAdmin`
+- `types/index.ts`: Added `audio_url?: string | null;` to `GoetheExamTemplate`.
+- `lib/db/content.ts`: Updated `mutateGoetheExamTemplate` to support `audio_url`.
+- `app/api/admin/audio/generate-batch/route.ts`: Added `"goethe_exam_templates"` to `BatchTarget`, added inventory stats query, batch generation handler via `synthesizeGermanSpeech` (`de-DE-Neural2-F`), Supabase Storage upload, and Edge cache revalidation (`/goethe/writing-speaking-guide`).
+- `app/audio/page.tsx`: Added Goethe Exam Templates card to Live Inventory and added target button to Batch Target Selector.
+- `components/ExamTemplatesManager.tsx`: Added audio preview player button (`Volume2`/`Square`), `audio_url` form input field, and visual audio readiness badge.
+- `__tests__/backend/api-admin-audio-generate.test.ts`: Added unit test covering batch audio generation for `goethe_exam_templates` and revalidation.
+- `AGENTS.md`: Added **Rule 18 (Studio-Grade Neural TTS Audio Standard & Strict Prohibition of Web Speech API)**.
+
 ### [2026-10-17] — Goethe Redemittel & Universal Exam Matrix Manager (`/exam-templates`) (`feat/goethe-exam-templates-matrix`)
 
 #### Summary

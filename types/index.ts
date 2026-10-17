@@ -428,6 +428,7 @@ export interface GoetheExamTemplate {
   model_answer_en: string;
   model_answer_ml: string;
   connectors: string[];
+  audio_url?: string | null;
   order_index?: number;
   created_at?: string;
   updated_at?: string;

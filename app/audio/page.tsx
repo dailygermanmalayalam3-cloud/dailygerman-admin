@@ -41,6 +41,11 @@ interface AudioStats {
     hoerenTotal?: number;
     hoerenMissing?: number;
   };
+  goetheExamTemplates?: {
+    total: number;
+    missing: number;
+    generated: number;
+  };
 }
 
 export default function AudioGeneratorPage() {
@@ -72,6 +77,7 @@ export default function AudioGeneratorPage() {
     | "reading_texts"
     | "listening_audios"
     | "goethe_materials"
+    | "goethe_exam_templates"
   >("vocab_words");
   const [isBatchRunning, setIsBatchRunning] = useState(false);
   const isBatchRunningRef = useRef(false);
@@ -680,6 +686,39 @@ export default function AudioGeneratorPage() {
             {stats?.goetheMaterials ? stats.goetheMaterials.missing : 0} missing ({stats?.goetheMaterials?.hoerenMissing ?? 0} Hören)
           </p>
         </div>
+
+        {/* 12. Goethe Exam Templates (Writing & Speaking) */}
+        <div className="p-4 bg-white dark:bg-[#141414] border-2 border-black dark:border-neutral-700 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black uppercase tracking-wider text-neutral-500">
+              Exam Templates (Schreiben & Sprechen)
+            </span>
+            <Sparkles className="w-4 h-4 text-neutral-500" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black">
+              {stats?.goetheExamTemplates ? stats.goetheExamTemplates.generated : 0}
+            </span>
+            <span className="text-xs font-bold text-neutral-500">
+              / {stats?.goetheExamTemplates ? stats.goetheExamTemplates.total : 0}
+            </span>
+          </div>
+          <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 mt-3 overflow-hidden border border-black/20">
+            <div
+              className="bg-emerald-500 h-full transition-all duration-500"
+              style={{
+                width: `${
+                  stats?.goetheExamTemplates
+                    ? calcPercentage(stats.goetheExamTemplates.generated, stats.goetheExamTemplates.total)
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+          <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-2">
+            {stats?.goetheExamTemplates ? stats.goetheExamTemplates.missing : 0} missing audio
+          </p>
+        </div>
       </div>
 
       {/* Voice Configuration & Real-Time Tester */}
@@ -810,6 +849,7 @@ export default function AudioGeneratorPage() {
             { id: "reading_texts", title: "Reading Passages", count: stats?.readingTexts?.missing || 0 },
             { id: "listening_audios", title: "Listening Audios (Hören)", count: stats?.listeningAudios?.missing || 0 },
             { id: "goethe_materials", title: "Goethe Exam Prep", count: stats?.goetheMaterials?.missing || 0 },
+            { id: "goethe_exam_templates", title: "Exam Templates (Writing/Speaking)", count: stats?.goetheExamTemplates?.missing || 0 },
           ].map((item) => (
             <button
               key={item.id}

@@ -209,3 +209,39 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
        * 100% compliance with official Goethe examiner 4-point rating grids (*Aufgabenerfüllung*, *Kohärenz*, *Wortschatz*, *Strukturen*).
        * Automated unit tests (`npm test`) covering edge cases, irregular conjugations, noun declensions, and boundary word counts.
        * Zero syntax errors, zero grammatical agreement mismatches, and zero build warnings.
+
+
+## 18. Studio-Grade Neural TTS Audio Standard & Strict Prohibition of Web Speech API (MANDATORY)
+- **Strict Prohibition of `window.speechSynthesis` / Web Speech API (Zero Robotic Audio Policy)**:
+  - The browser's native Web Speech API (`window.speechSynthesis`, `SpeechSynthesisUtterance`) is **STRICTLY PROHIBITED** across all public learner features, vocabulary, reading passages, dialogue turns, and Goethe exam tools.
+  - Client-side OS speech synthesizers produce robotic, metallic, dialectally incorrect, or unnatural sounding audio that degrades learner pronunciation and violates pedagogical quality standards.
+  - Any pull request or commit introducing `window.speechSynthesis` or robotic client-synthesized audio will be rejected.
+- **Mandatory Cloud Neural Audio Model Specification**:
+  - All German audio in the platform MUST be synthesized exclusively using Google Cloud Text-to-Speech high-fidelity neural models:
+    - **Primary Recommended Voice**: `de-DE-Neural2-F` (Female, crisp, authentic Hochdeutsch articulation).
+    - **Alternate Male Voice**: `de-DE-Neural2-B` (Male, authoritative, clear).
+    - **Conversational & Dialogue Voices**: `de-DE-Journey-F` / `de-DE-Journey-D` or Neural2 multi-speaker assignments for multi-turn dialogues.
+    - **Synthesis Parameters**:
+      * Audio Encoding: `MP3` (`audio/mpeg`).
+      * Sample Rate: `24000` Hz (24kHz studio clarity).
+      * Speaking Rate: `0.92` to `0.95` (calibrated for optimal CEFR A1–B2 acoustic comprehension; never rushed).
+      * Pitch: `0.0` (natural vocal timbre).
+- **Mandatory Storage & Database Persistence**:
+  - Audio files must NEVER be generated dynamically on-the-fly during learner page requests.
+  - All synthesized MP3 audio buffers MUST be uploaded and persisted to Supabase Storage in the `pronunciations` bucket under structured prefixes:
+    * Vocabulary words: `vocab/${word_slug}.mp3`
+    * Vocabulary sentences: `sentences/${sentence_id}.mp3`
+    * Goethe exam materials: `goethe/${id}.mp3`
+    * Goethe Writing & Speaking templates: `goethe-templates/${id}.mp3` (and slug alias)
+    * Verbs: `verbs/infinitive/${verb}.mp3`, `verbs/praeteritum/${verb}.mp3`, `verbs/perfekt/${verb}.mp3`
+    * Conversation dialogues: `conversations/${conversation_id}/${turn_id}.mp3`
+    * Reading passages: `reading/${reading_id}.mp3`
+    * Listening comprehension: `listening/${listening_id}.mp3`
+  - The public URL (`audio_url` / `sentence_audio_url`) must be stored directly on the corresponding PostgreSQL database row.
+- **Admin CMS 1-Click Batch Generation Integration**:
+  - Whenever any new audio-bearing module or database table is introduced:
+    1. It MUST provide an `audio_url TEXT` column.
+    2. It MUST be registered as an executable `BatchTarget` in `DailyGermanAdmin/app/api/admin/audio/generate-batch/route.ts`.
+    3. It MUST be exposed in `DailyGermanAdmin/app/audio/page.tsx` for real-time inventory tracking and 1-click batch generation with Google Cloud Permanent Free Tier protection.
+- **Learner App Audio Playback**:
+  - Learner components must use standard HTML5 audio playback (`new Audio(audioUrl)`) or `<audio>` controls backed by the CDN-cached Supabase Storage public URL with loading, playing, and pause states.
