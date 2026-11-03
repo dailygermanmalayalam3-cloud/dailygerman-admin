@@ -86,3 +86,99 @@ export async function deleteAdminUser(userId: string): Promise<void> {
     throw new Error(`Failed to delete user: ${error.message}`);
   }
 }
+
+export interface NormalizedAdminVoiceGroup {
+  id: string;
+  name: string;
+  level: "All" | "A1" | "A2" | "B1" | "B2";
+  topic: string;
+  host_id: string;
+  host_name: string;
+  host_email: string;
+  host_full_name: string;
+  host_provider: string;
+  host_avatar_url: string | null;
+  participant_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+export async function listAdminVoiceGroups(
+  status: "all" | "active" | "inactive" = "all"
+): Promise<NormalizedAdminVoiceGroup[]> {
+  const adminClient = createAdminClient();
+  let query = adminClient
+    .from("voice_groups")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (status === "active") {
+    query = query.eq("is_active", true);
+  } else if (status === "inactive") {
+    query = query.eq("is_active", false);
+  }
+
+  const { data: groups, error } = await query;
+  if (error) {
+    throw new Error(`Failed to list voice groups: ${error.message}`);
+  }
+
+  let userMap = new Map<string, NormalizedAdminUser>();
+  try {
+    const users = await listAdminUsers();
+    userMap = new Map(users.map((u) => [u.id, u]));
+  } catch {
+    // Non-blocking fallback
+  }
+
+  return (groups || []).map((g) => {
+    const creator = userMap.get(g.host_id);
+    return {
+      id: g.id,
+      name: g.name,
+      level: g.level,
+      topic: g.topic || "",
+      host_id: g.host_id,
+      host_name: g.host_name || "Unknown",
+      host_email: g.host_email || creator?.email || "",
+      host_full_name: creator?.fullName || g.host_name || "Learner",
+      host_provider: creator?.provider || "unknown",
+      host_avatar_url: creator?.avatarUrl || null,
+      participant_count: g.participant_count ?? 0,
+      is_active: Boolean(g.is_active),
+      created_at: g.created_at,
+      updated_at: g.updated_at,
+    };
+  });
+}
+
+export async function dissolveAdminVoiceGroup(groupId: string): Promise<void> {
+  if (!groupId || typeof groupId !== "string") {
+    throw new Error("Invalid voice group ID");
+  }
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
+    .from("voice_groups")
+    .update({ is_active: false, participant_count: 0 })
+    .eq("id", groupId);
+
+  if (error) {
+    throw new Error(`Failed to dissolve voice group: ${error.message}`);
+  }
+}
+
+export async function deleteAdminVoiceGroup(groupId: string): Promise<void> {
+  if (!groupId || typeof groupId !== "string") {
+    throw new Error("Invalid voice group ID");
+  }
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
+    .from("voice_groups")
+    .delete()
+    .eq("id", groupId);
+
+  if (error) {
+    throw new Error(`Failed to delete voice group: ${error.message}`);
+  }
+}

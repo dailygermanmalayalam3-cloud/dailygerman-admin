@@ -72,6 +72,28 @@
 
 ## 2. Chronological Merge Changelog
 
+### [0.0.2] - Voice Room Creator Identity Attribution & Moderation (`feat/voice-room-creator-identity`)
+
+#### Summary
+- **Verified Voice Room Creator Attribution & Dossier Display**:
+  - Resolved root cause where Admin CMS `/voice-moderation` only showed in-room nickname aliases (e.g. `Nothing`), with zero user email, account name, provider, or user ID.
+  - Added new route `/api/admin/voice-groups` utilizing service role admin client to cross-reference `auth.users`, extracting verified account email, Google/Email provider, full name, and auth UUID.
+  - Added room status filtering (`All Rooms`, `Active Live`, `Closed / Past`) and room/creator text search.
+  - Added dedicated **Room Creator Dossier Box** displaying verified email, 1-click email copy, full name, provider badge, in-room display alias if different, and direct link to user profile in `/users`.
+  - Added room deletion capability (`DELETE /api/admin/voice-groups`) and updated Stealth Listen-In console with verified host identity.
+- **Database Schema (`public.voice_groups`)**:
+  - Added column: `ALTER TABLE public.voice_groups ADD COLUMN IF NOT EXISTS host_email TEXT;`
+  - Backfilled existing rows with emails from `auth.users`.
+- **Files Added / Modified in `DailyGermanAdmin`**:
+  - `lib/supabase/admin.ts`: Added `NormalizedAdminVoiceGroup`, `listAdminVoiceGroups()`, `dissolveAdminVoiceGroup()`, and `deleteAdminVoiceGroup()`.
+  - `app/api/admin/voice-groups/route.ts`: Admin-authenticated `GET`, `PATCH`, and `DELETE` handlers.
+  - `app/voice-moderation/page.tsx`: Enhanced voice room monitoring UI with creator dossier, status filters, search, and delete action.
+  - `lib/voice/moderation-engine.ts`: Extended `VoiceGroupRow` interface.
+  - `__tests__/backend/api-admin-voice-groups.test.ts`: Added comprehensive unit test suite (14 test cases covering 100% of route logic).
+- **Testing & Quality Assurance**:
+  - `DailyGermanAdmin`: **156 / 156 passing tests** across 18 test suites (100% pass rate).
+  - Clean production build with 0 TypeScript errors and 0 build warnings.
+
 ### [2026-10-13] — Admin Voice Moderation, Audio Evidence Player & Stealth Listen-In Console (`feat/admin-voice-moderation`)
 
 #### Summary

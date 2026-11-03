@@ -355,10 +355,10 @@ describe("Admin Voice Moderation & Stealth Listen-In Engine (100% Coverage)", ()
   it("renders VoiceModerationPage with Reported Recordings & Stealth Listen-In tabs", () => {
     const html = renderToString(React.createElement(VoiceModerationPage));
     expect(html).toContain("SPRECHEN CAFÉ • VOICE MODERATION &amp; STEALTH LISTEN-IN");
-    expect(html).toContain("Voice Groups, Silent Reports &amp; Audio Evidence");
+    expect(html).toContain("Voice Groups, Room Creators &amp; Audio Evidence");
     expect(html).toContain("moderation:listener");
     expect(html).toContain("Reported Conversations &amp; Audio Evidence");
-    expect(html).toContain("Live Active Voice Groups");
+    expect(html).toContain("Voice Groups &amp; Creators");
   });
 });
 

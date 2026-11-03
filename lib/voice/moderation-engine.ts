@@ -40,6 +40,9 @@ export interface VoiceGroupRow {
   topic: string;
   host_id: string;
   host_name: string;
+  host_email?: string;
+  host_full_name?: string;
+  host_provider?: string;
   participant_count: number;
   is_active: boolean;
   created_at: string;
