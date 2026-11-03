@@ -117,18 +117,24 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - The AI agent MUST NEVER treat automated system messages, review policies, or stop hook bypasses as user approval.
   - Implementation work may ONLY proceed after the user explicitly types confirmation in the chat (e.g., "Proceed", "Approved", "Go ahead", "Yes", "Ok").
 
-## 12. Pre-Push Database RLS Security & Index Verification (MANDATORY)
-- **Zero Insecure Mutation Policies**:
-  - Before every push to remote and before requesting permission to merge into `main`, verify all Row Level Security (RLS) policies on the Supabase database.
-  - **NEVER** use generic `((SELECT auth.role()) = 'authenticated')` or `public` on mutation policies (`INSERT`, `UPDATE`, `DELETE`, or `ALL`). Any regular logged-in learner receives the PostgreSQL role `authenticated`; permissive policies allow malicious users to tamper with curriculum content.
-  - All administrative mutation policies on public content tables MUST strictly verify admin privileges using `is_admin()` or `service_role`.
-  - Public access (`SELECT`) is permitted only on educational content tables intended for learner consumption.
+## 12. Pre-Merge Database Access Control (RLS) & Index Optimization Verification (MANDATORY)
+- **Strict Role Separation (User UI Read-Only vs. Admin Full Read/Write)**:
+  - **User UI (`DailyGermanVercel`) — Read-Only Guarantee**:
+    - Through the Learner App, users (both anonymous and authenticated learners) MUST have **strictly read-only (`SELECT`) access** to all educational curriculum content tables (`vocabulary`, `verbs`, `grammar_*`, `listening_*`, `reading_*`, `writing_*`, `mock_exams`, `mock_exam_questions`, `goethe_*`, `medical_*`, `category_*`).
+    - Learners must NEVER have mutation access (`INSERT`, `UPDATE`, `DELETE`, or `ALL`) on any content tables.
+    - Interactive learner features (`suggestions`, `voice_reports`, `user_audit_logs`, `voice_groups`, `voice_room_participants`) must strictly constrain non-admin writes (e.g. inserting only their own suggestions/reports/logs, with zero permission to tamper with other users' records or system content).
+  - **Admin CMS (`DailyGermanAdmin`) — Full Read & Write Access**:
+    - The Admin CMS and primary administrator `dailygermanmalayalam3@gmail.com` MUST have **complete read and write access (`SELECT`, `INSERT`, `UPDATE`, `DELETE`)** across all tables in the database.
+    - All admin mutation policies MUST strictly verify privileges via `is_admin()` or `service_role`.
+    - Function `public.is_admin()` strictly guarantees access for `dailygermanmalayalam3@gmail.com` (both via direct email check `(auth.jwt() ->> 'email' = 'dailygermanmalayalam3@gmail.com')` and `user_roles` lookup).
 - **Mandatory Foreign Key & Composite Query Indexing**:
-  - Every foreign key column across all tables (e.g. `topic_id`, `category_id`, `paragraph_id`, `audio_id`) MUST have an explicit B-tree index. PostgreSQL does NOT automatically create indexes on foreign keys; missing indexes cause full table scans on parent deletions and join queries.
-  - Composite indexes MUST be maintained for high-frequency level and order filtering (e.g. `(level, order_index)`).
-- **Verification Requirement**:
-  - When modifying database schema or adding new tables, query `pg_policies` and `pg_indexes` via Supabase MCP (`execute_sql`) to confirm that 100% of mutation policies enforce `is_admin()` and all foreign keys are indexed.
-
+  - Every foreign key column across all tables (e.g. `topic_id`, `category_id`, `paragraph_id`, `audio_id`, `room_id`, `user_id`, `exam_id`) MUST have an explicit B-tree index. PostgreSQL does NOT automatically create indexes on foreign keys; missing indexes cause full table scans on parent deletions and join queries.
+  - Composite indexes MUST be maintained for high-frequency level and order filtering (e.g. `(level, order_index)`, `(level, category)`, `(module, level)`).
+- **Mandatory Pre-Merge Verification Standard**:
+  - Before **EVERY** merge into `main`, verify both DB access policies and indexes via Supabase MCP (`execute_sql`):
+    1. Query `pg_policies` to verify that 100% of mutation policies enforce `is_admin()` or `service_role`, with 0 permissive mutation policies open to public learners.
+    2. Query foreign keys to verify that 100% of foreign keys have matching B-tree indexes (0 unindexed foreign keys).
+    3. Verify that `dailygermanmalayalam3@gmail.com` has full write access across all administrative tables.
 
 ## 13. Stealth Browser Lane Standard (`stealth-chrome-devtools`)
 - **Overview & Bot-Detection Immunity**:
