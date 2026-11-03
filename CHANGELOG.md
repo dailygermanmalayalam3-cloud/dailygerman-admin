@@ -90,6 +90,9 @@
   - `app/voice-moderation/page.tsx`: Enhanced voice room monitoring UI with creator dossier, status filters, search, and delete action.
   - `lib/voice/moderation-engine.ts`: Extended `VoiceGroupRow` interface.
   - `__tests__/backend/api-admin-voice-groups.test.ts`: Added comprehensive unit test suite (14 test cases covering 100% of route logic).
+- **Package Freshness & Security Vulnerability Remediation**:
+  - Upgraded core dependencies to latest stable versions: `next` (16.4.4), `eslint-config-next` (16.4.4), `eslint` (10.14.0), `lucide-react` (1.67.0), `tailwindcss` & `@tailwindcss/postcss` (4.3.4), `vite` (8.3.5), `vitest` (5.1.0), and `@types/node` (26.6.6).
+  - Resolved transitive `zod` memory exhaustion advisory and eliminated `minimatch` glob amplification advisory via package override (`minimatch: ^11.0.4`), achieving **0 vulnerabilities** on `npm audit`.
 - **Testing & Quality Assurance**:
   - `DailyGermanAdmin`: **156 / 156 passing tests** across 18 test suites (100% pass rate).
   - Clean production build with 0 TypeScript errors and 0 build warnings.
