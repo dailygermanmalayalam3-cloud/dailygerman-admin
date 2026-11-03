@@ -370,3 +370,35 @@ Added PDF study-notes upload and management to the Grammar Admin CMS (`/grammar`
   - `components/AdminHeader.tsx`: Added version indicator.
   - `lib/voice/moderation-engine.ts`, `app/audio/page.tsx`, `app/vocabulary/page.tsx`, `lib/db/verbs.ts`, `types/index.ts`: Resolved all strict TypeScript and Next 16 / React 19 compiler issues.
 
+---
+
+### [2026-11-03] — Semantic Versioning `0.0.2` & Direct Dependencies Upgrades (`feat/update-nextjs-latest`)
+- **Summary**:
+  - Upgraded direct dependencies to latest stable releases across the repository (`next@16.4.4`, `react@19.2.4`, `react-dom@19.2.4`, `lucide-react@1.16.0`, `vitest@5.1.0`).
+  - Pinned TypeScript to `^6.0.3` for 100% compatibility with `eslint-config-next` (`typescript-eslint`).
+  - Zero audit vulnerabilities (`npm audit`: 0 vulnerabilities).
+- **Key Files**:
+  - `package.json`: Version bumped to `0.0.2`.
+  - `lib/config/version.ts`: Updated to `0.0.2`.
+
+---
+
+### [2026-11-03] — Semantic Versioning `0.0.3` & Voice Room Attendance & Participant History Dossier (`feat/voice-room-participants`)
+- **Summary**:
+  - Implemented comprehensive participant attendance history and forensic attendee tracking in Voice Moderation (`/voice-moderation`).
+  - Updated `listAdminVoiceGroups` in `lib/supabase/admin.ts` to query `public.voice_room_participants`, joining with `auth.users` to enrich attendee profiles with verified account emails, full names, and authentication providers (Google / Email / Guest).
+  - Designed and rendered the expandable "Joined Participants & Attendance History" module on every voice room card in `app/voice-moderation/page.tsx`:
+    - Full Name, In-Room Display Alias (highlighted when different from registered name), and Role badge (`HOST`, `LEARNER`, `GUEST`).
+    - Verified Account Email with 1-click clipboard copy and authentication provider badge (`GOOGLE`, `EMAIL`).
+    - Join timestamp and Leave timestamp with dynamically calculated stay duration (e.g. `12m`, `1h 24m`, `< 1m`).
+    - Real-time `Active Now` indicator for currently connected room attendees.
+    - User UUID and 1-click deep-link to `/users?search=...` for instant admin inspection.
+  - Upgraded semantic version to `0.0.3` across `package.json` and `lib/config/version.ts`.
+  - All 156 unit and integration tests passing (100% pass rate) with 0 ESLint errors and 0 audit vulnerabilities.
+- **Key Files**:
+  - `lib/voice/moderation-engine.ts`: Added `VoiceParticipantHistoryRow` interface and `participants_history` to `VoiceGroupRow`.
+  - `lib/supabase/admin.ts`: Added `NormalizedVoiceParticipantHistory`, queried `voice_room_participants`, and enriched participant rows with user profiles.
+  - `app/voice-moderation/page.tsx`: Rendered expandable participant history section with copyable emails, stay duration, role badges, and user links.
+  - `__tests__/backend/api-admin-voice-groups.test.ts`: Added unit tests verifying participant history enrichment in `/api/admin/voice-groups`.
+  - `package.json` & `lib/config/version.ts`: Bumped to `0.0.3`.
+

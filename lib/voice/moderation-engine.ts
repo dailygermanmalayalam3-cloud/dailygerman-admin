@@ -33,7 +33,23 @@ export interface VoiceReportRow {
   created_at: string;
 }
 
+export interface VoiceParticipantHistoryRow {
+  id: string;
+  room_id: string;
+  user_id: string | null;
+  user_name: string;
+  user_email: string | null;
+  user_full_name?: string;
+  user_provider?: string;
+  is_guest: boolean;
+  role: "host" | "learner" | "guest" | string;
+  joined_at: string;
+  left_at: string | null;
+  duration_seconds?: number;
+}
+
 export interface VoiceGroupRow {
+
   id: string;
   name: string;
   level: "All" | "A1" | "A2" | "B1" | "B2";
@@ -45,6 +61,7 @@ export interface VoiceGroupRow {
   host_provider?: string;
   participant_count: number;
   is_active: boolean;
+  participants_history?: VoiceParticipantHistoryRow[];
   created_at: string;
 }
 

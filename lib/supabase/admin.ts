@@ -87,6 +87,21 @@ export async function deleteAdminUser(userId: string): Promise<void> {
   }
 }
 
+export interface NormalizedVoiceParticipantHistory {
+  id: string;
+  room_id: string;
+  user_id: string | null;
+  user_name: string;
+  user_email: string | null;
+  user_full_name?: string;
+  user_provider?: string;
+  is_guest: boolean;
+  role: "host" | "learner" | "guest" | string;
+  joined_at: string;
+  left_at: string | null;
+  duration_seconds?: number;
+}
+
 export interface NormalizedAdminVoiceGroup {
   id: string;
   name: string;
@@ -102,6 +117,7 @@ export interface NormalizedAdminVoiceGroup {
   is_active: boolean;
   created_at: string;
   updated_at?: string;
+  participants_history: NormalizedVoiceParticipantHistory[];
 }
 
 export async function listAdminVoiceGroups(
@@ -132,6 +148,39 @@ export async function listAdminVoiceGroups(
     // Non-blocking fallback
   }
 
+  const participantsByRoom = new Map<string, NormalizedVoiceParticipantHistory[]>();
+  try {
+    const { data: participants } = await adminClient
+      .from("voice_room_participants")
+      .select("*")
+      .order("joined_at", { ascending: false });
+
+    (participants || []).forEach((p) => {
+      const user = p.user_id ? userMap.get(p.user_id) : undefined;
+      const historyItem: NormalizedVoiceParticipantHistory = {
+        id: p.id,
+        room_id: p.room_id,
+        user_id: p.user_id,
+        user_name: p.user_name || "Unknown",
+        user_email: p.user_email || user?.email || null,
+        user_full_name: user?.fullName || p.user_name || "Learner",
+        user_provider: user?.provider || (p.is_guest ? "guest" : "email"),
+        is_guest: Boolean(p.is_guest),
+        role: p.role || (p.is_guest ? "guest" : "learner"),
+        joined_at: p.joined_at,
+        left_at: p.left_at || null,
+        duration_seconds: p.left_at
+          ? Math.max(0, Math.round((new Date(p.left_at).getTime() - new Date(p.joined_at).getTime()) / 1000))
+          : undefined,
+      };
+      const list = participantsByRoom.get(p.room_id) || [];
+      list.push(historyItem);
+      participantsByRoom.set(p.room_id, list);
+    });
+  } catch {
+    // Non-blocking fallback
+  }
+
   return (groups || []).map((g) => {
     const creator = userMap.get(g.host_id);
     return {
@@ -149,6 +198,7 @@ export async function listAdminVoiceGroups(
       is_active: Boolean(g.is_active),
       created_at: g.created_at,
       updated_at: g.updated_at,
+      participants_history: participantsByRoom.get(g.id) || [],
     };
   });
 }

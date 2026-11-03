@@ -1,1 +1,1 @@
-export const ADMIN_VERSION = "0.0.2";
+export const ADMIN_VERSION = "0.0.3";

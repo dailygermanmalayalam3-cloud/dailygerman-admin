@@ -33,7 +33,19 @@ import {
   ExternalLink,
   Search,
   Calendar,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+
+function formatStayDuration(seconds?: number): string {
+  if (typeof seconds !== "number" || isNaN(seconds) || seconds < 0) return "< 1m";
+  if (seconds < 60) return `${Math.max(1, seconds)}s`;
+  const mins = Math.floor(seconds / 60);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  return `${hrs}h ${remMins}m`;
+}
 
 export default function VoiceModerationPage() {
   const supabase = useMemo(() => createClient(), []);
@@ -48,6 +60,7 @@ export default function VoiceModerationPage() {
   const [groupStatusFilter, setGroupStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [groupSearchQuery, setGroupSearchQuery] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [expandedRooms, setExpandedRooms] = useState<Record<string, boolean>>({});
 
   // Audio playback current time per reportId for synchronized speaker timeline highlight
   const [playbackTimes, setPlaybackTimes] = useState<Record<string, number>>({});
@@ -939,6 +952,173 @@ export default function VoiceModerationPage() {
                             <ExternalLink className="w-3 h-3" />
                           </Link>
                         </div>
+                      </div>
+
+                      {/* JOINED PARTICIPANTS & ATTENDANCE HISTORY */}
+                      <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/80 overflow-hidden bg-white dark:bg-slate-900/60">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedRooms((prev) => ({
+                              ...prev,
+                              [group.id]: !Boolean(
+                                prev[group.id] ??
+                                  ((group.participants_history?.length || 0) > 0 &&
+                                    (group.participants_history?.length || 0) <= 4)
+                              ),
+                            }))
+                          }
+                          className="w-full flex items-center justify-between p-3 bg-slate-50/80 dark:bg-slate-800/60 hover:bg-slate-100/80 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                              Joined Participants &amp; Attendance
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300">
+                              {group.participants_history?.length || 0}
+                            </span>
+                          </div>
+                          {(expandedRooms[group.id] ??
+                          ((group.participants_history?.length || 0) > 0 &&
+                            (group.participants_history?.length || 0) <= 4)) ? (
+                            <ChevronUp className="w-4 h-4 text-slate-400" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-slate-400" />
+                          )}
+                        </button>
+
+                        {(expandedRooms[group.id] ??
+                          ((group.participants_history?.length || 0) > 0 &&
+                            (group.participants_history?.length || 0) <= 4)) && (
+                          <div className="p-3 space-y-2 border-t border-slate-100 dark:border-slate-800/80 max-h-72 overflow-y-auto">
+                            {!group.participants_history || group.participants_history.length === 0 ? (
+                              <p className="text-xs text-slate-400 dark:text-slate-500 italic py-1">
+                                No participants logged for this room session yet.
+                              </p>
+                            ) : (
+                              group.participants_history.map((p) => {
+                                const isHost = p.role === "host" || p.user_id === group.host_id;
+                                const isActive = !p.left_at && group.is_active;
+                                const durationSec =
+                                  p.duration_seconds ??
+                                  (p.left_at
+                                    ? Math.max(
+                                        0,
+                                        Math.round(
+                                          (new Date(p.left_at).getTime() - new Date(p.joined_at).getTime()) / 1000
+                                        )
+                                      )
+                                    : undefined);
+
+                                return (
+                                  <div
+                                    key={p.id}
+                                    className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50 space-y-1.5"
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                          {p.user_full_name || p.user_name}
+                                        </span>
+                                        {p.is_guest && (
+                                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300">
+                                            GUEST
+                                          </span>
+                                        )}
+                                        {isHost && (
+                                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300">
+                                            HOST
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {p.user_provider && p.user_provider !== "unknown" && (
+                                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300 uppercase font-semibold">
+                                          {p.user_provider}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {p.user_name && p.user_full_name && p.user_name !== p.user_full_name && (
+                                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                        In-Room Alias:{" "}
+                                        <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                          &quot;{p.user_name}&quot;
+                                        </span>
+                                      </p>
+                                    )}
+
+                                    {p.user_email ? (
+                                      <div className="flex items-center gap-1.5">
+                                        <Mail className="w-3 h-3 text-slate-400 shrink-0" />
+                                        <span className="text-[11px] font-mono text-slate-600 dark:text-slate-300 truncate">
+                                          {p.user_email}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleCopy(p.user_email!, `p-email-${p.id}`)}
+                                          title="Copy email"
+                                          className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                                        >
+                                          {copiedKey === `p-email-${p.id}` ? (
+                                            <Check className="w-3 h-3 text-emerald-500" />
+                                          ) : (
+                                            <Copy className="w-3 h-3" />
+                                          )}
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <p className="text-[10px] text-slate-400 italic">No account email (Guest)</p>
+                                    )}
+
+                                    <div className="flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-slate-200/50 dark:border-slate-700/40 text-[10px] text-slate-500 dark:text-slate-400">
+                                      <span>
+                                        Joined:{" "}
+                                        {new Date(p.joined_at).toLocaleTimeString([], {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </span>
+                                      {isActive ? (
+                                        <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                          Active Now
+                                        </span>
+                                      ) : p.left_at ? (
+                                        <span>
+                                          Left:{" "}
+                                          {new Date(p.left_at).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          })}
+                                          {durationSec !== undefined && ` (${formatStayDuration(durationSec)})`}
+                                        </span>
+                                      ) : (
+                                        <span>Left when room closed</span>
+                                      )}
+                                    </div>
+
+                                    {p.user_id && (
+                                      <div className="flex items-center justify-between pt-1 text-[9px] font-mono text-slate-400">
+                                        <span className="truncate" title={p.user_id}>
+                                          ID: {p.user_id.slice(0, 8)}...
+                                        </span>
+                                        <Link
+                                          href={`/users?search=${encodeURIComponent(p.user_email || p.user_id)}`}
+                                          className="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5 font-sans font-bold"
+                                        >
+                                          <span>View User</span>
+                                          <ExternalLink className="w-2.5 h-2.5" />
+                                        </Link>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 

@@ -20,6 +20,35 @@ const mockVoiceGroups = [
     is_private: false,
     created_at: "2026-10-20T10:00:00.000Z",
     updated_at: "2026-10-20T10:00:00.000Z",
+    participants_history: [
+      {
+        id: "44444444-4444-4444-8444-444444444444",
+        room_id: mockActiveGroupId,
+        user_id: mockHostUserId,
+        user_name: "Nothing",
+        user_email: "germanlearnpooja@gmail.com",
+        user_full_name: "German learnpooja",
+        user_provider: "google",
+        is_guest: false,
+        role: "host",
+        joined_at: "2026-10-20T10:00:00.000Z",
+        left_at: null,
+      },
+      {
+        id: "55555555-5555-4555-8555-555555555555",
+        room_id: mockActiveGroupId,
+        user_id: "88888888-8888-4888-8888-888888888888",
+        user_name: "Stefan",
+        user_email: "stefan.learner@example.com",
+        user_full_name: "Stefan Müller",
+        user_provider: "email",
+        is_guest: false,
+        role: "learner",
+        joined_at: "2026-10-20T10:05:00.000Z",
+        left_at: "2026-10-20T10:35:00.000Z",
+        duration_seconds: 1800,
+      },
+    ],
   },
   {
     id: mockInactiveGroupId,
@@ -96,6 +125,15 @@ describe("Admin Backend API: /api/admin/voice-groups", () => {
       expect(groupWithAlias.host_full_name).toBe("German learnpooja");
       expect(groupWithAlias.host_name).toBe("Nothing");
       expect(groupWithAlias.host_provider).toBe("google");
+
+      // Verify participants history contains join/leave records
+      expect(groupWithAlias.participants_history).toHaveLength(2);
+      expect(groupWithAlias.participants_history[0].role).toBe("host");
+      expect(groupWithAlias.participants_history[0].user_email).toBe("germanlearnpooja@gmail.com");
+      expect(groupWithAlias.participants_history[0].left_at).toBeNull();
+      expect(groupWithAlias.participants_history[1].role).toBe("learner");
+      expect(groupWithAlias.participants_history[1].user_name).toBe("Stefan");
+      expect(groupWithAlias.participants_history[1].duration_seconds).toBe(1800);
     });
 
     it("should filter only active voice groups when status=active", async () => {
