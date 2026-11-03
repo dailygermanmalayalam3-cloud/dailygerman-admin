@@ -28,7 +28,7 @@
     "eslint-config-next": "^16.4.4",
     "husky": "^9.1.7",
     "tailwindcss": "^4.3.4",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "vitest": "^5.1.0"
   },
   "overrides": {

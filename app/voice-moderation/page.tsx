@@ -362,7 +362,7 @@ export default function VoiceModerationPage() {
                   </span>
                 )}
                 {listeningGroup.host_name && listeningGroup.host_name !== listeningGroup.host_full_name && (
-                  <span className="italic ml-1">• Alias: "{listeningGroup.host_name}"</span>
+                  <span className="italic ml-1">• Alias: &quot;{listeningGroup.host_name}&quot;</span>
                 )}
                 {" • Topic: "}{listeningGroup.topic || "General Practice"}
               </p>
@@ -921,7 +921,7 @@ export default function VoiceModerationPage() {
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                               In-Room Display Alias:{" "}
                               <span className="font-semibold text-slate-700 dark:text-slate-200">
-                                "{group.host_name}"
+                                &quot;{group.host_name}&quot;
                               </span>
                             </p>
                           )}
